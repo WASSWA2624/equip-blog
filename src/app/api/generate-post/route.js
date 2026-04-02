@@ -1,7 +1,10 @@
+import { NextResponse } from "next/server";
+
+import { createAiCompositionErrorPayload, generateDraftFromRequest } from "@/lib/ai";
 import { requireAdminApiPermission } from "@/lib/auth/api";
 import { ADMIN_PERMISSIONS } from "@/lib/auth/rbac";
 import { generationRequestSchema } from "@/lib/validation";
-import { scaffoldRouteResponse, validateJsonRequest } from "@/lib/validation/api-placeholders";
+import { validateJsonRequest } from "@/lib/validation/api-placeholders";
 
 export async function POST(request) {
   const auth = await requireAdminApiPermission(request, ADMIN_PERMISSIONS.GENERATE_POSTS);
@@ -16,10 +19,15 @@ export async function POST(request) {
     return result.response;
   }
 
-  return scaffoldRouteResponse({
-    access: "admin",
-    body: result.data,
-    method: "POST",
-    route: "/api/generate-post",
-  });
+  try {
+    const generationResult = await generateDraftFromRequest(result.data, {
+      actorId: auth.user.id,
+    });
+
+    return NextResponse.json(generationResult);
+  } catch (error) {
+    const payload = createAiCompositionErrorPayload(error);
+
+    return NextResponse.json(payload.body, { status: payload.statusCode });
+  }
 }

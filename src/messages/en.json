@@ -95,6 +95,27 @@
       "title": "Manufacturers management",
       "unnamedLabel": "Unnamed manufacturer"
     },
+    "promptConfiguration": {
+      "activeLabel": "Active",
+      "activeSummary": "Prompt templates currently active for generation.",
+      "description": "Manage the layered prompt templates that shape structured article generation, formatting, and safety boundaries.",
+      "editorDescription": "Each active template is loaded by purpose during generation. Edit carefully so the composition pipeline keeps disclaimer, references, and section order intact.",
+      "editorTitle": "Prompt template editor",
+      "enabledLabel": "Enabled",
+      "eyebrow": "Prompts",
+      "fieldName": "Template name",
+      "fieldSystemPrompt": "System prompt",
+      "fieldUserPrompt": "User prompt template",
+      "purposeSummary": "Required prompt purposes currently represented in the database.",
+      "saveAction": "Save prompt templates",
+      "saveErrorPrefix": "Unable to save prompt templates",
+      "saveSuccess": "Prompt templates saved.",
+      "saveWorking": "Saving prompt templates...",
+      "statusReady": "Prompt templates are ready for review.",
+      "summaryTitle": "Prompt summary",
+      "templateSummary": "Stored prompt template versions available to the generator.",
+      "title": "Prompt configuration"
+    },
     "sourceConfiguration": {
       "allowedDomainsHint": "Enter one domain or wildcard domain per line. Leave blank to allow the tier to evaluate any domain.",
       "allowedDomainsLabel": "Allowed domains",

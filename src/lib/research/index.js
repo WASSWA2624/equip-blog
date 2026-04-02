@@ -1085,6 +1085,8 @@ function normalizeSectionEntry(
 
   return {
     details,
+    frequency:
+      typeof item === "string" ? undefined : collapseWhitespace(item?.frequency || item?.interval),
     label,
     sourceReferenceIds,
   };

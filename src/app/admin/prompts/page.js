@@ -1,17 +1,18 @@
-import PlaceholderPage from "@/components/common/placeholder-page";
+import PromptConfigurationScreen from "@/components/admin/prompt-configuration-screen";
+import { defaultLocale } from "@/features/i18n/config";
+import { getMessages } from "@/features/i18n/get-messages";
+import { getPromptConfigurationSnapshot } from "@/lib/ai";
 
-export default function PromptsPage() {
+export default async function PromptsPage() {
+  const [messages, snapshot] = await Promise.all([
+    getMessages(defaultLocale),
+    getPromptConfigurationSnapshot(),
+  ]);
+
   return (
-    <PlaceholderPage
-      badges={["/admin/prompts", "Configuration"]}
-      description="Prompt configuration has a dedicated route now so later steps can add editor-managed templates."
-      eyebrow="Prompts"
-      notes={[
-        "Store and version writing prompts.",
-        "Restrict changes to authorized roles.",
-        "Tie prompt selection to the generation workflow.",
-      ]}
-      title="Prompt configuration"
+    <PromptConfigurationScreen
+      copy={messages.admin.promptConfiguration}
+      initialData={snapshot}
     />
   );
 }
