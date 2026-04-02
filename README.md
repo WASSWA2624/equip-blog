@@ -2,7 +2,7 @@
 
 `equip-blog` is a specification-first project for building an AI-assisted medical equipment publishing platform.
 
-The app is designed to let an authenticated admin enter an equipment name, generate a source-grounded draft, review it, then manually schedule or publish it to a public localized website with SEO, comments, analytics, and moderation.
+The app is designed to let an authenticated admin enter an equipment name, generate a source-grounded draft, review it, then manually schedule or publish it to a public English website that uses a locale-ready architecture for future expansion.
 
 ## Current Repo State
 
@@ -23,12 +23,14 @@ Release 1 defines a production-ready app with:
 - styled-components for styling
 - Redux Toolkit for admin-side client state
 - Zod for validation
-- locale-prefixed public routes for `en`, `fr`, `sw`, and `ar`
+- locale-prefixed public routes with `en` as the only active locale in Release 1
 - admin authentication with RBAC
 - guest comments with moderation
 - manual publishing and scheduled publishing
 - SEO metadata, sitemap, robots, and structured data
 - search, related posts, analytics, and auditability
+
+Future locale integration should be a small extension: add a new locale file, register it in the existing locale configuration, and reuse the existing locale-aware routing and persistence flow.
 
 ## Source Of Truth Rules
 
@@ -69,7 +71,7 @@ Implementation is only complete when step 24 proves full traceability to all man
 - The AI layer is not the factual source of truth; structured research is.
 - Publishing must remain a manual editor action.
 - Duplicate generation must be blocked until the admin explicitly chooses replace or cancel.
-- Localized content must be persisted and reused, not regenerated every time.
+- Release 1 ships English-only content, but the locale architecture must stay ready for future locale files and configuration-driven expansion.
 - Media usage, attribution, and copyright rules must be enforced.
 
 ## Next Step

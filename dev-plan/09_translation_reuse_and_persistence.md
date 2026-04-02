@@ -1,34 +1,34 @@
 # 09 Translation Reuse and Persistence
 
 Source sections: 11.3, 11.4, 24, 39.
-Atomic aspect: translation lifecycle and localization management only.
+Atomic aspect: English-first locale persistence and localization management only.
 Prerequisite: step 08.
 
 ## Goal
 
-Persist localized content correctly and prevent unnecessary regeneration of existing translations.
+Persist English content correctly in Release 1 while keeping the app ready for future locale additions without redesign.
 
 ## Implement
 
-1. Implement `en` as the source locale for generation.
-2. Implement lazy translation on first request for supported non-`en` locales.
-3. Persist exactly one active translation per post and locale.
-4. Reuse stored translations when they already exist.
-5. Support manual editing of localized content in the admin localization management page.
-6. Persist localized Markdown and HTML render artifacts per post and locale.
+1. Implement `en` as the only active locale in Release 1.
+2. Persist exactly one active translation record per post and locale, with `en` as the only populated locale in Release 1.
+3. Build locale-aware rendering and persistence helpers so additional locales can be added without schema or route changes.
+4. Support manual editing of English locale content in the admin Localization Management page, while keeping the page ready to list future locales.
+5. Document and implement the future locale activation path: add a new locale file, register it in supported locale configuration, then use the existing locale-aware persistence flow.
+6. Persist Markdown and HTML render artifacts per post and locale.
 
 ## Required Outputs
 
-- translation persistence service
-- translation lookup and reuse logic
+- locale-aware persistence service
+- locale activation and reuse logic
 - localization management admin surface
 
 ## Verify
 
-- the first non-`en` request creates and stores a translation
-- later requests reuse the stored translation instead of regenerating it
-- locale edits are persisted independently of the `en` source
+- Release 1 content persists under `en` correctly
+- adding a test locale requires only a new locale file and configuration registration, with no schema or route redesign
+- English locale edits are persisted correctly through the locale-aware storage layer
 
 ## Exit Criteria
 
-- localized content behavior is deterministic and reusable
+- English-first locale behavior is deterministic and the future locale extension path is already supported

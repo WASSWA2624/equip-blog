@@ -17,7 +17,7 @@ Create the runnable project skeleton that matches the target folder structure an
 5. Add the Redux provider, empty slice folders, and store bootstrap.
 6. Add baseline scripts for linting, testing, Prisma, and development.
 7. Add placeholder API route files for the required handlers in section 26.
-8. Add locale message files for `en`, `fr`, `sw`, and `ar`.
+8. Add the `en` locale message file and wire the scaffold so future locales can be added by adding a new locale file and registering it in configuration.
 
 ## Required Outputs
 

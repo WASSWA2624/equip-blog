@@ -13,7 +13,7 @@ Implement the complete Prisma schema that matches the Release 1 source-of-truth 
 1. Create the Prisma schema for every required model in section 13.2.
 2. Include the required enums, uniqueness constraints, and join tables.
 3. Model both `status` and `editorialStage` exactly as defined in section 35.
-4. Ensure localized content is stored through `PostTranslation` with one active record per post and locale.
+4. Ensure locale-aware content is stored through `PostTranslation` with one active record per post and locale, while Release 1 only uses `en`.
 5. Ensure media, source attribution, audit events, prompts, providers, and source configuration all have persistence models.
 6. Include the content storage fields required by section 28: Markdown, HTML, and structured JSON.
 7. Create an initial migration from an empty database.

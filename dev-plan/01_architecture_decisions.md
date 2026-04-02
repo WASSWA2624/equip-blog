@@ -11,12 +11,13 @@ Lock the non-negotiable architecture decisions before scaffolding begins.
 ## Implement
 
 1. Create ADRs that freeze the required stack: Next.js App Router, JavaScript, Vercel AI SDK, styled-components, Redux Toolkit, Zod, Prisma, MySQL.
-2. Record the routing strategy: locale-prefixed public routes, root redirect at `/`, non-locale admin routes at `/admin`.
+2. Record the routing strategy: locale-prefixed public routes with only `en` active in Release 1, root redirect at `/`, non-locale admin routes at `/admin`.
 3. Record the content rule: AI is the writing layer, structured research is the factual source layer.
 4. Record the publishing rule: draft generation may be automatic, publish must be manual.
 5. Record the lifecycle rule: `status` and `editorialStage` are separate fields.
 6. Record the storage rule: content is stored as Markdown, HTML, and structured JSON; media uses a driver abstraction.
 7. Record the auth rule: Release 1 requires admin email/password auth and guest public comments.
+8. Record the locale extensibility rule: adding a new locale should require a new locale file and registration in the existing locale configuration, not schema or route redesign.
 
 ## Required Outputs
 

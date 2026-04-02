@@ -6,14 +6,14 @@ Prerequisite: step 16.
 
 ## Goal
 
-Render the complete public website with mobile-first layouts and the required post structure.
+Render the complete English public website for Release 1 with mobile-first layouts and the required post structure, while reusing locale-aware components.
 
 ## Implement
 
-1. Build the locale home page.
+1. Build the English home page under the locale-prefixed route structure.
 2. Build the blog index page and post page templates.
 3. Build category, manufacturer, and equipment landing pages.
-4. Build the localized About, Contact, Disclaimer, and Privacy pages.
+4. Build the English About, Contact, Disclaimer, and Privacy pages from the locale-aware content system.
 5. Render the post body in the exact order defined in section 9.
 6. Render related posts, disclaimer, references, share actions, and comments placeholders on post pages.
 7. Apply mobile-first responsive layouts, then tablet and desktop refinements.

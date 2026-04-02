@@ -12,7 +12,7 @@ Add the query-performance indexes and seed data that the app needs before featur
 
 1. Add indexes for slug lookups, localized post lookups, status, publish dates, and analytics time-series queries.
 2. Seed the first Super Admin account from environment variables.
-3. Seed supported locales and provider configuration defaults.
+3. Seed the active locale registry with `en` only and seed provider configuration defaults.
 4. Seed baseline prompt templates and source configuration records.
 5. Seed any required taxonomy defaults that later steps assume.
 6. Make the seed flow idempotent.

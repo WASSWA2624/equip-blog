@@ -10,7 +10,7 @@ Build the admin UI for generation, review, and generation-stage feedback.
 
 ## Implement
 
-1. Build all required inputs from section 23.1.
+1. Build all required inputs from section 23.1, with the locale control fixed to `en` or rendered as a single-option config-driven control in Release 1.
 2. Surface duplicate detection feedback inline.
 3. Show generation progress stages, warnings, and errors.
 4. Show a live draft preview after generation.

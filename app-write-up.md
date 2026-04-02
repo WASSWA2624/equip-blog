@@ -91,7 +91,7 @@ Release 1 must support all of the following:
 
 Duplicate-handling rules:
 
-- Release 1 treats the generated equipment guide as one canonical guide post per equipment record, localized through translations
+- Release 1 treats the generated equipment guide as one canonical guide post per equipment record, stored in locale-aware translations with only the English translation active
 - when an existing non-archived post for the same canonical equipment and locale is detected, the admin must be warned before generation continues
 - the admin must choose either `Replace existing post` or `Cancel`
 - generation must not continue until one of those actions is chosen
@@ -1566,7 +1566,7 @@ Related-content ordering rules:
 
 ### 30.1 Initial Version
 
-Release 1 uses database-backed search across published localized content using:
+Release 1 uses database-backed search across published content in the active locale, which is `en`, using:
 
 - post title
 - excerpt

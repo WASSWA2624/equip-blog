@@ -11,7 +11,7 @@ Create the single validated runtime configuration contract for the application.
 ## Implement
 
 1. Define a typed environment schema using Zod.
-2. Support all required variables in section 34, including locale, auth, AI, storage, rate limiting, and secrets.
+2. Support all required variables in section 34, including locale, auth, AI, storage, rate limiting, and secrets, with `SUPPORTED_LOCALES` set to `en` in Release 1 but still config-driven.
 3. Distinguish required, optional, and feature-flag variables.
 4. Add `.env.example` that matches the validated schema.
 5. Centralize environment access so later modules do not read `process.env` directly.

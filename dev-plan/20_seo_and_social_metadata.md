@@ -6,12 +6,12 @@ Prerequisite: step 19.
 
 ## Goal
 
-Implement localized SEO, crawlability, and social metadata for all required public pages.
+Implement English SEO for Release 1 and keep the metadata system ready for future locale expansion.
 
 ## Implement
 
-1. Generate metadata for every localized post translation.
-2. Implement canonical URLs and locale alternate links.
+1. Generate metadata for the required English post translation in Release 1.
+2. Implement canonical URLs and emit locale alternate links only when additional locales are enabled.
 3. Implement Open Graph and Twitter/X metadata.
 4. Implement sitemap and robots generation.
 5. Implement breadcrumb, article, organization, and FAQ JSON-LD where applicable.
@@ -29,6 +29,7 @@ Implement localized SEO, crawlability, and social metadata for all required publ
 - published pages expose complete metadata
 - sitemap and robots are valid
 - canonical and alternate URLs match the locale routing rules
+- the English-only Release 1 site does not emit broken alternate links
 
 ## Exit Criteria
 
