@@ -1,12 +1,35 @@
 # 24 Security, Copyright, and Release Traceability
 
-Source sections: 32, 36, 43, 46.
-Atomic aspect: final compliance/traceability only.
+Source sections: 32, 36, 39, 40, 41, 43, 46.
+Atomic aspect: final compliance, traceability, and release gate only.
 Prerequisite: step 23.
-Implement:
-- security and content-safety verification,
-- copyright/attribution verification,
-- full requirements traceability map for sections 1-46,
-- final QA release gate.
-Deliverable: release sign-off pack (traceability + evidence).
-Verify: no mandatory requirement remains unmapped, untested, or unverified.
+
+## Goal
+
+Prove that the finished build satisfies all mandatory Release 1 requirements and excludes future phases cleanly.
+
+## Implement
+
+1. Run a security review across auth, route protection, validation, sanitization, rate limiting, upload restrictions, and secret handling.
+2. Run a copyright and attribution review across source references, manual links, media assets, and generated summaries.
+3. Validate content quality against section 36.
+4. Produce a traceability matrix that maps every mandatory requirement in sections `1-39` and `42-46` to implementation evidence.
+5. Mark sections `40-41` as future-phase and section `45` as informational in the final release evidence.
+6. Produce final QA sign-off notes for public pages, admin pages, scheduling, analytics, comments, SEO, and localization.
+
+## Required Outputs
+
+- security verification checklist
+- copyright and attribution checklist
+- full Release 1 traceability matrix
+- final QA and release sign-off pack
+
+## Verify
+
+- no mandatory requirement remains unmapped
+- no contradiction remains between `dev-plan` and `app-write-up.md`
+- every required page, workflow, and contract has evidence
+
+## Exit Criteria
+
+- the app is ready for Release 1 sign-off

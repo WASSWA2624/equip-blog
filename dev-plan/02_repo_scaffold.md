@@ -1,8 +1,37 @@
 # 02 Repo Scaffold
 
-Source sections: 14, 15, 16, 34, 42.
-Atomic aspect: repo/bootstrap only.
+Source sections: 5, 14, 15, 16, 26, 34, 42.
+Atomic aspect: repo bootstrap only.
 Prerequisite: step 01.
-Implement: initialize App Router structure, styled-components registry setup, Redux skeleton, scripts, and baseline quality tooling.
-Deliverable: runnable scaffold aligned to target folders.
-Verify: app starts, lint/test commands run, and folder topology matches section 14.
+
+## Goal
+
+Create the runnable project skeleton that matches the target folder structure and route inventory.
+
+## Implement
+
+1. Initialize the Next.js App Router project in JavaScript and commit the package lockfile.
+2. Add the top-level folder structure from section 14.
+3. Create placeholder route files for every mandatory public and admin page listed in section 5.
+4. Add the styled-components registry scaffold and theme entry point.
+5. Add the Redux provider, empty slice folders, and store bootstrap.
+6. Add baseline scripts for linting, testing, Prisma, and development.
+7. Add placeholder API route files for the required handlers in section 26.
+8. Add locale message files for `en`, `fr`, `sw`, and `ar`.
+
+## Required Outputs
+
+- a bootable app
+- route placeholders for all required pages
+- API route placeholders for all required endpoints
+- a folder tree that matches section 14
+
+## Verify
+
+- the app starts locally
+- lint and test commands run without scaffold errors
+- every route named in sections 5 and 26 exists as a file placeholder
+
+## Exit Criteria
+
+- later steps can add behavior without restructuring the app

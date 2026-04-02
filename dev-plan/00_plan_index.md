@@ -1,15 +1,32 @@
 # Atomic Dev Plan Index
 
-Single source of truth: `app-write-up.md` (section 46).
+Single source of truth: `app-write-up.md`.
 
-Execution rules:
+## Execution Rules
 
-- Execute files in exact order.
-- Do not skip verification criteria in each file.
-- Do not merge steps; one step owns one aspect.
-- If a step fails verification, stop and fix before next step.
+- Execute steps in exact numeric order.
+- Do not skip verification in any step.
+- Do not merge steps or reorder them.
+- If a step fails verification, stop and fix it before moving on.
+- Do not substitute the required stack, route names, enum names, API field names, or status values defined in `app-write-up.md`.
+- When a step creates configuration, schema, or UI contracts, later steps must reuse those contracts rather than redefining them.
 
-Ordered steps:
+## Evidence Rules
+
+For every step, capture:
+
+- files created or changed
+- commands run
+- automated checks run
+- manual verification notes
+- unresolved risks, if any
+
+Step 24 is not complete unless every mandatory requirement in `app-write-up.md` is either:
+
+- implemented and verified, or
+- explicitly marked future-phase or informational by section `46.2`
+
+## Ordered Steps
 
 1. `01_architecture_decisions.md`
 2. `02_repo_scaffold.md`
@@ -36,6 +53,17 @@ Ordered steps:
 23. `23_performance_and_scalability.md`
 24. `24_security_copyright_and_release_traceability.md`
 
-Final completeness rule:
+## Coverage Rule
 
-- Implementation is complete only if step 24 proves full traceability to all mandatory requirements in `app-write-up.md` sections 1-46.
+The plan must collectively cover all mandatory Release 1 requirements in sections `1-39` and `42-46` of `app-write-up.md`.
+
+- Sections `40-41` are future-phase only.
+- Section `45` is informational only.
+
+## Final Completeness Rule
+
+Implementation is complete only if step 24 proves:
+
+- full traceability to all mandatory requirements
+- no contradiction between `dev-plan` and `app-write-up.md`
+- no unmapped mandatory page, API, schema object, or workflow

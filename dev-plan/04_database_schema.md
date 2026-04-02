@@ -1,8 +1,34 @@
 # 04 Database Schema
 
-Source sections: 13, 13.1, 13.2.
-Atomic aspect: schema/migrations only.
+Source sections: 13, 13.1, 13.2, 28, 35.
+Atomic aspect: schema and migrations only.
 Prerequisite: step 03.
-Implement: Prisma models, enums, relations, uniqueness constraints for post translations, slugs, jobs, views, and provider config.
-Deliverable: migration chain + schema baseline.
-Verify: migrate from empty DB passes and all required entities exist.
+
+## Goal
+
+Implement the complete Prisma schema that matches the Release 1 source-of-truth model contract.
+
+## Implement
+
+1. Create the Prisma schema for every required model in section 13.2.
+2. Include the required enums, uniqueness constraints, and join tables.
+3. Model both `status` and `editorialStage` exactly as defined in section 35.
+4. Ensure localized content is stored through `PostTranslation` with one active record per post and locale.
+5. Ensure media, source attribution, audit events, prompts, providers, and source configuration all have persistence models.
+6. Include the content storage fields required by section 28: Markdown, HTML, and structured JSON.
+7. Create an initial migration from an empty database.
+
+## Required Outputs
+
+- `prisma/schema.prisma`
+- initial migration files
+
+## Verify
+
+- `prisma validate` passes
+- migration from an empty database succeeds
+- every required model, enum, and uniqueness rule from section 13.2 exists
+
+## Exit Criteria
+
+- the database schema is complete enough for the rest of the build

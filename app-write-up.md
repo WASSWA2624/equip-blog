@@ -1,240 +1,278 @@
-# Automated Medical Equipment Blog Platform — Complete App Write-Up
+# Automated Medical Equipment Blog Platform - Complete App Write-Up
 
 ## 1. Project Overview
 
 This project is a full-stack AI-powered blog platform for publishing educational content about medical equipment.
 
-The core workflow is simple:
+The Release 1 target is a production-ready application where an authenticated admin can enter a general equipment name, generate a source-grounded draft in English, review the draft, schedule or publish it, and expose the finished content on a public localized website.
 
-1. Admin enters a general equipment name, for example `microscope`, `centrifuge`, `hematology analyzer`, or `ultrasound machine`.
-2. The system searches trusted sources, gathers structured data, generates a complete post in default locale `en`, and prepares media.
-3. The admin reviews the generated draft.
-4. The admin clicks **Publish**.
-5. The post becomes publicly visible, SEO-ready, localized, shareable, and open for visitor comments.
-
-The platform must work for any medical equipment category, not only microscopes.
-
----
+The platform must work for many medical equipment categories, not only microscopes. Example inputs include `microscope`, `centrifuge`, `hematology analyzer`, `ultrasound machine`, `autoclave`, and `patient monitor`.
 
 ## 2. Primary Goal
 
-Build a scalable content generation and publishing system where creating a detailed medical-equipment article is as easy as:
+Build a scalable content generation and publishing system where creating a detailed medical-equipment article is as simple as:
 
 - typing the equipment name
-- clicking **Generate Post**
+- clicking `Generate Post`
 - reviewing the draft
-- clicking **Publish**
+- clicking `Publish`
 
----
+Publishing must remain a human action. Draft generation may be automated; final publication must not be fully automatic.
 
 ## 3. Core Business Requirements
 
 ### 3.1 Required Generated Post Content
 
-For any equipment entered, the generated post should include, where available:
+For any equipment entered, the generated post must include the following sections when reliable source data exists:
 
 1. Equipment title
-2. Definition / overview
+2. Definition and overview
 3. Featured image
 4. Principle of operation
 5. Illustrative images with captions
-6. Main components / parts
-7. Different types / variants
+6. Main components and parts
+7. Different types and variants
 8. Clinical or laboratory uses
 9. Common manufacturers
-10. Top commonly used manufacturers (target: top 100 where data is available - list is enough). Show top 5 with an option to view more.
-11. For each manufacturer, common latest models by year of manufacture (target: top 100 where data is available - list is enough). Show top 5 with an option to view more. The models should be shown under the manufacturer.
-12. Common faults / errors / failure modes (target: at least 100 if reliable information exists)
-13. Remedies / troubleshooting steps
+10. Commonly used manufacturers list
+11. Commonly encountered models grouped under each manufacturer
+12. Common faults, errors, or failure modes
+13. Remedies or troubleshooting steps
 14. Daily care and maintenance
 15. Preventive maintenance schedule
 16. Safety precautions
-17. User manuals, brochures, operator manuals, service manuals, or technical documents where available (links only)
-18. How to use section with SOPs (prioritize general SOPs and add inline model-specific SOP differences when available)
+17. User manuals, brochures, operator manuals, service manuals, or technical documents where available, stored as links only
+18. How-to-use section with SOPs, including model-specific differences inline when verified
 19. FAQ section
 20. Disclaimer
-21. References / sources
+21. References and sources
 
-Content quality requirement for every generated section:
+Content quality requirements for every generated section:
 
-- each section must be information-rich and instructional, not surface-level
+- every section must be information-rich, instructional, and not surface-level
 - include practical examples and contextual explanation where useful
-- include inline photos/illustrations where they improve clarity
+- include inline photos or illustrations where they improve clarity
+- clearly distinguish verified facts from AI-composed summary language
+- explicitly state when reliable information was not found instead of inventing content
+- address the supported target audiences in a way that is readable by non-specialists and still useful to technical readers
+
+Manufacturer and model list rules:
+
+- target up to 100 manufacturers and up to 100 models only when reliable data exists
+- the UI must show the top 5 entries first with a `View more` affordance for the remainder
+- the labels shown to the user must be `Commonly used manufacturers` and `Commonly encountered models`
+- the system must not claim an exact global ranking unless a source explicitly provides one
+
+Fault and remedy rules:
+
+- target up to 100 common faults only when reliable data exists
+- if fewer reliable faults exist, publish only the verified set
+- every published fault entry must include a paired cause, symptom, and remedy when that information is available
 
 ### 3.2 Required Disclaimer
 
-Every generated post must include a visible disclaimer such as:
+Every generated post must include this visible disclaimer text, localized per supported locale:
 
-> While care has been taken to ensure accuracy of the content in this post, this content is provided for educational and informational purposes only. It does not replace the manufacturer’s official instructions, operator manual, service manual, safety procedures, or institutional biomedical engineering protocols. Always follow the official manufacturer guidelines and applicable clinical regulations.
+> While care has been taken to ensure accuracy of the content in this post, this content is provided for educational and informational purposes only. It does not replace the manufacturer's official instructions, operator manual, service manual, safety procedures, or institutional biomedical engineering protocols. Always follow the official manufacturer guidelines and applicable clinical regulations.
 
 ### 3.3 Publishing Requirements
 
-- Draft generation before publishing
-- Manual publish button
-- Draft, scheduled, published, archived states
-- Editable content before publishing
-- Schedule publish date and time during generation or after generation
-- Slug generation
+Release 1 must support all of the following:
+
+- draft generation before publishing
+- manual publish button
+- editable content before publishing
+- schedule publish date and time during generation or after generation
+- slug generation
 - SEO metadata generation
-- Social sharing metadata
-- Duplicate detection before generation for existing equipment posts:
-  - notify admin when an existing equipment post is detected
-  - if admin permits regeneration, replace the existing post
-  - if admin declines, do nothing and keep the existing post as-is
+- social sharing metadata generation
+- public post sharing actions
+- duplicate detection before generation for existing equipment posts in the same locale
+
+Duplicate-handling rules:
+
+- Release 1 treats the generated equipment guide as one canonical guide post per equipment record, localized through translations
+- when an existing non-archived post for the same canonical equipment and locale is detected, the admin must be warned before generation continues
+- the admin must choose either `Replace existing post` or `Cancel`
+- generation must not continue until one of those actions is chosen
+- if the admin chooses replacement, the existing post record must be updated in place so the canonical slug and public URL stay stable unless the admin explicitly edits the slug
+- if the admin chooses cancel, no generation, overwrite, or publish action occurs
 
 ### 3.4 Visitor Requirements
 
-- No subscription required to read posts
-- Publicly visible blog posts
-- Visitors can comment on posts
-- Spam control for comments
-- Moderation tools for comments
-- Visitors can share posts via social platforms and email
+Visitors must be able to:
 
----
+- read published posts without signing up
+- browse public pages and archives
+- search content
+- comment on posts as guests
+- share posts through supported social actions and email
+
+The system must also provide:
+
+- spam control for comments
+- moderation tools for comments
+- mobile-first page rendering
 
 ## 4. Recommended Tech Stack
 
-The requested stack is appropriate for this project:
+Release 1 must use the following stack:
 
-- **Frontend / Fullstack framework:** Next.js (JavaScript, App Router)
-- **AI layer:** Vercel AI SDK
-- **Styling:** styled-components
-- **State management:** Redux Toolkit
-- **Validation:** Zod
-- **ORM / database access:** Prisma
-- **Database:** MySQL
-- **Localization:** Next.js i18n strategy
-- **Image and file handling:** local `public/` storage first, switchable to cloud object storage (for example AWS S3) via environment variables
-- **Search indexing:** database-backed search first, optional external search later
-- **Background jobs:** internal job runner / queue
-- **Auth:** admin-only authentication, public reading for visitors
+- Frontend and fullstack framework: Next.js, JavaScript, App Router
+- AI layer: Vercel AI SDK
+- Styling: styled-components
+- State management: Redux Toolkit
+- Validation: Zod
+- ORM and database access: Prisma
+- Database: MySQL
+- Localization: Next.js locale-prefixed routing strategy
+- Image and file handling: local `public/uploads` storage first, switchable to S3-compatible object storage by environment configuration
+- Search indexing: database-backed search for Release 1
+- Background jobs: internal job runner and queue
+- Auth: admin-only authentication, public reading for visitors
 
-### 4.1 Why this stack fits
+### 4.1 Why This Stack Fits
 
-- Next.js App Router supports full-stack rendering, route handlers, metadata, layouts, and server-first architecture.
-- Vercel AI SDK supports text generation and streaming workflows.
-- Next.js supports metadata APIs and file conventions for SEO and social previews.
-- Next.js also supports internationalization routing and localized content structure.
-- Prisma is a solid ORM choice for MySQL-backed content systems.
-- Redux Toolkit is suitable for admin UI state, filters, generation status, and editor workflows.
-- styled-components can be used in the App Router with the required CSS-in-JS registry setup.
-- Zod is appropriate for validating generation inputs, AI outputs, API payloads, and admin forms.
+- Next.js App Router supports server rendering, route handlers, layouts, metadata, and server-first rendering.
+- Vercel AI SDK supports model abstraction, streaming workflows, and tool integrations.
+- styled-components works with App Router when the registry pattern is configured correctly.
+- Redux Toolkit fits admin-side client state such as generation progress, moderation filters, and editor UI state.
+- Zod is suitable for input validation, API validation, AI output validation, and admin form validation.
+- Prisma and MySQL are appropriate for structured relational content, moderation, analytics, and configuration data.
 
----
+### 4.2 Reproducibility Rule
+
+The implementation may use current stable package versions, but the resulting project must commit a lockfile and must not replace any of the required libraries above with alternatives.
 
 ## 5. Product Scope
 
-## 5.1 Public Website
+Unless explicitly marked optional or future-phase later in this document, the following pages and capabilities are mandatory for Release 1.
 
-- Home page
-- Blog index page
-- Category pages
-- Manufacturer pages
-- Equipment pages
-- Individual post pages
-- Search page
-- Comment threads
-- About page
-- Contact page
-- Disclaimer page
-- Privacy policy page
+### 5.1 Public Website
 
-## 5.2 Admin Panel
+Mandatory public routes and pages:
 
-- Dashboard
+- locale home page
+- locale blog index page
+- locale category pages
+- locale manufacturer pages
+- locale equipment pages
+- locale individual post pages
+- locale search page
+- locale About page
+- locale Contact page
+- locale Disclaimer page
+- locale Privacy Policy page
+
+Mandatory public page behavior:
+
+- all public routes are locale-prefixed
+- root `/` redirects to the default or negotiated locale home page
+- published content only appears on public pages
+- manufacturer and equipment pages act as topical landing pages and discovery pages
+- post pages contain share actions and comments
+
+### 5.2 Admin Panel
+
+Mandatory admin routes and pages:
+
+- login page
+- dashboard
 - Generate Post page
 - Drafts list
 - Published posts list
+- post editor page
 - Categories management
 - Manufacturers management
 - Media library
 - Comments moderation
 - SEO management
 - Localization management
-- Job logs / generation logs
+- Job logs and generation logs
 - Prompt configuration
 - Source configuration
 
----
+Admin routes are not locale-prefixed, but admin labels must still support localization.
 
 ## 6. User Roles
 
 ### 6.1 Super Admin
 
-- Full system control
-- Manage settings
-- Publish / unpublish
-- Moderate comments
-- Manage prompts and sources
-- Manage translations
+Super Admin must be able to:
+
+- access all admin routes
+- manage settings
+- manage prompt templates
+- manage source configuration
+- manage provider and model configuration
+- publish, unpublish, archive, and schedule posts
+- moderate comments
+- manage translations
+- manage categories and manufacturers
+- view logs and analytics
 
 ### 6.2 Editor
 
-- Generate drafts
-- Edit drafts
-- Publish if allowed
-- Upload media
-- Moderate comments if allowed
+Editor must be able to:
+
+- generate drafts
+- edit drafts
+- schedule posts
+- publish posts if that permission is enabled in the server-side policy
+- upload media
+- moderate comments if that permission is enabled in the server-side policy
+- view generation logs and content lists
+
+Editors must not be able to change global provider credentials, source configuration, or security-sensitive settings unless explicitly granted by policy. Release 1 defaults those settings to Super Admin only.
 
 ### 6.3 Visitor
 
-- Read posts
-- Search content
-- Comment on posts
+Visitor capabilities:
 
----
+- read public content
+- search public content
+- submit guest comments
+- use public sharing actions
 
 ## 7. High-Level Workflow
 
-## 7.1 Post Generation Flow
+### 7.1 Post Generation Flow
 
-1. Admin opens **Generate Post**.
-2. Admin enters equipment name.
-3. System checks for existing post(s) for that equipment and locale.
-4. If duplicate is found, system notifies admin and requests action:
-  - replace existing post and continue, or
-  - stop generation and keep existing post
-5. Admin chooses language, depth, target audience, and region.
-6. System validates input with Zod.
-7. System starts a generation job.
-8. System runs research pipeline:
-  - normalize equipment term
-  - expand aliases and synonyms
-  - collect manufacturers
-  - collect models
-  - collect maintenance and troubleshooting information
-  - collect manuals and brochures
-  - collect images and captions
-9. System builds structured JSON.
-10. AI converts structured JSON into a chronologically organized article.
-11. SEO metadata is generated.
-12. Draft is saved.
-13. Admin can set publish schedule (date/time) immediately or later.
-14. Admin reviews draft.
-15. Admin clicks **Publish** (or leaves scheduled publishing active).
-16. Post becomes live.
+1. Admin opens `Generate Post`.
+2. Admin enters equipment name and selects locale, article depth, target audiences, and content toggles.
+3. System normalizes the equipment name into a canonical equipment identity.
+4. System checks for duplicates using canonical equipment plus locale.
+5. If a duplicate exists, the system blocks generation until the admin chooses replacement or cancel.
+6. System collects sources from approved source tiers and scores the findings.
+7. System extracts normalized structured research data.
+8. System validates the research package.
+9. System generates structured article output, then Markdown, then HTML, then SEO metadata.
+10. System saves the draft, warnings, sources, media metadata, and generation logs.
+11. Admin reviews, edits, schedules, or publishes.
 
-## 7.2 Comment Flow
+### 7.2 Comment Flow
 
-1. Visitor opens post
-2. Visitor submits comment
-3. Comment passes validation and anti-spam checks
-4. Depending on settings:
-  - published immediately, or
-  - held for moderation
-
----
+1. Visitor opens a published post.
+2. Visitor submits a guest comment with name, optional email, and body.
+3. System validates and rate-limits the submission.
+4. System runs spam, profanity, and duplicate-content checks.
+5. Comment enters moderation state.
+6. Approved comments become visible on the post page.
+7. Moderators can approve, reject, mark spam, or delete comments.
 
 ## 8. Content Generation Strategy
 
-This platform should not rely on a single raw prompt. It should use a structured pipeline.
+### 8.1 Step 1: Input Normalization
 
-## 8.1 Step 1: Input Normalization
+The system must normalize the admin's raw input into a canonical equipment record. This includes:
 
-Input: `microscope`
+- trimming whitespace
+- normalizing casing and punctuation
+- matching aliases to a canonical equipment name
+- generating a normalized slug base
+- preserving the original admin-entered label for audit history
 
-System expands to:
+Examples that should normalize to one canonical equipment identity when supported by aliases:
 
 - microscope
 - laboratory microscope
@@ -242,165 +280,155 @@ System expands to:
 - compound microscope
 - clinical microscope
 
-For other equipment, the system should also resolve synonyms, abbreviations, and spelling variants.
+### 8.2 Step 2: Structured Research Schema
 
-## 8.2 Step 2: Structured Research Schema
+Before AI writing begins, the system must build a structured research payload containing, at minimum:
 
-The research layer should aim to fill a normalized schema like this:
+- canonical equipment identity
+- aliases used
+- localized target locale
+- verified definition
+- operating principle summary
+- component list
+- variants and types
+- clinical and laboratory uses
+- manufacturers with source-backed metadata
+- models grouped under manufacturers with latest known year when verified
+- manuals and document links with metadata
+- faults and remedies
+- maintenance tasks and preventive schedule notes
+- safety precautions
+- images and media candidates with legal usage metadata
+- source references for every critical factual cluster
+- reliability warnings
 
-```json
-{
-  "equipmentName": "Microscope",
-  "aliases": [],
-  "summary": "...",
-  "definition": "...",
-  "principleOfOperation": "...",
-  "components": [],
-  "types": [],
-  "uses": [],
-  "manufacturers": [
-    {
-      "name": "...",
-      "country": "...",
-      "website": "...",
-      "models": [
-        {
-          "name": "...",
-          "category": "...",
-          "manualLinks": []
-        }
-      ]
-    }
-  ],
-  "faults": [
-    {
-      "fault": "...",
-      "cause": "...",
-      "symptoms": "...",
-      "remedy": "..."
-    }
-  ],
-  "maintenance": {
-    "daily": [],
-    "weekly": [],
-    "monthly": [],
-    "safety": []
-  },
-  "images": [
-    {
-      "url": "...",
-      "caption": "...",
-      "alt": "..."
-    }
-  ],
-  "references": []
-}
-```
+### 8.3 Step 3: AI Writing Layer
 
-## 8.3 Step 3: AI Writing Layer
+The AI layer is a writing and organization layer, not the source of truth.
 
-The AI should not invent facts. It should transform verified structured data into a readable article with:
+It must:
 
-- logical progression
-- section headings
-- numbered troubleshooting lists where appropriate
-- tables for manufacturers and models
-- caution notes
-- references
-- disclaimer
+- transform validated research data into a coherent long-form article
+- preserve stable section order
+- generate FAQs
+- generate SEO text
+- generate image captions
+- keep warnings and unknowns explicit
+- follow prompt templates stored in the system
 
-## 8.4 Step 4: Quality Gate
+It must not:
 
-Before saving the draft, validate:
+- invent manuals, models, or technical facts
+- state unsupported rankings as certain
+- remove the required disclaimer
 
-- required sections exist
-- no empty headings
-- at least one image exists if available
-- manual links are valid if collected
-- fault/remedy entries are paired correctly
-- duplicate manufacturers and models are removed
-- content length passes minimum threshold
-- unsupported claims are flagged
+### 8.4 Step 4: Quality Gate
 
----
+A draft is not valid unless all of the following pass:
+
+- required sections exist where reliable data exists
+- no empty headings remain
+- at least one image exists when reliable legal media is available and `includeImages` is true
+- manual links are valid when collected
+- manufacturer, model, and fault lists are deduplicated
+- fault, cause, symptom, and remedy records are paired correctly
+- content length meets minimum thresholds for the selected depth mode
+- unsupported claims are flagged in warnings
+- target audience coverage is present
+- disclaimer and references are present
 
 ## 9. Article Structure Template
 
-Each generated article should follow a stable structure.
+### 9.1 Recommended Post Order
 
-## 9.1 Recommended Post Order
+Release 1 must render generated posts in this order:
 
 1. Title
-2. Intro summary
-3. Definition
-4. Featured image
+2. Excerpt
+3. Featured image
+4. Definition and overview
 5. Principle of operation
-6. Main components
-7. Types of the equipment
-8. Common applications
-9. Top manufacturers
-10. Common models by manufacturer
-11. Common faults and remedies
+6. Components and parts
+7. Types and variants
+8. Uses and applications
+9. Commonly used manufacturers
+10. Commonly encountered models by manufacturer
+11. Faults and remedies
 12. Daily care and maintenance
-13. Preventive maintenance checklist
+13. Preventive maintenance schedule
 14. Safety precautions
-15. Manuals / brochures / technical documents
-16. Frequently asked questions
-17. Disclaimer
+15. SOP and how-to-use guidance
+16. Manuals and technical documents
+17. FAQ
 18. References
-
-This order is ideal for easy understanding and follow-up because it moves from basic knowledge to advanced operational support.
-
----
+19. Disclaimer
+20. Related posts
+21. Comments
 
 ## 10. SEO Requirements
 
-“100% SEO” is not realistic in an absolute sense because search ranking depends on competition, backlinks, crawl behavior, content quality, technical health, site authority, and search engine decisions. The practical goal should be **strong technical SEO + strong content SEO + clean information architecture**.
+### 10.1 Technical SEO Requirements
 
-## 10.1 Technical SEO Requirements
+Release 1 must include:
 
-- Server-rendered post pages
-- Clean readable URLs
-- Dynamic metadata per post
+- server-rendered public pages
+- clean readable URLs
+- locale-prefixed canonical public routes
+- dynamic metadata per localized post
 - Open Graph metadata
 - Twitter/X metadata
-- Canonical URLs
+- canonical URLs
+- locale alternate links
 - XML sitemap
 - robots.txt
 - breadcrumb schema
 - article schema
 - organization schema
-- image alt text
+- FAQ schema when FAQ content exists
+- descriptive image alt text
 - internal linking
-- fast Core Web Vitals
 - compressed images
 - lazy loading for non-critical media
 - proper heading hierarchy
-- structured data JSON-LD
+- JSON-LD structured data
 
-## 10.2 Content SEO Requirements
+### 10.2 Content SEO Requirements
 
-- unique title per post
-- unique meta description
-- keyword-focused H1/H2/H3 structure
-- equipment synonyms in content naturally
-- FAQ schema where appropriate
+- unique title per post translation
+- unique meta description per post translation
+- keyword-focused heading hierarchy
+- natural use of equipment synonyms
 - descriptive image captions
-- topical cluster pages for categories and manufacturers
+- topical cluster landing pages for categories, manufacturers, and equipment
 - related posts section
 - multilingual SEO support
 
-## 10.3 SEO Page Types
+### 10.3 SEO Page Types
 
-- `/` home
-- `/blog`
-- `/blog/[slug]`
-- `/category/[slug]`
-- `/manufacturer/[slug]`
-- `/equipment/[slug]`
-- `/search`
+Canonical public routes for Release 1:
 
-## 10.4 Metadata to Generate Per Post
+- `/`
+- `/{locale}`
+- `/{locale}/blog`
+- `/{locale}/blog/{slug}`
+- `/{locale}/category/{slug}`
+- `/{locale}/manufacturer/{slug}`
+- `/{locale}/equipment/{slug}`
+- `/{locale}/search`
+- `/{locale}/about`
+- `/{locale}/contact`
+- `/{locale}/disclaimer`
+- `/{locale}/privacy`
+
+Routing rules:
+
+- `/` redirects to the default or negotiated locale home page
+- canonical tags on public pages must point to locale-prefixed URLs
+- alternate language links must be emitted for every available translation
+
+### 10.4 Metadata to Generate Per Post Translation
+
+Each localized post translation must have:
 
 - title
 - description
@@ -415,30 +443,36 @@ This order is ideal for easy understanding and follow-up because it moves from b
 - publication date
 - modified date
 
----
-
 ## 11. Internationalization Strategy
-
-The application should support multiple locales from the start.
 
 ### 11.1 Locale Strategy
 
-Example locales:
+Release 1 supported locales:
 
 - `en`
 - `fr`
 - `sw`
 - `ar`
 
+`en` is the default source locale.
+
 ### 11.2 Localized Routing
 
-Example:
+Examples:
 
 - `/en/blog/microscope`
 - `/fr/blog/microscope`
 - `/sw/blog/microscope`
+- `/ar/blog/microscope`
 
-### 11.3 What Should Be Localized
+Routing rules:
+
+- all public routes are nested under `[locale]`
+- root `/` redirects to the chosen locale
+- unsupported locale prefixes return `404` or redirect safely according to implementation policy
+- admin routes remain under `/admin`
+
+### 11.3 What Must Be Localized
 
 - UI labels
 - buttons
@@ -448,330 +482,364 @@ Example:
 - generated article body
 - SEO metadata
 - image captions where possible
+- public legal pages
 
 ### 11.4 Translation Approach
 
-- Generate source content in default locale `en` first
-- When a visitor requests a supported non-`en` locale:
-  - if translation does not exist yet, translate and persist it
-  - if translation already exists, reuse the stored translation
-- Save localized versions per post with one unique translation per locale
-- Keep manual editing per locale
-- Keep locale files separated (one content file per locale per post in the output/rendering layer)
-
----
+- generate source content in default locale `en` first
+- when a visitor requests a supported non-`en` locale:
+  - if the translation does not exist, translate from the current approved `en` content and persist it
+  - if the translation already exists, reuse the stored translation
+- store exactly one active translation record per post per locale
+- allow manual editing per locale
+- persist one render artifact per post per locale for Markdown and HTML output
 
 ## 12. Authentication and Access Control
 
 Visitors do not need accounts.
 
-Only admin/editor areas require authentication.
-
 ### 12.1 Admin Authentication
 
-- email/password or secure provider login
-- role-based access control
+Release 1 must support:
+
+- email and password login
+- secure password hashing
 - protected admin routes
+- protected admin APIs
 - session expiry
-- audit trail for publish actions
+- logout
+- audit trail for publish, archive, moderation, configuration, and authentication events
+
+Secure external provider login is optional after Release 1 and must not replace the required email/password flow.
 
 ### 12.2 Public Access
 
-- all posts readable without login
-- comments optionally anonymous or guest-based
-
----
+- all published posts are readable without login
+- comments are guest-based in Release 1
+- guest comments require name and comment body
+- guest email is optional and used only for moderation follow-up if needed
 
 ## 13. Database Design
 
-Below is a recommended Prisma data model structure.
+### 13.1 Required Persistence Behavior
 
-Scalability and performance requirements:
+The data model must:
 
-- optimize for high-read workloads (indexes on slug, locale, status, publish date)
-- support analytics volume growth using append-only view-event tables
-- use selective denormalization/materialized aggregates for admin dashboards when needed
-- partition/archive large event tables over time without affecting post read performance
+- support localized content per post
+- preserve stable canonical slugs
+- support duplicate detection by canonical equipment and locale
+- support scheduling, publishing, and archiving
+- store source attribution for critical facts
+- store media licensing and usage notes
+- store prompt and source configuration
+- store analytics and audit logs
+- support high-read public workloads
 
-## 13.1 Main Entities
+### 13.2 Required Data Models and Constraints
 
-- User
-- Role
-- Post
-- PostTranslation
-- Category
-- Tag
-- Manufacturer
-- Equipment
-- EquipmentAlias
-- Model
-- Fault
-- Remedy
-- MaintenanceTask
-- MediaAsset
-- SourceReference
-- Comment
-- CommentModeration
-- GenerationJob
-- PromptTemplate
-- SEORecord
-- ViewEvent
-- ModelProviderConfig
+The following model contract is normative for Release 1. The Prisma implementation may add helper fields, but it must not remove any required field or constraint listed here.
 
-## 13.2 Suggested Prisma Models
+`User`
 
-```prisma
-model User {
-  id           String   @id @default(cuid())
-  name         String?
-  email        String   @unique
-  passwordHash String
-  role         UserRole @default(EDITOR)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  posts        Post[]
-}
+- `id`
+- `email` unique
+- `name`
+- `passwordHash`
+- `role` enum: `SUPER_ADMIN | EDITOR`
+- `isActive`
+- `createdAt`
+- `updatedAt`
 
-model Post {
-  id                String         @id @default(cuid())
-  slug              String         @unique
-  status            PostStatus     @default(DRAFT)
-  equipmentName     String
-  excerpt           String?        @db.Text
-  featuredImageId   String?
-  authorId          String
-  publishedAt       DateTime?
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
-  author            User           @relation(fields: [authorId], references: [id])
-  featuredImage     MediaAsset?    @relation(fields: [featuredImageId], references: [id])
-  translations      PostTranslation[]
-  categories        PostCategory[]
-  tags              PostTag[]
-  manufacturers     PostManufacturer[]
-  comments          Comment[]
-  sources           SourceReference[]
-  generationJobs    GenerationJob[]
-  seo               SEORecord?
-  viewEvents        ViewEvent[]
-}
+`Equipment`
 
-model PostTranslation {
-  id             String   @id @default(cuid())
-  postId         String
-  locale         String
-  title          String
-  contentHtml    String   @db.LongText
-  contentMd      String   @db.LongText
-  metaTitle      String?
-  metaDescription String? @db.Text
-  disclaimer     String   @db.Text
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  post           Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+- `id`
+- `name`
+- `normalizedName` unique
+- `slug` unique
+- `description`
+- `createdAt`
+- `updatedAt`
 
-  @@unique([postId, locale])
-}
+`EquipmentAlias`
 
-model Category {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  slug      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  posts     PostCategory[]
-}
+- `id`
+- `equipmentId`
+- `alias`
+- `normalizedAlias` unique
 
-model Manufacturer {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  slug      String   @unique
-  website   String?
-  country   String?
-  branchCountries String? @db.Text
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  models    Model[]
-  posts     PostManufacturer[]
-}
+`Post`
 
-model Model {
-  id             String   @id @default(cuid())
-  name           String
-  slug           String
-  manufacturerId String
-  equipmentType  String?
-  summary        String?  @db.Text
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  manufacturer   Manufacturer @relation(fields: [manufacturerId], references: [id], onDelete: Cascade)
-  manuals        SourceReference[]
+- `id`
+- `equipmentId`
+- `slug` unique
+- `status` enum: `DRAFT | SCHEDULED | PUBLISHED | ARCHIVED`
+- `editorialStage` enum: `GENERATED | REVIEWED | EDITED | APPROVED`
+- `excerpt`
+- `featuredImageId`
+- `authorId`
+- `scheduledPublishAt`
+- `publishedAt`
+- `createdAt`
+- `updatedAt`
 
-  @@unique([manufacturerId, slug])
-}
+`PostTranslation`
 
-model Fault {
-  id          String   @id @default(cuid())
-  postId       String
-  title        String
-  cause        String?  @db.Text
-  symptoms     String?  @db.Text
-  remedy       String?  @db.Text
-  severity     String?
-  sortOrder    Int      @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-}
+- `id`
+- `postId`
+- `locale`
+- `title`
+- `contentMd`
+- `contentHtml`
+- `structuredContentJson`
+- `excerpt`
+- `disclaimer`
+- `faqJson`
+- `isAutoTranslated`
+- `createdAt`
+- `updatedAt`
+- unique constraint on `postId + locale`
 
-model MaintenanceTask {
-  id          String   @id @default(cuid())
-  postId       String
-  frequency    String
-  title        String
-  description  String   @db.Text
-  sortOrder    Int      @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-}
+`Category`
 
-model MediaAsset {
-  id          String   @id @default(cuid())
-  url         String
-  alt         String?
-  caption     String?  @db.Text
-  mimeType    String?
-  width       Int?
-  height      Int?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
+- `id`
+- `name` unique
+- `slug` unique
+- `description`
 
-model SourceReference {
-  id          String   @id @default(cuid())
-  postId       String?
-  modelId      String?
-  title        String
-  url          String
-  sourceType   String
-  notes        String?  @db.Text
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  post         Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
-  model        Model?   @relation(fields: [modelId], references: [id], onDelete: Cascade)
-}
+`Tag`
 
-model Comment {
-  id          String         @id @default(cuid())
-  postId       String
-  name         String
-  email        String?
-  body         String         @db.Text
-  status       CommentStatus  @default(PENDING)
-  parentId     String?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  post         Post           @relation(fields: [postId], references: [id], onDelete: Cascade)
-}
+- `id`
+- `name` unique
+- `slug` unique
 
-model GenerationJob {
-  id            String      @id @default(cuid())
-  postId         String?
-  equipmentName  String
-  locale         String
-  status         JobStatus   @default(PENDING)
-  requestJson    String      @db.LongText
-  responseJson   String?     @db.LongText
-  errorMessage   String?     @db.Text
-  replaceExisting Boolean    @default(false)
-  startedAt      DateTime?
-  finishedAt     DateTime?
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-  post           Post?       @relation(fields: [postId], references: [id], onDelete: SetNull)
-}
+`Manufacturer`
 
-model ViewEvent {
-  id          String   @id @default(cuid())
-  postId      String?
-  path        String
-  locale      String
-  eventType   ViewEventType
-  ipHash      String?
-  userAgent   String?  @db.Text
-  referrer    String?  @db.Text
-  createdAt   DateTime @default(now())
-  post        Post?    @relation(fields: [postId], references: [id], onDelete: SetNull)
+- `id`
+- `name`
+- `normalizedName`
+- `slug` unique
+- `primaryDomain`
+- `headquartersCountry`
+- `branchCountriesJson`
+- `rankingScore`
+- unique constraint on `normalizedName + primaryDomain`
 
-  @@index([createdAt])
-  @@index([postId, createdAt])
-  @@index([path, createdAt])
-}
+`ManufacturerAlias`
 
-model ModelProviderConfig {
-  id            String   @id @default(cuid())
-  provider      String
-  model         String
-  isDefault     Boolean  @default(false)
-  isEnabled     Boolean  @default(true)
-  apiKeyEnvName String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+- `id`
+- `manufacturerId`
+- `alias`
+- `normalizedAlias`
+- unique constraint on `manufacturerId + normalizedAlias`
 
-  @@unique([provider, model])
-}
+`Model`
 
-model SEORecord {
-  id               String   @id @default(cuid())
-  postId            String   @unique
-  canonicalUrl      String?
-  metaTitle         String?
-  metaDescription   String?  @db.Text
-  ogTitle           String?
-  ogDescription     String?  @db.Text
-  ogImage           String?
-  keywords          String?  @db.Text
-  structuredData    String?  @db.LongText
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  post              Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-}
+- `id`
+- `manufacturerId`
+- `equipmentId`
+- `name`
+- `normalizedName`
+- `slug`
+- `latestKnownYear`
+- `summary`
+- `rankingScore`
+- unique constraint on `manufacturerId + slug`
 
-enum UserRole {
-  SUPER_ADMIN
-  EDITOR
-}
+`Fault`
 
-enum PostStatus {
-  DRAFT
-  SCHEDULED
-  PUBLISHED
-  ARCHIVED
-}
+- `id`
+- `postId`
+- `title`
+- `normalizedTitle`
+- `cause`
+- `symptoms`
+- `remedy`
+- `severity`
+- `evidenceCount`
+- `sortOrder`
+- unique constraint on `postId + normalizedTitle`
 
-enum CommentStatus {
-  PENDING
-  APPROVED
-  SPAM
-  REJECTED
-}
+`MaintenanceTask`
 
-enum JobStatus {
-  PENDING
-  RUNNING
-  COMPLETED
-  FAILED
-}
+- `id`
+- `postId`
+- `frequency`
+- `title`
+- `description`
+- `sortOrder`
 
-enum ViewEventType {
-  WEBSITE_VIEW
-  PAGE_VIEW
-  POST_VIEW
-}
-```
+`MediaAsset`
 
-Note: join tables such as `PostCategory`, `PostTag`, and `PostManufacturer` should also be added in the implementation.
+- `id`
+- `storageDriver`
+- `storageKey`
+- `publicUrl`
+- `localPath`
+- `sourceUrl`
+- `sourceDomain`
+- `alt`
+- `caption`
+- `mimeType`
+- `width`
+- `height`
+- `attributionText`
+- `licenseType`
+- `usageNotes`
+- `isAiGenerated`
+- `createdAt`
+- `updatedAt`
 
----
+`SourceReference`
+
+- `id`
+- `postId` nullable
+- `equipmentId` nullable
+- `manufacturerId` nullable
+- `modelId` nullable
+- `title`
+- `url`
+- `sourceDomain`
+- `sourceType`
+- `fileType`
+- `language`
+- `accessStatus`
+- `reliabilityTier`
+- `lastCheckedAt`
+- `notes`
+- `excerpt`
+
+`Comment`
+
+- `id`
+- `postId`
+- `parentId` nullable
+- `name`
+- `email` nullable
+- `body`
+- `status` enum: `PENDING | APPROVED | REJECTED | SPAM`
+- `ipHash`
+- `userAgent`
+- `createdAt`
+- `updatedAt`
+
+Release 1 supports one reply level only. Deeper nesting is out of scope.
+
+`CommentModerationEvent`
+
+- `id`
+- `commentId`
+- `actorId` nullable for automated moderation
+- `action`
+- `notes`
+- `createdAt`
+
+`GenerationJob`
+
+- `id`
+- `postId` nullable
+- `equipmentName`
+- `locale`
+- `providerConfigId`
+- `status` enum: `PENDING | RUNNING | COMPLETED | FAILED | CANCELLED`
+- `currentStage`
+- `requestJson`
+- `responseJson`
+- `warningJson`
+- `errorMessage`
+- `replaceExistingPost`
+- `schedulePublishAt`
+- `startedAt`
+- `finishedAt`
+- `createdAt`
+- `updatedAt`
+
+`PromptTemplate`
+
+- `id`
+- `name`
+- `purpose`
+- `version`
+- `systemPrompt`
+- `userPromptTemplate`
+- `isActive`
+- `createdAt`
+- `updatedAt`
+
+`SourceConfig`
+
+- `id`
+- `name`
+- `sourceType`
+- `priority`
+- `isEnabled`
+- `allowedDomainsJson`
+- `notes`
+- `createdAt`
+- `updatedAt`
+
+`ModelProviderConfig`
+
+- `id`
+- `provider`
+- `model`
+- `purpose`
+- `apiKeyEnvName`
+- `isDefault`
+- `isEnabled`
+- unique constraint on `provider + model + purpose`
+
+`SEORecord`
+
+- `id`
+- `postTranslationId` unique
+- `canonicalUrl`
+- `metaTitle`
+- `metaDescription`
+- `ogTitle`
+- `ogDescription`
+- `ogImageId`
+- `twitterTitle`
+- `twitterDescription`
+- `keywordsJson`
+- `authorsJson`
+- `noindex`
+- `createdAt`
+- `updatedAt`
+
+`ViewEvent`
+
+- `id`
+- `postId` nullable
+- `path`
+- `locale`
+- `eventType` enum: `WEBSITE_VIEW | PAGE_VIEW | POST_VIEW`
+- `ipHash`
+- `userAgent`
+- `referrer`
+- `createdAt`
+
+`AuditEvent`
+
+- `id`
+- `actorId` nullable
+- `entityType`
+- `entityId`
+- `action`
+- `payloadJson`
+- `createdAt`
+
+Required join tables:
+
+- `PostCategory`
+- `PostTag`
+- `PostManufacturer`
+
+### 13.3 Performance and Scalability Data Rules
+
+- index localized public lookup paths, especially `slug`, `status`, `publishedAt`, and translation locale combinations
+- treat `ViewEvent` as append-only
+- keep analytics aggregation separate from public post lookup paths
+- allow event archival or partitioning without impacting post reads
 
 ## 14. Folder Structure
 
@@ -780,9 +848,18 @@ Recommended Next.js App Router structure in JavaScript:
 ```text
 src/
   app/
+    page.js
     [locale]/
       layout.js
       page.js
+      about/
+        page.js
+      contact/
+        page.js
+      disclaimer/
+        page.js
+      privacy/
+        page.js
       blog/
         page.js
         [slug]/
@@ -793,27 +870,60 @@ src/
       manufacturer/
         [slug]/
           page.js
+      equipment/
+        [slug]/
+          page.js
       search/
         page.js
     admin/
+      login/
+        page.js
       layout.js
       page.js
       generate/
         page.js
       posts/
+        drafts/
+          page.js
+        published/
+          page.js
+        [id]/
+          page.js
+      categories/
         page.js
-      posts/[id]/
+      manufacturers/
+        page.js
+      media/
         page.js
       comments/
         page.js
+      seo/
+        page.js
+      localization/
+        page.js
+      jobs/
+        page.js
+      prompts/
+        page.js
+      sources/
+        page.js
     api/
+      auth/
+        login/route.js
+        logout/route.js
       generate-post/route.js
+      save-draft/route.js
       publish-post/route.js
+      posts/[id]/route.js
+      posts/slug/[slug]/route.js
       comments/route.js
       comments/[id]/route.js
+      manufacturers/route.js
+      models/route.js
       media/route.js
       revalidate/route.js
-      webhook/route.js
+      metrics/route.js
+      jobs/route.js
     sitemap.js
     robots.js
     opengraph-image.js
@@ -829,22 +939,29 @@ src/
     seo/
   features/
     auth/
-    postGenerator/
+    generator/
+    editor/
     posts/
     comments/
     media/
     seo/
     i18n/
+    analytics/
+    settings/
   lib/
     ai/
+    auth/
     prisma/
     validation/
     seo/
     markdown/
     storage/
-    scraping/
+    research/
     normalization/
     comments/
+    analytics/
+    jobs/
+    security/
   store/
     index.js
     provider.js
@@ -856,20 +973,20 @@ src/
     en.json
     fr.json
     sw.json
+    ar.json
   prisma/
     schema.prisma
   middleware.js
 ```
 
----
-
 ## 15. Styled-Components Architecture
 
-Because App Router needs a CSS-in-JS registry pattern, use:
+Use the App Router registry pattern:
 
 - `styles/styled-registry.js`
-- root layout wraps app with registry
-- theme provider placed high in the tree
+- the root layout wraps the app in the registry
+- the theme provider sits high in the tree
+- the public site and admin site share core tokens but may have different layout components
 
 ### 15.1 Theme Shape Example
 
@@ -877,13 +994,14 @@ Because App Router needs a CSS-in-JS registry pattern, use:
 export const lightTheme = {
   colors: {
     bg: '#ffffff',
-    surface: '#f8f9fb',
-    text: '#111827',
-    muted: '#6b7280',
-    primary: '#0f62fe',
-    danger: '#dc2626',
-    success: '#16a34a',
-    border: '#e5e7eb'
+    surface: '#f7f9fc',
+    text: '#102033',
+    muted: '#586174',
+    primary: '#005f73',
+    accent: '#c97b2a',
+    danger: '#b42318',
+    success: '#157347',
+    border: '#d7dce3'
   },
   spacing: {
     xs: '4px',
@@ -894,19 +1012,17 @@ export const lightTheme = {
   },
   radius: {
     sm: '6px',
-    md: '10px',
-    lg: '16px'
+    md: '12px',
+    lg: '20px'
   }
 }
 ```
 
----
-
 ## 16. Redux Toolkit Usage Plan
 
-Redux Toolkit should be used mainly in admin UX and client-side state, not for everything.
+Redux Toolkit is for admin-side client state only. Use server components and server actions for primary data access wherever possible.
 
-### 16.1 Suggested Slices
+### 16.1 Required Slices
 
 - `authSlice`
 - `generatorSlice`
@@ -915,192 +1031,195 @@ Redux Toolkit should be used mainly in admin UX and client-side state, not for e
 - `mediaLibrarySlice`
 - `uiSlice`
 - `localeSlice`
+- `settingsSlice`
 
-### 16.2 Suggested State for Generator Slice
+### 16.2 Required Generator Slice State
 
 ```js
 {
   equipmentName: '',
   locale: 'en',
+  articleDepth: 'complete',
+  targetAudience: [],
   loading: false,
   progress: 0,
   currentStage: 'idle',
   resultPostId: null,
   error: null,
   warnings: [],
-  preview: null
+  preview: null,
+  duplicateMatch: null,
+  selectedProviderConfigId: null
 }
 ```
 
-### 16.3 RTK Query
+### 16.3 RTK Query Usage
 
-Use RTK Query for:
+Use RTK Query for admin-side list and moderation APIs, including:
 
 - drafts list
 - published posts list
 - comments moderation
 - manufacturer lookup
 - generation logs
-
----
+- media library
+- localization list
+- prompt and source settings
 
 ## 17. Validation with Zod
 
-Use Zod in four layers:
+Use Zod in these layers:
 
 1. admin input validation
 2. API request validation
 3. AI structured output validation
 4. comment submission validation
+5. environment variable validation
 
-### 17.1 Example Input Schema
+### 17.1 Required Generation Input Schema
 
-```js
-import { z } from 'zod'
+The generation contract must validate:
 
-export const generatePostSchema = z.object({
-  equipmentName: z.string().trim().min(2).max(200),
-  locale: z.string().trim().min(2).max(10),
-  articleDepth: z.enum(['fast', 'complete', 'repair', 'maintenance']).default('complete'),
-  targetAudience: z.array(z.enum([
-    'students',
-    'nurses',
-    'doctors',
-    'medical_workers',
-    'technicians',
-    'engineers',
-    'hospital_owners',
-    'administrators',
-    'procurement_teams',
-    'trainers',
-    'biomedical_staff'
-  ])).min(1),
-  includeManufacturers: z.boolean().default(true),
-  includeModels: z.boolean().default(true),
-  includeFaults: z.boolean().default(true),
-  includeManualLinks: z.boolean().default(true),
-  schedulePublishAt: z.string().datetime().optional(),
-  replaceExistingPost: z.boolean().default(false)
-})
-```
+- `equipmentName`
+- `locale`
+- `articleDepth` enum: `fast | complete | repair | maintenance`
+- `targetAudience` as a non-empty array of:
+  - `students`
+  - `nurses`
+  - `doctors`
+  - `medical_workers`
+  - `technicians`
+  - `engineers`
+  - `hospital_owners`
+  - `administrators`
+  - `procurement_teams`
+  - `trainers`
+  - `biomedical_staff`
+- `includeImages` boolean default `true`
+- `includeManualLinks` boolean default `true`
+- `includeManufacturers` boolean default `true`
+- `includeModels` boolean default `true`
+- `includeFaults` boolean default `true`
+- `schedulePublishAt` optional ISO datetime
+- `replaceExistingPost` boolean default `false`
+- `providerConfigId`
 
-### 17.2 Example Comment Schema
+Validation rules:
 
-```js
-import { z } from 'zod'
+- `schedulePublishAt` must be in the future
+- `replaceExistingPost` may only be `true` after duplicate detection
 
-export const commentSchema = z.object({
-  postId: z.string().min(1),
-  name: z.string().trim().min(2).max(80),
-  email: z.string().email().optional().or(z.literal('')),
-  body: z.string().trim().min(3).max(3000)
-})
-```
+### 17.2 Required Comment Schema
 
----
+Validate:
+
+- `postId`
+- `parentId` optional
+- `name`
+- `email` optional
+- `body`
+
+Release 1 comment body maximum is `3000` characters.
 
 ## 18. AI Integration Design
 
-## 18.1 AI Responsibilities
+### 18.1 AI Responsibilities
 
-The AI layer should:
+The AI layer must:
 
 - organize validated research into readable sections
 - generate summaries and FAQs
 - generate meta titles and descriptions
 - generate image captions
 - generate related-keyword suggestions
-- rewrite for different audiences and locales
-- use SDK-first tool integrations (web search, extraction, image generation) for accuracy and efficiency
+- rewrite for supported audiences and locales
+- use configured provider and model settings without code changes
 
-The AI layer should not be trusted as the only source of factual truth.
+The AI layer must not be treated as the factual source of truth.
 
-## 18.2 Generation Modes
+### 18.2 Generation Modes
 
-- **Fast mode:** shorter draft
-- **Complete mode:** deep article with all sections
-- **Repair/Troubleshooting mode:** fault-heavy article
-- **Maintenance mode:** care-heavy article
-- **Translation mode:** locale version of an existing article
+- `fast`: shorter draft while keeping the required section skeleton
+- `complete`: full depth article with all required sections
+- `repair`: fault-heavy and troubleshooting-heavy emphasis
+- `maintenance`: care-heavy and schedule-heavy emphasis
+- `translation`: localized version of an approved `en` article
 
-## 18.3 AI Pipeline Components
+### 18.3 AI Pipeline Components
 
 - input validator
 - normalization service
+- duplicate detector
 - source collector
 - structured research aggregator
 - AI writer
 - post formatter
 - SEO generator
 - persistence service
-- provider/model switch layer controlled from admin UI
+- provider and model switch layer controlled from admin UI
 
-## 18.4 Recommended Internal Prompt Layers
+### 18.4 Required Prompt Layers
 
-1. System instruction for medical-equipment educational writing
-2. Data-grounding instruction
-3. Output JSON structure instruction
-4. Final article formatting instruction
-5. Safety instruction for non-diagnostic, non-clinical advice boundaries
+1. system instruction for educational medical-equipment writing
+2. data-grounding instruction
+3. output JSON structure instruction
+4. final article formatting instruction
+5. safety instruction for non-diagnostic, non-clinical advice boundaries
 
-## 18.5 Output Stages
+### 18.5 Output Stages
 
-- stage A: structured JSON
-- stage B: validated structured JSON
-- stage C: markdown article
+- stage A: structured research JSON
+- stage B: validated structured article JSON
+- stage C: Markdown article
 - stage D: HTML render output
 - stage E: SEO package
 
----
-
 ## 19. Research and Source Collection Layer
 
-This is the most important layer in the whole system.
+This is the most important layer in the system.
 
-A high-quality platform depends more on **research quality** than on the writing model itself.
+### 19.1 Source Priority
 
-## 19.1 Source Priority
-
-Prioritize sources in this order:
+Source priority order:
 
 1. official manufacturer websites
 2. official product pages
-3. official manuals / brochures / IFUs / service documents
+3. official manuals, brochures, IFUs, and service documents
 4. official distributor documentation
 5. trusted biomedical engineering references
 6. trusted professional societies
 7. reputable educational institutions
-8. trusted web search results through approved AI tools/SDK integrations
+8. trusted search results gathered through approved tool integrations
 
-## 19.2 What to Collect
+### 19.2 What to Collect
 
 For each equipment query, collect:
 
 - official definition if available
-- core operating principle
+- operating principle
 - manufacturer list
 - model list
 - PDF manuals and brochures
 - maintenance instructions
 - troubleshooting references
-- images with usable attribution rules where applicable
+- images with usable attribution rules
+- legal warnings about unavailable or restricted media
 
-## 19.3 Reliability Rules
+### 19.3 Reliability Rules
 
-- tag every fact with its source
+- tag every critical fact with at least one source
 - do not present unsupported counts as certain
-- if “top 20” is not reliably available, return the best verified set
+- if a target count is not reliably available, return the best verified set
 - do not fabricate manuals, models, or faults
-- separate “verified” from “AI-composed summary”
-- enforce copyright-safe usage:
-  - avoid copying proprietary text verbatim beyond short fair-use excerpts
-  - prefer synthesized/paraphrased explanations with citations
-  - use only licensed images or internally generated illustrations
-  - store license/usage notes for each media asset
+- separate verified data from AI-composed summary text
+- avoid copying proprietary text verbatim beyond short fair-use excerpts
+- prefer synthesized explanations with citations
+- use only licensed images or internally generated illustrations
+- store license and usage notes for each media asset
 
-## 19.4 Manuals and Brochures
+### 19.4 Manuals and Brochures Metadata
 
-Store for each link:
+Store for each document link:
 
 - title
 - source domain
@@ -1108,55 +1227,62 @@ Store for each link:
 - language
 - access status
 - last checked time
+- notes
 
----
-
-## 20. Handling “Top 100 Manufacturers” and “Top 100 Models”
-
-This requirement should be implemented carefully.
+## 20. Handling "Top 100 Manufacturers" and "Top 100 Models"
 
 ### 20.1 Problem
 
-For many medical devices, there is no single universal authoritative ranking of the “top 100” manufacturers or models.
+For many medical devices, there is no universal authoritative ranking of the top 100 manufacturers or models.
 
-### 20.2 Practical Solution
+### 20.2 Deterministic Scoring Rules
 
-Use a ranking strategy such as:
+Release 1 must use deterministic ranking logic so repeated implementations produce the same ordering from the same evidence.
 
-- frequency across trusted sources
-- market presence across official catalogs
-- product breadth in the equipment category
-- recurrence in distributor catalogs and hospital procurement references
+Manufacturer ranking score:
 
-### 20.3 Output Rule
+- +40 if an official manufacturer page clearly matches the equipment type
+- +25 if at least one official manual or brochure exists for the equipment type
+- +15 if the manufacturer appears in at least one trusted distributor or procurement catalog for the equipment type
+- +10 if the manufacturer appears in at least one trusted biomedical or educational reference
+- +1 per additional corroborating trusted source after the first, capped at +10
 
-Present these as:
+Model ranking score:
 
-- **Commonly used manufacturers**
-- **Commonly encountered models**
+- +50 if an official product page or official manual clearly confirms the model
+- +20 if the model is explicitly tied to the canonical equipment type
+- +10 if a latest known year is verified
+- +1 per additional corroborating trusted source after the first, capped at +20
 
-Do not claim exact worldwide rank unless a reliable source explicitly supports that ranking.
+Tie-break rules:
 
-Additional deduplication and coverage rules:
+- higher score first
+- if scores tie for models under the same manufacturer, higher `latestKnownYear` first
+- then alphabetical ascending by normalized display name
 
-- deduplicate manufacturer names by normalized name + primary domain
+### 20.3 Output Rules
+
+- present the lists as `Commonly used manufacturers` and `Commonly encountered models`
+- do not call the results a worldwide rank unless a source explicitly says so
+- deduplicate manufacturers by normalized name plus primary domain
 - merge aliases into one canonical manufacturer record
-- include headquarters country and branch countries where verified data exists
+- include headquarters and branch-country data only when verified
 
----
-
-## 21. Handling “Up To 100 Common Faults and Remedies”
+## 21. Handling "Up To 100 Common Faults and Remedies"
 
 ### 21.1 Required Logic
 
-- collect verified issues from manuals, service docs, and support references
+- collect verified issues from manuals, service documents, and support references
 - deduplicate similar faults
 - normalize wording
 - map each fault to cause, symptom, and remedy
+- count distinct corroborating source references per fault
 
-### 21.2 Output Rule
+### 21.2 Output Rules
 
-If only 18 reliable faults are found, publish 18 reliable faults instead of inventing 100.
+- if only 18 reliable faults are found, publish 18 reliable faults
+- order faults by evidence count descending, then severity descending, then normalized title ascending
+- do not include a fault entry that has no supported title
 
 ### 21.3 Fault Record Example
 
@@ -1169,61 +1295,69 @@ If only 18 reliable faults are found, publish 18 reliable faults instead of inve
 }
 ```
 
----
-
 ## 22. Media and Image Strategy
 
-## 22.1 Required Images
+### 22.1 Required Images
+
+Release 1 targets the following media when reliable legal assets exist:
 
 - featured image
 - principle-of-operation illustration
-- component diagram if available
+- component diagram
 - representative equipment type images
+- inline illustrations anchored to relevant article sections
 
-## 22.2 Image Metadata to Store
+### 22.2 Image Metadata to Store
 
 - source URL
+- source domain
 - alt text
 - caption
 - width
 - height
-- license / usage notes
-- local optimized file path
+- attribution text
+- license type
+- usage notes
+- storage driver
+- optimized local path or storage key
+- public URL
+- AI-generated flag
 
-## 22.3 Image Processing
+### 22.3 Image Processing Rules
 
 - download or proxy only when legally allowed
-- optimize for web
+- optimize for web delivery
 - generate responsive sizes
 - lazy load non-critical images
 - auto-generate descriptive alt text draft
-- support inline illustrations inside article sections, not only hero media
-- store assets in `public/uploads` initially through a storage adapter
-- switch to object storage (for example AWS S3) via environment variables without changing business logic
-
----
+- support inline illustrations, not only hero media
+- use a storage adapter so local and object storage can be swapped through configuration
 
 ## 23. Admin Generate Post Page Specification
 
-## 23.1 Inputs
+### 23.1 Inputs
+
+The Generate Post page must include:
 
 - equipment name
 - locale
-- article depth (select/dropdown, default: `complete`)
-- target audience (multi-choice checkboxes, select all by default)
+- article depth dropdown, default `complete`
+- target audience multi-select checkboxes, all selected by default
 - include images toggle
 - include manuals toggle
 - include faults toggle
 - include manufacturers toggle
 - include models toggle
-- publish immediately toggle disabled by default
 - optional schedule publish date-time picker
-- replace existing post checkbox (shown only after duplicate detection)
+- replace existing post checkbox shown only after duplicate detection
+- AI provider and model selector backed by `providerConfigId`
 
-## 23.2 UI Flow
+If a schedule is entered during generation, it acts as a pre-filled scheduling intent only. The post must remain a draft until an admin explicitly confirms the schedule action after review.
+
+### 23.2 UI Flow
 
 - text input
-- duplicate check runs after equipment name input
+- duplicate check after equipment name normalization
 - generate button
 - progress indicator
 - stage labels
@@ -1232,46 +1366,59 @@ If only 18 reliable faults are found, publish 18 reliable faults instead of inve
 - warnings section
 - save draft button
 - publish button
-- schedule controls (date + time picker)
-- AI provider/model selector for easy switching
+- schedule controls
+- duplicate warning and replace-or-cancel branch
 
-## 23.3 Progress Stages Example
+### 23.3 Progress Stages
 
 1. validating input
 2. normalizing equipment
-3. collecting sources
-4. extracting structured data
-5. generating article
-6. generating SEO
-7. saving draft
+3. checking duplicates
+4. collecting sources
+5. extracting structured data
+6. generating article
+7. generating SEO
+8. saving draft
 
----
+## 24. Public Website and Post Page Specification
 
-## 24. Public Post Page Specification
+### 24.1 Mandatory Public Pages
 
-## 24.1 Sections
+Release 1 must include:
+
+- locale home page with featured and recent published content
+- locale blog index page with pagination
+- locale category page with localized content list
+- locale manufacturer page with manufacturer summary, related posts, and model list where available
+- locale equipment page with equipment overview, related posts, and manufacturer coverage
+- locale post page
+- locale search page
+- locale About page
+- locale Contact page
+- locale Disclaimer page
+- locale Privacy Policy page
+
+### 24.2 Mandatory Post Page Sections
 
 - breadcrumb
 - title
 - excerpt
-- publish info
+- publish information
 - hero image
 - article body
-- inline images/diagrams anchored to relevant sections
+- inline images or diagrams anchored to relevant sections
 - references
 - disclaimer
 - related posts
 - comments block
-- share actions (social/email/copy link)
+- share actions for X, Facebook, LinkedIn, WhatsApp, email, and copy link
 
-## 24.2 Comments Block
+### 24.3 Comments Block
 
 - comment form
-- list of approved comments
-- reply support optional
+- approved comment list
+- one-level reply support
 - moderation notice
-
----
 
 ## 25. Comment System Design
 
@@ -1285,12 +1432,17 @@ If only 18 reliable faults are found, publish 18 reliable faults instead of inve
 
 ### 25.2 Moderation Rules
 
+Mandatory Release 1 controls:
+
 - rate limiting
-- spam keyword check
-- duplicate detection
-- optional CAPTCHA
+- spam keyword checks
+- duplicate-body detection
 - profanity filtering
-- status workflow: pending, approved, rejected, spam
+- moderation status workflow: `pending`, `approved`, `rejected`, `spam`
+
+Optional hardening:
+
+- CAPTCHA behind configuration
 
 ### 25.3 Admin Comment Tools
 
@@ -1300,19 +1452,20 @@ If only 18 reliable faults are found, publish 18 reliable faults instead of inve
 - delete
 - filter by post
 - filter by status
-
----
+- view moderation history
 
 ## 26. API Route Plan
 
-Recommended route handlers:
+Recommended route handlers for Release 1:
 
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
 - `POST /api/generate-post`
-- `POST /api/publish-post`
 - `POST /api/save-draft`
+- `POST /api/publish-post`
 - `PATCH /api/posts/:id`
 - `GET /api/posts`
-- `GET /api/posts/:slug`
+- `GET /api/posts/slug/:slug`
 - `POST /api/comments`
 - `PATCH /api/comments/:id`
 - `DELETE /api/comments/:id`
@@ -1320,8 +1473,14 @@ Recommended route handlers:
 - `GET /api/models`
 - `POST /api/media`
 - `POST /api/revalidate`
+- `GET /api/metrics`
+- `GET /api/jobs`
 
----
+Route behavior rules:
+
+- all mutating routes must validate input with Zod
+- admin-only routes must require authenticated admin sessions
+- public read routes must only expose published content
 
 ## 27. Suggested Generation API Contract
 
@@ -1331,15 +1490,20 @@ Recommended route handlers:
 {
   "equipmentName": "microscope",
   "locale": "en",
-  "targetAudience": ["technicians", "engineers", "biomedical_staff"],
+  "targetAudience": ["students", "technicians", "biomedical_staff"],
   "articleDepth": "complete",
   "includeImages": true,
   "includeManualLinks": true,
   "includeManufacturers": true,
   "includeModels": true,
-  "includeFaults": true
+  "includeFaults": true,
+  "schedulePublishAt": null,
+  "replaceExistingPost": false,
+  "providerConfigId": "provider_cfg_default_generation"
 }
 ```
+
+`schedulePublishAt` in the generation request stores the intended schedule value for the draft. It must not publish or schedule the post until an admin explicitly confirms the schedule action.
 
 ### 27.2 Response
 
@@ -1349,51 +1513,44 @@ Recommended route handlers:
   "jobId": "job_123",
   "postId": "post_123",
   "status": "draft_saved",
+  "editorialStage": "GENERATED",
   "warnings": [
     "Only 12 verified model manuals were found"
   ]
 }
 ```
 
----
-
 ## 28. Rendering Format Strategy
 
-Store content in both:
+Release 1 must store content in:
 
-- **Markdown** for editing portability
-- **HTML** for fast rendering
+- Markdown for editing portability
+- HTML for rendering
+- structured JSON for section blocks such as faults, maintenance tasks, model lists, and FAQs
 
-Optional:
-
-- structured JSON blocks for sections such as faults, maintenance tasks, and model lists
-
-This hybrid approach makes editing and templating easier.
-
----
+This hybrid storage strategy is mandatory because the app needs editable content, fast rendering, and reusable structured subsections.
 
 ## 29. Related Content Strategy
 
-Generate relationships automatically based on:
+Release 1 must generate related-post relationships automatically based on:
 
 - equipment type
 - manufacturers
 - shared tags
 - shared categories
-- localized language
+- locale
 
-Examples:
+Related-content ordering rules:
 
-- “Microscope maintenance guide” related to “Common microscope faults”
-- “Hematology analyzer basics” related to “CBC analyzer maintenance”
-
----
+- prefer same-locale content first
+- then higher overlap count
+- then most recently published
 
 ## 30. Search Strategy
 
 ### 30.1 Initial Version
 
-Use database search on:
+Release 1 uses database-backed search across published localized content using:
 
 - post title
 - excerpt
@@ -1402,15 +1559,22 @@ Use database search on:
 - equipment name
 - manufacturer name
 
+Search result ordering:
+
+- exact title match first
+- then prefix title match
+- then weighted text match
+- then most recently published
+
 ### 30.2 Future Version
 
-Introduce dedicated search indexing when content volume grows.
-
----
+Dedicated search indexing may be added in a later phase when content volume grows.
 
 ## 31. Performance Strategy
 
-- design mobile-first, then scale to tablet and desktop breakpoints
+Release 1 performance rules:
+
+- design mobile-first, then scale to tablet and desktop
 - use server components by default
 - keep client components minimal
 - paginate comments and admin tables
@@ -1418,178 +1582,220 @@ Introduce dedicated search indexing when content volume grows.
 - optimize images
 - lazy load below-the-fold media
 - revalidate only changed routes
-- use streaming for generation progress if needed
-- keep UI lightweight, attractive, and fast to load with clear reading hierarchy
-
----
+- support streaming progress updates for generation where useful
+- keep the UI fast, readable, and visually intentional
 
 ## 32. Security Strategy
 
-- protect admin routes
-- sanitize comments
-- sanitize rendered HTML
-- validate all API input with Zod
-- rate limit public comment submissions
-- secure secrets in environment variables
-- restrict media upload types
-- audit publish actions
-- verify external URLs before storing
+Release 1 must include:
 
----
+- protected admin routes
+- protected admin APIs
+- comment sanitization
+- rendered HTML sanitization
+- Zod validation for all API inputs
+- rate limiting for public comment submissions
+- secure secret handling in environment variables
+- restricted upload MIME types
+- external URL verification before storing
+- audit logging for publish, moderation, settings, and authentication events
+- safe rendering boundaries that do not present generated content as clinical or diagnostic instruction
 
 ## 33. Observability and Logging
 
-Track:
+Track and persist:
 
-- generation success/failure
+- generation success and failure
 - source fetch errors
 - missing manual links
 - image processing failures
 - comment spam rate
 - publish events
 - SEO generation issues
-- website/page/post views for admin statistics
+- website, page, and post views
 
-Admin should see generation logs per job.
+Admin must be able to see:
 
----
+- dashboard summary metrics
+- generation logs per job
+- recent failures and warnings
+- view trends over time
 
 ## 34. Environment Variables
 
-Example:
+The exact env schema may add helper variables, but Release 1 must support this contract:
 
 ```env
 DATABASE_URL="mysql://user:password@localhost:3306/med_blog"
 NEXT_PUBLIC_APP_URL="https://example.com"
-AI_PROVIDER_API_KEY="your-key"
+DEFAULT_LOCALE="en"
+SUPPORTED_LOCALES="en,fr,sw,ar"
+
+SESSION_SECRET="change-me"
+SESSION_MAX_AGE_SECONDS="28800"
+
 AI_PROVIDER_DEFAULT="openai"
-AI_MODEL_DEFAULT="gpt-4.1"
+AI_MODEL_DEFAULT="gpt-5.4"
 AI_PROVIDER_FALLBACK="openai"
-MEDIA_BUCKET_NAME="your-bucket"
-MEDIA_BUCKET_REGION="your-region"
-MEDIA_ACCESS_KEY="your-access-key"
-MEDIA_SECRET_KEY="your-secret-key"
-MEDIA_DRIVER="local" # local | s3
+AI_MODEL_FALLBACK="gpt-5.4-mini"
+OPENAI_API_KEY="your-openai-key"
+
+MEDIA_DRIVER="local"
 LOCAL_MEDIA_BASE_PATH="public/uploads"
+LOCAL_MEDIA_BASE_URL="/uploads"
 S3_MEDIA_BUCKET="your-bucket"
 S3_MEDIA_REGION="your-region"
 S3_MEDIA_BASE_URL="https://cdn.example.com"
+S3_ACCESS_KEY_ID="your-access-key"
+S3_SECRET_ACCESS_KEY="your-secret-key"
+
 ADMIN_SEED_EMAIL="admin@example.com"
 ADMIN_SEED_PASSWORD="strong-password"
+
 COMMENT_RATE_LIMIT_WINDOW_MS="60000"
 COMMENT_RATE_LIMIT_MAX="5"
-```
+COMMENT_CAPTCHA_ENABLED="false"
+COMMENT_CAPTCHA_SECRET=""
 
----
+UPLOAD_ALLOWED_MIME_TYPES="image/jpeg,image/png,image/webp"
+REVALIDATE_SECRET="change-me"
+CRON_SECRET="change-me"
+```
 
 ## 35. Publishing States and Editorial Workflow
 
-### 35.1 Draft Workflow
+### 35.1 Persisted Post Status
 
-- generated
-- reviewed
-- edited
-- approved
-- published
+These are the persisted post status values:
 
-### 35.2 Optional Enhancements
+- `DRAFT`
+- `SCHEDULED`
+- `PUBLISHED`
+- `ARCHIVED`
 
-- scheduled publishing with date-time picker in generation/editor flows
-- revision history
-- rollback to previous version
+### 35.2 Editorial Checkpoints
+
+These are the editorial checkpoint values:
+
+- `GENERATED`
+- `REVIEWED`
+- `EDITED`
+- `APPROVED`
+
+`editorialStage` and `status` are separate fields. A post may be `status = DRAFT` while moving through editorial checkpoints.
+
+### 35.3 Scheduling Workflow
+
+Scheduling is mandatory for Release 1.
+
+- a draft only moves to `status = SCHEDULED` after an admin explicitly confirms scheduling
+- once confirmed, the future `scheduledPublishAt` value is used by the scheduler
+- the scheduler publishes it exactly once when the target time arrives
+- publish actions must write an audit event
+- manual publish clears any future schedule
+
+### 35.4 Optional Editorial Enhancements
+
+Optional after Release 1:
+
+- revision history UI
+- rollback UI
 - draft comparison view
-
----
 
 ## 36. Content Quality Rules
 
-Every generated post should pass these checks:
+Every generated post must pass these checks:
 
 - title exists
 - definition exists
-- operation principle exists
-- maintenance exists
+- principle of operation exists
+- maintenance section exists
 - disclaimer exists
 - references exist
 - no broken internal structure
 - no duplicate manufacturer rows
 - no empty model sections
 - readable paragraph length
-- tables formatted correctly
-- each section includes deep explanation, not only summary statements
-- SOP/how-to-use section exists and includes model-specific differences where available
-- target audience coverage is explicit and broad (students, nurses, doctors, medical workers, technicians, engineers, hospital owners, administrators, procurement teams, trainers, and biomedical staff)
-- manufacturer entries are deduplicated and include branch countries where data exists
+- tables are formatted correctly
+- each section contains deep explanation, not only summary statements
+- SOP and how-to-use section exists and includes model-specific differences where available
+- target audience coverage is explicit across students, nurses, doctors, medical workers, technicians, engineers, hospital owners, administrators, procurement teams, trainers, and biomedical staff
+- manufacturer entries are deduplicated and include branch countries where verified
 
----
+## 37. Prompt Design Requirements
 
-## 37. Suggested Prompt Design
-
-The writing prompt should instruct the model to:
+The writing prompts must instruct the model to:
 
 - write for educational use
 - avoid unsupported claims
 - preserve source-grounded structure
-- organize sections in a stable learning sequence
+- organize sections in the stable learning sequence defined in section 9
 - clearly separate facts, guidance, and warnings
 - never invent manuals or technical documents
 - explicitly note missing information where necessary
+- preserve disclaimers and references
+- respect the selected article depth and target audiences
 
----
+## 38. Acceptance Fixture for "Microscope"
 
-## 38. Sample Generated Post Outline for “Microscope”
+Use `microscope` as the baseline acceptance fixture during implementation and QA.
 
-1. What is a microscope?
+The resulting English draft must include, when reliable data exists:
+
+1. What is a microscope
 2. Featured image of a microscope
 3. How a microscope works
 4. Key components of a microscope
 5. Types of microscopes
 6. Common laboratory applications
 7. Commonly used microscope manufacturers
-8. Common microscope models by manufacturer
+8. Commonly encountered microscope models by manufacturer
 9. Common microscope faults and remedies
 10. Daily care and cleaning
 11. Preventive maintenance checklist
 12. Safety precautions
 13. Manuals and brochures
-14. FAQs
-15. Disclaimer
-16. References
+14. SOP and how-to-use guidance
+15. FAQ
+16. Disclaimer
+17. References
 
----
+This fixture is mandatory for acceptance testing. The implementation may add more fixtures later.
 
-## 39. Minimum Viable Product
+## 39. Release 1 Minimum Feature Set
 
-The MVP should include:
+This section summarizes the minimum ship-ready subset of the mandatory Release 1 requirements already defined above. It does not reduce or override earlier mandatory sections.
+
+Release 1 must include:
 
 - admin authentication
-- generate post form
-- draft save
+- Generate Post page
+- draft save and edit flow
 - manual publish
-- public blog pages
-- localized routing foundation
+- scheduled publish
+- public localized blog pages
 - comments with moderation
 - SEO metadata
 - sitemap and robots
-- manufacturer/model/manual links support
-
----
+- manufacturer, model, and manual-link support
+- search
+- analytics dashboard and job logs
 
 ## 40. Phase 2 Features
 
-- automatic related posts
+These are future enhancements and are not required for Release 1:
+
 - richer manufacturer pages
 - manual source approval queue
 - PDF extraction pipeline
-- source confidence scoring
-- analytics dashboard
+- source confidence scoring UI
 - content update reminders
-- multilingual translation dashboard
+- multilingual translation dashboard enhancements
 - advanced search filters
 
----
-
 ## 41. Phase 3 Features
+
+These are future enhancements and are not required for Release 1:
 
 - automatic refresh of old posts
 - model comparison tables
@@ -1600,146 +1806,144 @@ The MVP should include:
 - semantic search
 - AI-assisted comment moderation
 
----
-
 ## 42. Recommended Development Order
 
-1. initialize Next.js JavaScript app
-2. configure styled-components registry
-3. configure Prisma + MySQL
-4. add admin auth
-5. build Post, PostTranslation, Comment models
-6. build public blog pages
-7. build admin dashboard
-8. build generation form
-9. add AI generation pipeline
-10. add source normalization and storage
-11. add SEO metadata system
-12. add comments moderation
-13. add localization
-14. optimize performance and caching
-15. add logging and analytics
+Follow the `dev-plan` files in numeric order from `00` through `24`.
 
----
+At a high level, the build order is:
+
+1. lock architecture decisions
+2. scaffold the repo and routes
+3. define environment schema
+4. implement database schema, indexes, and seeds
+5. add authentication and RBAC
+6. add locale routing and translation persistence
+7. add generation validation, source collection, and AI composition
+8. add duplicate handling and Generate Post admin UX
+9. add editorial lifecycle and scheduling
+10. add public pages, media, comments, SEO, search, and related posts
+11. add analytics, observability, performance work, and final release traceability
 
 ## 43. Practical Constraints and Important Notes
 
 ### 43.1 About Full Automation
 
-A fully automatic medical-equipment publisher can be built technically, but medical and technical accuracy must be handled very carefully.
+A fully automatic medical-equipment publisher is technically possible, but medical and technical accuracy must be handled carefully.
 
-### 43.2 Strong Recommendation
+### 43.2 Required Operating Policy
 
-Use this operational policy:
+Release 1 must follow this operating policy:
 
-- **AI generates drafts automatically**
-- **publishing remains a manual editor action**
-
-That still keeps the workflow extremely fast while reducing risk.
+- AI generates drafts automatically
+- publishing remains a manual editor action
 
 ### 43.3 Why This Matters
 
-Medical-equipment content can affect cleaning, maintenance, safety, and troubleshooting behavior. Incorrect details may create operational risk.
+Medical-equipment content can influence cleaning, maintenance, safety, and troubleshooting behavior. Incorrect details can create operational risk.
 
-So the safest model is:
+The safest Release 1 workflow is:
 
 - automated research
 - automated draft generation
+- human review
 - manual final publish approval
-
----
 
 ## 44. Final Architecture Summary
 
-This application should be built as a **Next.js App Router full-stack content platform** with:
+This application must be built as a Next.js App Router full-stack content platform with:
 
 - JavaScript only
 - Vercel AI SDK for generation
 - styled-components for theming and styling
 - Redux Toolkit for admin-side state
 - Zod for strict validation
-- Prisma + MySQL for structured persistence
-- localized routes and translations
+- Prisma plus MySQL for structured persistence
+- localized public routes and persisted translations
 - public reading without signup
-- visitor comments with moderation
+- guest comments with moderation
 - rich SEO metadata
 - source-grounded AI generation workflow
 
-The most important design decision is this:
+The core design rule is:
 
 > Do not treat the model as the source of truth. Treat the model as the writing and organization layer on top of a structured research pipeline.
 
-That is what will make the platform scalable, trustworthy, and reusable across many medical-equipment categories.
-
----
-
 ## 45. Official Technology References
+
+These references are informational and do not override this document:
 
 - Next.js App Router documentation
 - Next.js Metadata and SEO documentation
-- Next.js Internationalization documentation
+- Next.js internationalization documentation
 - Next.js CSS-in-JS documentation
 - Vercel AI SDK documentation
 - Prisma documentation for Next.js and Prisma schema
-- Redux Toolkit guide for Next.js App Router
+- Redux Toolkit documentation
 - Zod documentation
-
----
 
 ## 46. Source of Truth and Implementation Completeness
 
-This file (`app-write-up.md`) is the single source of truth for implementation.
+This file, `app-write-up.md`, is the single source of truth for implementation.
 
 ### 46.1 Precedence Rules
 
 Use this precedence order for all implementation decisions:
 
-1. Safety, legal, and compliance requirements in this document
-2. Core business requirements and workflows in this document
-3. Data model and API contracts in this document
-4. UX/UI behavior in this document
-5. Optimization and phase enhancements in this document
+1. safety, legal, and compliance requirements in this document
+2. core business requirements and workflows in this document
+3. data model and API contracts in this document
+4. UX and UI behavior in this document
+5. optimization rules and future-phase notes in this document
 
-If implementation artifacts conflict with this document, this document wins.
+If any implementation artifact conflicts with this document, this document wins.
 
 ### 46.2 Normative Requirement Semantics
 
-- **Must:** mandatory for release.
-- **Should:** expected unless a documented exception is approved.
-- **May/Optional:** not mandatory for MVP, but if implemented must still follow all constraints in this document.
-- **Where available:** include data only when verifiably sourced; never fabricate missing values.
+- `Must`: mandatory for Release 1
+- `Should`: expected unless a documented exception is approved
+- `May` or `Optional`: not mandatory for Release 1, but if implemented must still follow this document
+- `Future phase`: explicitly excluded from Release 1
+- `Where available`: include data only when it is verifiably sourced; never fabricate missing values
 
-### 46.3 Completion Gate (No Missing Scope)
+Mandatory Release 1 scope rule:
 
-Implementation is incomplete unless all are true:
+- sections `1-39` and `42-46` are mandatory unless a specific item is explicitly labeled optional
+- sections `40-41` are future-phase only and are not part of Release 1
+- section `45` is informational only
 
-- all required content sections are generated (including SOP/how-to-use with model-specific differences where applicable)
-- localization behavior is correct (`en` source generation, translation reuse, and per-locale persistence)
-- duplicate equipment detection and replace-or-cancel branch are enforced
-- article depth and target audience controls match UI and API contracts
-- scheduling works during or after generation with date-time picker
-- inline images and media attribution/copyright constraints are enforced
-- manufacturer/model/fault dedup and reliability rules are enforced
-- admin can switch AI provider/model without code changes
-- website/page/post view analytics are tracked and visible to admin
-- public sharing (social/email) works
-- mobile-first responsive behavior is implemented
+### 46.3 Completion Gate
+
+Implementation is incomplete unless all of the following are true:
+
+- all required content sections are generated, including SOP and model-specific differences where available
+- localization works with `en` source generation, translation reuse, and per-locale persistence
+- duplicate equipment detection and replace-or-cancel branching are enforced
+- article depth, target audience, and provider selection controls match UI and API contracts
+- scheduling works during or after generation with a date-time picker and background worker
+- inline images, media attribution, and copyright constraints are enforced
+- manufacturer, model, and fault deduplication and reliability rules are enforced
+- admin can switch AI provider and model without code changes
+- website, page, and post view analytics are tracked and visible to admin
+- public sharing through social actions, email, and copy link works
+- mobile-first responsive behavior is implemented across required public pages
 - security validation and moderation controls are active
+- every mandatory page listed in section 5 exists
+- every mandatory admin page listed in section 5 exists
 
 ### 46.4 Change Control for Future Edits
 
 Any future update to this document must include:
 
-- explicit section(s) changed
-- rationale for change
-- impact on schema/API/UI/workflows
+- the explicit sections changed
+- the reason for the change
+- the impact on schema, API, UI, and workflows
 - migration or backward-compatibility notes when relevant
 
 ### 46.5 Definition of Done
 
-The app is considered complete only when:
+The application is complete only when:
 
-- all mandatory requirements in sections 1-46 are implemented
-- no unresolved contradictions exist inside this document
-- release validation confirms behavior against the completion gate in section 46.3
-
+- all mandatory requirements in sections `1-46` are satisfied according to section `46.2`
+- no unresolved contradictions remain inside this document
+- the `dev-plan` is fully aligned with this document
+- release validation confirms behavior against the completion gate in section `46.3`

@@ -1,8 +1,34 @@
 # 01 Architecture Decisions
 
-Source sections: 1, 2, 4, 5, 44, 46.
+Source sections: 1, 2, 4, 5, 6, 44, 45, 46.
 Atomic aspect: architecture decisions only.
 Prerequisite: none.
-Implement: lock stack, boundaries, and invariants (mobile-first, locale-first, source-grounded generation, public read/admin write split).
-Deliverable: ADR set with accepted decisions.
-Verify: every high-level module in sections 4-5 has an owner and integration boundary.
+
+## Goal
+
+Lock the non-negotiable architecture decisions before scaffolding begins.
+
+## Implement
+
+1. Create ADRs that freeze the required stack: Next.js App Router, JavaScript, Vercel AI SDK, styled-components, Redux Toolkit, Zod, Prisma, MySQL.
+2. Record the routing strategy: locale-prefixed public routes, root redirect at `/`, non-locale admin routes at `/admin`.
+3. Record the content rule: AI is the writing layer, structured research is the factual source layer.
+4. Record the publishing rule: draft generation may be automatic, publish must be manual.
+5. Record the lifecycle rule: `status` and `editorialStage` are separate fields.
+6. Record the storage rule: content is stored as Markdown, HTML, and structured JSON; media uses a driver abstraction.
+7. Record the auth rule: Release 1 requires admin email/password auth and guest public comments.
+
+## Required Outputs
+
+- ADR documents in a dedicated folder such as `docs/adr/`
+- a one-page architecture summary linked from the repo root
+
+## Verify
+
+- every major module in section 44 has an owner and boundary
+- every public route family and admin route family is documented
+- the ADRs do not contradict `app-write-up.md`
+
+## Exit Criteria
+
+- stack, routing, auth, data-flow, and lifecycle decisions are frozen for later steps
