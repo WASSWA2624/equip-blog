@@ -7,7 +7,7 @@ export async function getMessages(locale) {
     return null;
   }
 
-  const module = await definition.loadMessages();
+  const messageModule = await definition.loadMessages();
 
-  return module.default;
+  return messageModule.default;
 }

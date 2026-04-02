@@ -8,6 +8,7 @@ export const metadata = {
   },
   description:
     "Locale-ready scaffold for the Equip Blog public site and admin workspace.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
 };
 
 export default function RootLayout({ children }) {
