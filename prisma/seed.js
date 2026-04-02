@@ -277,9 +277,22 @@ async function seedLocales(tx) {
   return BASELINE_LOCALES.length;
 }
 
+async function invalidateAdminSessions(tx, userId) {
+  await tx.adminSession.updateMany({
+    where: {
+      invalidatedAt: null,
+      userId,
+    },
+    data: {
+      invalidatedAt: new Date(),
+    },
+  });
+}
+
 async function seedAdminUser(tx) {
   const email = requiredEnv("ADMIN_SEED_EMAIL").toLowerCase();
   const password = requiredEnv("ADMIN_SEED_PASSWORD");
+  const passwordHash = createPasswordHash(password);
   const existingUser = await tx.user.findUnique({
     where: { email },
     select: { id: true },
@@ -290,20 +303,55 @@ async function seedAdminUser(tx) {
       where: { email },
       data: {
         name: "Super Admin",
-        passwordHash: createPasswordHash(password),
+        passwordHash,
         role: UserRole.SUPER_ADMIN,
         isActive: true,
       },
     });
+    await invalidateAdminSessions(tx, existingUser.id);
 
     return { created: false };
+  }
+
+  const existingSeedAdmin = await tx.user.findFirst({
+    where: {
+      name: "Super Admin",
+      role: UserRole.SUPER_ADMIN,
+    },
+    orderBy: {
+      createdAt: "asc",
+    },
+    select: {
+      email: true,
+      id: true,
+    },
+  });
+
+  if (existingSeedAdmin) {
+    await tx.user.update({
+      where: { id: existingSeedAdmin.id },
+      data: {
+        email,
+        isActive: true,
+        name: "Super Admin",
+        passwordHash,
+        role: UserRole.SUPER_ADMIN,
+      },
+    });
+    await invalidateAdminSessions(tx, existingSeedAdmin.id);
+
+    return {
+      created: false,
+      previousEmail: existingSeedAdmin.email,
+      updatedEmail: existingSeedAdmin.email !== email,
+    };
   }
 
   await tx.user.create({
     data: {
       email,
       name: "Super Admin",
-      passwordHash: createPasswordHash(password),
+      passwordHash,
       role: UserRole.SUPER_ADMIN,
       isActive: true,
     },

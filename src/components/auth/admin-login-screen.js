@@ -128,6 +128,10 @@ const FieldLabel = styled.span`
   font-weight: 700;
 `;
 
+const PasswordField = styled.div`
+  position: relative;
+`;
+
 const Input = styled.input`
   background: white;
   border: 1px solid ${({ theme }) => theme.colors.border};
@@ -139,6 +143,31 @@ const Input = styled.input`
     border-color: ${({ theme }) => theme.colors.primary};
     box-shadow: 0 0 0 4px rgba(0, 95, 115, 0.12);
     outline: none;
+  }
+`;
+
+const PasswordInput = styled(Input)`
+  padding-right: 4.8rem;
+`;
+
+const PasswordToggle = styled.button`
+  align-items: center;
+  background: transparent;
+  border: none;
+  color: ${({ theme }) => theme.colors.primary};
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 0.9rem;
+  font-weight: 700;
+  inset: 0 0 0 auto;
+  justify-content: center;
+  min-width: 4.25rem;
+  padding: 0 0.85rem;
+  position: absolute;
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.primary};
+    outline-offset: -2px;
   }
 `;
 
@@ -182,6 +211,7 @@ export default function AdminLoginScreen({ nextPath }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isNavigating, startNavigation] = useTransition();
@@ -282,15 +312,25 @@ export default function AdminLoginScreen({ nextPath }) {
             </Field>
             <Field>
               <FieldLabel>Password</FieldLabel>
-              <Input
-                autoComplete="current-password"
-                name="password"
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="Enter your password"
-                required
-                type="password"
-                value={password}
-              />
+              <PasswordField>
+                <PasswordInput
+                  autoComplete="current-password"
+                  name="password"
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="Enter your password"
+                  required
+                  type={isPasswordVisible ? "text" : "password"}
+                  value={password}
+                />
+                <PasswordToggle
+                  aria-label={isPasswordVisible ? "Hide password" : "Show password"}
+                  aria-pressed={isPasswordVisible}
+                  onClick={() => setIsPasswordVisible((currentValue) => !currentValue)}
+                  type="button"
+                >
+                  {isPasswordVisible ? "Hide" : "Show"}
+                </PasswordToggle>
+              </PasswordField>
             </Field>
             {error ? <ErrorNotice aria-live="polite">{error}</ErrorNotice> : null}
             <SubmitButton disabled={isSubmitting || isNavigating} type="submit">
