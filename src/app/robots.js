@@ -1,8 +1,7 @@
+import { env } from "@/lib/env/server";
+
 export default function robots() {
-  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(
-    /\/$/,
-    "",
-  );
+  const baseUrl = env.app.url;
 
   return {
     rules: [

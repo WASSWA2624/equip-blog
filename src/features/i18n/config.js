@@ -1,4 +1,4 @@
-const fallbackDefaultLocale = "en";
+import { sharedEnv } from "@/lib/env/shared";
 
 export const localeRegistry = {
   en: {
@@ -7,11 +7,27 @@ export const localeRegistry = {
   },
 };
 
-export const supportedLocales = Object.keys(localeRegistry);
+const configuredLocales = sharedEnv.i18n.supportedLocales;
+const missingLocaleDefinitions = configuredLocales.filter((locale) => !localeRegistry[locale]);
 
-export const defaultLocale =
-  supportedLocales.find((locale) => locale === process.env.DEFAULT_LOCALE) ||
-  fallbackDefaultLocale;
+if (missingLocaleDefinitions.length) {
+  throw new Error(
+    [
+      "Locale configuration is incomplete.",
+      `Register locale definitions for: ${missingLocaleDefinitions.join(", ")}.`,
+      "Add the matching message file and localeRegistry entry before enabling the locale.",
+    ].join("\n"),
+  );
+}
+
+if (!localeRegistry[sharedEnv.i18n.defaultLocale]) {
+  throw new Error(
+    `DEFAULT_LOCALE "${sharedEnv.i18n.defaultLocale}" is not registered in localeRegistry.`,
+  );
+}
+
+export const supportedLocales = configuredLocales;
+export const defaultLocale = sharedEnv.i18n.defaultLocale;
 
 export function getLocaleDefinition(locale) {
   return localeRegistry[locale] || null;

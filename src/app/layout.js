@@ -1,4 +1,5 @@
 import AppProviders from "@/components/common/app-providers";
+import { env } from "@/lib/env/server";
 import StyledRegistry from "@/styles/styled-registry";
 
 export const metadata = {
@@ -8,7 +9,7 @@ export const metadata = {
   },
   description:
     "Locale-ready scaffold for the Equip Blog public site and admin workspace.",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
+  metadataBase: new URL(env.app.url),
 };
 
 export default function RootLayout({ children }) {

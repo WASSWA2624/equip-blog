@@ -1,4 +1,5 @@
 import { defaultLocale, supportedLocales } from "@/features/i18n/config";
+import { env } from "@/lib/env/server";
 
 const publicPaths = [
   "",
@@ -11,10 +12,7 @@ const publicPaths = [
 ];
 
 export default function sitemap() {
-  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(
-    /\/$/,
-    "",
-  );
+  const baseUrl = env.app.url;
 
   const localeUrls = supportedLocales.flatMap((locale) =>
     publicPaths.map((path) => ({
