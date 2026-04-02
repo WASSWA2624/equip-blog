@@ -12,6 +12,7 @@ const protectedAdminApiPrefixes = [
 
 const protectedAdminApiPaths = new Set([
   "/api/auth/logout",
+  "/api/categories",
   "/api/generate-post",
   "/api/jobs",
   "/api/localization",

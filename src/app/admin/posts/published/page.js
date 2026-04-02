@@ -1,17 +1,17 @@
-import PlaceholderPage from "@/components/common/placeholder-page";
+import PostInventoryScreen from "@/components/admin/post-inventory-screen";
+import { defaultLocale } from "@/features/i18n/config";
+import { getMessages } from "@/features/i18n/get-messages";
+import { getPostInventorySnapshot } from "@/features/posts";
 
-export default function PublishedPostsPage() {
-  return (
-    <PlaceholderPage
-      badges={["/admin/posts/published", "Protected list"]}
-      description="The published posts list route is scaffolded for the editorial inventory of live content."
-      eyebrow="Published posts"
-      notes={[
-        "List published posts and status metadata.",
-        "Support unpublish and archive workflows later.",
-        "Expose localized admin labels from messages.",
-      ]}
-      title="Published posts"
-    />
-  );
+export default async function PublishedPostsPage({ searchParams }) {
+  const resolvedSearchParams = await searchParams;
+  const [messages, snapshot] = await Promise.all([
+    getMessages(defaultLocale),
+    getPostInventorySnapshot({
+      scope: "published",
+      search: resolvedSearchParams.search,
+    }),
+  ]);
+
+  return <PostInventoryScreen copy={messages.admin.publishedList} initialData={snapshot} />;
 }

@@ -1,17 +1,16 @@
-import PlaceholderPage from "@/components/common/placeholder-page";
+import CategoryManagementScreen from "@/components/admin/category-management-screen";
+import { defaultLocale } from "@/features/i18n/config";
+import { getMessages } from "@/features/i18n/get-messages";
+import { getCategoryManagementSnapshot } from "@/features/posts";
 
-export default function CategoriesPage() {
-  return (
-    <PlaceholderPage
-      badges={["/admin/categories", "Management"]}
-      description="The categories management route is available for future taxonomy administration."
-      eyebrow="Categories"
-      notes={[
-        "Manage category metadata and slugs.",
-        "Protect the route with admin auth.",
-        "Connect management forms and validations.",
-      ]}
-      title="Manage categories"
-    />
-  );
+export default async function CategoriesPage({ searchParams }) {
+  const resolvedSearchParams = await searchParams;
+  const [messages, snapshot] = await Promise.all([
+    getMessages(defaultLocale),
+    getCategoryManagementSnapshot({
+      categoryId: resolvedSearchParams.categoryId,
+    }),
+  ]);
+
+  return <CategoryManagementScreen copy={messages.admin.categoryManagement} initialData={snapshot} />;
 }

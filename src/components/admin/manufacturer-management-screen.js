@@ -299,7 +299,6 @@ export default function ManufacturerManagementScreen({ copy, initialData }) {
           primaryDomain: "",
           rankingScore: 0,
           slug: "",
-          updatedAt: null,
         },
         models: [],
         sourceReferences: [],

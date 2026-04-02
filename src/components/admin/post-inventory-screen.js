@@ -1,0 +1,330 @@
+"use client";
+
+import Link from "next/link";
+import styled from "styled-components";
+
+function formatDateTime(value) {
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+}
+
+const Page = styled.main`
+  display: grid;
+  gap: ${({ theme }) => theme.spacing.lg};
+  margin: 0 auto;
+  max-width: 1280px;
+  padding: ${({ theme }) => theme.spacing.xl};
+`;
+
+const Hero = styled.section`
+  background:
+    radial-gradient(circle at top right, rgba(201, 123, 42, 0.2), transparent 38%),
+    linear-gradient(135deg, rgba(0, 95, 115, 0.12), rgba(16, 32, 51, 0.03));
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radius.lg};
+  display: grid;
+  gap: ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing.xl};
+`;
+
+const Eyebrow = styled.p`
+  color: ${({ theme }) => theme.colors.primary};
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  margin: 0;
+  text-transform: uppercase;
+`;
+
+const Title = styled.h1`
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  line-height: 1.05;
+  margin: 0;
+`;
+
+const Description = styled.p`
+  color: ${({ theme }) => theme.colors.muted};
+  line-height: 1.7;
+  margin: 0;
+  max-width: 860px;
+`;
+
+const SummaryGrid = styled.section`
+  display: grid;
+  gap: ${({ theme }) => theme.spacing.md};
+
+  @media (min-width: 760px) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+`;
+
+const SummaryCard = styled.section`
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radius.md};
+  box-shadow: 0 18px 50px rgba(16, 32, 51, 0.08);
+  display: grid;
+  gap: ${({ theme }) => theme.spacing.xs};
+  padding: ${({ theme }) => theme.spacing.lg};
+`;
+
+const SummaryValue = styled.strong`
+  font-size: 2rem;
+  line-height: 1;
+`;
+
+const SmallText = styled.p`
+  color: ${({ theme }) => theme.colors.muted};
+  line-height: 1.6;
+  margin: 0;
+`;
+
+const Card = styled.section`
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radius.md};
+  box-shadow: 0 18px 50px rgba(16, 32, 51, 0.08);
+  display: grid;
+  gap: ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing.lg};
+`;
+
+const CardTitle = styled.h2`
+  font-size: 1.05rem;
+  margin: 0;
+`;
+
+const SearchForm = styled.form`
+  display: flex;
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing.sm};
+`;
+
+const SearchInput = styled.input`
+  background: white;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 999px;
+  color: ${({ theme }) => theme.colors.text};
+  flex: 1 1 260px;
+  font: inherit;
+  padding: 0.82rem 1rem;
+`;
+
+const Button = styled.button`
+  background: ${({ $tone, theme }) =>
+    $tone === "secondary" ? "rgba(247, 249, 252, 0.96)" : theme.colors.primary};
+  border: 1px solid ${({ $tone, theme }) => ($tone === "secondary" ? theme.colors.border : "transparent")};
+  border-radius: 999px;
+  color: ${({ $tone }) => ($tone === "secondary" ? "inherit" : "white")};
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  padding: 0.82rem 1.2rem;
+`;
+
+const LinkButton = styled(Link)`
+  align-items: center;
+  background: rgba(247, 249, 252, 0.96);
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 999px;
+  display: inline-flex;
+  font-weight: 700;
+  justify-content: center;
+  padding: 0.82rem 1.2rem;
+`;
+
+const List = styled.div`
+  display: grid;
+  gap: ${({ theme }) => theme.spacing.md};
+`;
+
+const Item = styled.article`
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 249, 252, 0.94));
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radius.md};
+  display: grid;
+  gap: ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing.lg};
+`;
+
+const ItemHeader = styled.div`
+  align-items: start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing.sm};
+  justify-content: space-between;
+`;
+
+const ItemTitle = styled.h3`
+  font-size: 1.1rem;
+  margin: 0;
+`;
+
+const PillRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing.xs};
+`;
+
+const Pill = styled.span`
+  background: ${({ $tone }) =>
+    $tone === "accent"
+      ? "rgba(201, 123, 42, 0.18)"
+      : $tone === "success"
+        ? "rgba(21, 115, 71, 0.12)"
+        : "rgba(0, 95, 115, 0.12)"};
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.3rem 0.7rem;
+`;
+
+const MetaGrid = styled.div`
+  display: grid;
+  gap: ${({ theme }) => theme.spacing.sm};
+
+  @media (min-width: 860px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+`;
+
+const MetaCard = styled.div`
+  background: rgba(247, 249, 252, 0.86);
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radius.md};
+  display: grid;
+  gap: ${({ theme }) => theme.spacing.xs};
+  padding: ${({ theme }) => theme.spacing.md};
+`;
+
+const MetaLabel = styled.strong`
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+`;
+
+const ActionRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing.sm};
+`;
+
+export default function PostInventoryScreen({ copy, initialData }) {
+  const basePath =
+    initialData.filters.scope === "published" ? "/admin/posts/published" : "/admin/posts/drafts";
+
+  return (
+    <Page>
+      <Hero>
+        <Eyebrow>{copy.eyebrow}</Eyebrow>
+        <Title>{copy.title}</Title>
+        <Description>{copy.description}</Description>
+      </Hero>
+      <SummaryGrid>
+        <SummaryCard>
+          <SummaryValue>{initialData.summary.draftCount}</SummaryValue>
+          <SmallText>{copy.draftCountLabel}</SmallText>
+        </SummaryCard>
+        <SummaryCard>
+          <SummaryValue>{initialData.summary.scheduledCount}</SummaryValue>
+          <SmallText>{copy.scheduledCountLabel}</SmallText>
+        </SummaryCard>
+        <SummaryCard>
+          <SummaryValue>{initialData.summary.publishedCount}</SummaryValue>
+          <SmallText>{copy.publishedCountLabel}</SmallText>
+        </SummaryCard>
+        <SummaryCard>
+          <SummaryValue>{initialData.summary.archivedCount}</SummaryValue>
+          <SmallText>{copy.archivedCountLabel}</SmallText>
+        </SummaryCard>
+      </SummaryGrid>
+      <Card>
+        <CardTitle>{copy.listTitle}</CardTitle>
+        <SmallText>
+          {copy.matchingCountLabel.replace("{count}", `${initialData.summary.matchingCount}`)}
+        </SmallText>
+        <SearchForm action={basePath} method="get">
+          <SearchInput
+            defaultValue={initialData.filters.search}
+            name="search"
+            placeholder={copy.searchPlaceholder}
+          />
+          <Button type="submit">{copy.searchAction}</Button>
+          {initialData.filters.search ? (
+            <LinkButton href={basePath}>{copy.clearSearchAction}</LinkButton>
+          ) : null}
+        </SearchForm>
+        {initialData.posts.length ? (
+          <List>
+            {initialData.posts.map((post) => (
+              <Item key={post.id}>
+                <ItemHeader>
+                  <div>
+                    <ItemTitle>{post.title}</ItemTitle>
+                    <SmallText>
+                      {post.equipmentName} | slug `{post.slug}`
+                    </SmallText>
+                  </div>
+                  <PillRow>
+                    <Pill>{post.status}</Pill>
+                    <Pill $tone="accent">{post.editorialStage}</Pill>
+                    {post.status === "PUBLISHED" ? (
+                      <Pill $tone="success">{copy.publishedBadge}</Pill>
+                    ) : null}
+                  </PillRow>
+                </ItemHeader>
+                <MetaGrid>
+                  <MetaCard>
+                    <MetaLabel>{copy.updatedAtLabel}</MetaLabel>
+                    <SmallText>{formatDateTime(post.updatedAt) || copy.notAvailable}</SmallText>
+                  </MetaCard>
+                  <MetaCard>
+                    <MetaLabel>
+                      {post.status === "PUBLISHED" ? copy.publishedAtLabel : copy.scheduledAtLabel}
+                    </MetaLabel>
+                    <SmallText>
+                      {formatDateTime(
+                        post.status === "PUBLISHED" ? post.publishedAt : post.scheduledPublishAt,
+                      ) || copy.notAvailable}
+                    </SmallText>
+                  </MetaCard>
+                  <MetaCard>
+                    <MetaLabel>{copy.categoriesLabel}</MetaLabel>
+                    <SmallText>
+                      {post.categoryNames.length ? post.categoryNames.join(", ") : copy.noCategories}
+                    </SmallText>
+                  </MetaCard>
+                  <MetaCard>
+                    <MetaLabel>{copy.localeLabel}</MetaLabel>
+                    <SmallText>{post.locale}</SmallText>
+                  </MetaCard>
+                </MetaGrid>
+                <ActionRow>
+                  <LinkButton href={`/admin/posts/${post.id}`}>{copy.openEditorAction}</LinkButton>
+                  <LinkButton href={`/admin/localization?postId=${post.id}&locale=${post.locale}`}>
+                    {copy.localizationAction}
+                  </LinkButton>
+                </ActionRow>
+              </Item>
+            ))}
+          </List>
+        ) : (
+          <SmallText>{copy.emptyState}</SmallText>
+        )}
+      </Card>
+    </Page>
+  );
+}

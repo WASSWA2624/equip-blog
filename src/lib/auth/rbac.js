@@ -376,7 +376,12 @@ export function getRequiredPermissionForPublishAction(publishAt) {
 export function getRequiredPermissionsForPostUpdate(payload = {}) {
   const permissions = [];
 
-  if (payload.title !== undefined || payload.editorialStage !== undefined) {
+  if (
+    payload.categoryIds !== undefined ||
+    payload.editorialStage !== undefined ||
+    payload.slug !== undefined ||
+    payload.title !== undefined
+  ) {
     permissions.push(ADMIN_PERMISSIONS.EDIT_POSTS);
   }
 

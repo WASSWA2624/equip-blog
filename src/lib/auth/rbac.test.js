@@ -80,6 +80,9 @@ describe("RBAC policy", () => {
     expect(getRequiredPermissionsForPostUpdate({ title: "Updated draft" })).toEqual([
       ADMIN_PERMISSIONS.EDIT_POSTS,
     ]);
+    expect(getRequiredPermissionsForPostUpdate({ categoryIds: ["cat_1"], slug: "updated-draft" })).toEqual([
+      ADMIN_PERMISSIONS.EDIT_POSTS,
+    ]);
     expect(
       getRequiredPermissionsForPostUpdate({
         editorialStage: "APPROVED",

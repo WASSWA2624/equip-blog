@@ -1867,7 +1867,6 @@ function buildManufacturerSummary(manufacturer) {
     primaryDomain: manufacturer.primaryDomain,
     rankingScore: manufacturer.rankingScore,
     sourceReferenceCount: manufacturer._count.sourceReferences,
-    updatedAt: serializeDate(manufacturer.updatedAt),
   };
 }
 
@@ -1884,7 +1883,6 @@ function buildManufacturerEditor(manufacturer) {
         primaryDomain: "",
         rankingScore: 0,
         slug: "",
-        updatedAt: null,
       },
       models: [],
       sourceReferences: [],
@@ -1911,7 +1909,6 @@ function buildManufacturerEditor(manufacturer) {
       primaryDomain: manufacturer.primaryDomain,
       rankingScore: manufacturer.rankingScore,
       slug: manufacturer.slug,
-      updatedAt: serializeDate(manufacturer.updatedAt),
     },
     models: manufacturer.models.map((model) => ({
       equipmentName: model.equipment.name,
@@ -1985,7 +1982,6 @@ async function getManufacturerSnapshotSelection(db, requestedManufacturerId) {
       name: true,
       primaryDomain: true,
       rankingScore: true,
-      updatedAt: true,
     },
   });
   const selectedManufacturerId =
@@ -2071,7 +2067,6 @@ export async function getManufacturerManagementSnapshot(
               url: true,
             },
           },
-          updatedAt: true,
         },
       })
     : null;

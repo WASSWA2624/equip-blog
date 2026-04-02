@@ -1,17 +1,17 @@
-import PlaceholderPage from "@/components/common/placeholder-page";
+import PostInventoryScreen from "@/components/admin/post-inventory-screen";
+import { defaultLocale } from "@/features/i18n/config";
+import { getMessages } from "@/features/i18n/get-messages";
+import { getPostInventorySnapshot } from "@/features/posts";
 
-export default function DraftsPage() {
-  return (
-    <PlaceholderPage
-      badges={["/admin/posts/drafts", "Protected list"]}
-      description="This drafts list placeholder preserves the route for editorial work-in-progress content."
-      eyebrow="Drafts"
-      notes={[
-        "List draft posts with locale-aware metadata.",
-        "Connect filters and RTK Query data loading.",
-        "Link into the editor route.",
-      ]}
-      title="Draft posts"
-    />
-  );
+export default async function DraftsPage({ searchParams }) {
+  const resolvedSearchParams = await searchParams;
+  const [messages, snapshot] = await Promise.all([
+    getMessages(defaultLocale),
+    getPostInventorySnapshot({
+      scope: "drafts",
+      search: resolvedSearchParams.search,
+    }),
+  ]);
+
+  return <PostInventoryScreen copy={messages.admin.draftsList} initialData={snapshot} />;
 }
