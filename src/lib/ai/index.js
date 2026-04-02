@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { getMessages } from "@/features/i18n/get-messages";
 import { detectDuplicateEquipmentPost } from "@/lib/generation/duplicates";
+import { generationStageOrder, generationTerminalStageIds } from "@/lib/generation/stages";
 import { buildMarkdownFromStructuredArticle, buildHtmlFromStructuredArticle } from "@/lib/markdown";
 import { createCanonicalEquipmentIdentity, normalizeDisplayText } from "@/lib/normalization";
 import { buildVerifiedResearchPayload } from "@/lib/research";
@@ -1177,6 +1178,50 @@ function createDuplicateBlockedWarning(request, duplicateCheck) {
   return `Duplicate detection blocked generation for "${request.equipmentName}" in locale "${request.locale}". Existing post slug: ${duplicateSlug}.`;
 }
 
+function createDraftPreviewPayload({
+  article,
+  duplicateCheck,
+  persistedDraft,
+  providerConfig,
+  providerExecutionMode,
+  promptBundle,
+  request,
+  seoPayload,
+  warnings,
+}) {
+  return {
+    article: {
+      contentHtml: article.contentHtml,
+      contentMd: article.contentMd,
+      disclaimer: article.disclaimer,
+      excerpt: article.excerpt,
+      faqJson: article.faq,
+      sections: article.sections,
+      structuredBlocks: article.structuredBlocks,
+      structuredContentJson: article.structuredContentJson,
+      title: article.title,
+    },
+    duplicateCheck: createDuplicateDecisionSnapshot(duplicateCheck),
+    editorialStage: persistedDraft.editorialStage,
+    locale: request.locale,
+    post: {
+      id: persistedDraft.postId,
+      schedulePublishAt: request.schedulePublishAt,
+      translationId: persistedDraft.translationId,
+    },
+    promptBundle,
+    providerConfig: {
+      id: providerConfig.id,
+      model: providerConfig.model,
+      provider: providerConfig.provider,
+      purpose: providerConfig.purpose,
+    },
+    providerExecutionMode,
+    seoPayload,
+    warnings,
+  };
+}
+
 async function recordDuplicateBlockedAuditEvent(
   { actorId, duplicateCheck, jobId, request },
   prisma,
@@ -1461,7 +1506,7 @@ export async function generateDraftFromRequest(input, options = {}, prisma) {
   );
   const job = await createGenerationJobRecord(
     {
-      currentStage: "duplicate_check",
+      currentStage: generationStageOrder[0],
       equipmentName: input.equipmentName,
       locale: input.locale,
       providerConfigId: providerConfig.id,
@@ -1475,7 +1520,7 @@ export async function generateDraftFromRequest(input, options = {}, prisma) {
   let jobFinalized = false;
 
   try {
-    await markGenerationJobRunning(job.id, "duplicate_check", prisma);
+    await markGenerationJobRunning(job.id, generationStageOrder[0], prisma);
 
     if (duplicateCheck.duplicateDetected && !input.replaceExistingPost) {
       const duplicateDecision = createDuplicateDecisionSnapshot(duplicateCheck);
@@ -1484,7 +1529,7 @@ export async function generateDraftFromRequest(input, options = {}, prisma) {
       await cancelGenerationJob(
         job.id,
         {
-          currentStage: "duplicate_check_blocked",
+          currentStage: generationTerminalStageIds.duplicateCheckBlocked,
           postId: duplicateCheck.duplicateMatch?.postId || null,
           responseJson: {
             duplicateCheck: duplicateDecision,
@@ -1520,7 +1565,7 @@ export async function generateDraftFromRequest(input, options = {}, prisma) {
       );
     }
 
-    await markGenerationJobRunning(job.id, "composing_draft", prisma);
+    await markGenerationJobRunning(job.id, generationStageOrder[1], prisma);
 
     const composed = await composeDraftPackage(
       input,
@@ -1531,7 +1576,7 @@ export async function generateDraftFromRequest(input, options = {}, prisma) {
       prisma,
     );
 
-    await markGenerationJobRunning(job.id, "saving_draft", prisma);
+    await markGenerationJobRunning(job.id, generationStageOrder[2], prisma);
 
     const persistedDraft = await persistDraftPackage(
       {
@@ -1547,7 +1592,7 @@ export async function generateDraftFromRequest(input, options = {}, prisma) {
     await completeGenerationJob(
       job.id,
       {
-        currentStage: "draft_saved",
+        currentStage: generationStageOrder[3],
         postId: persistedDraft.postId,
         responseJson: {
           duplicateCheck: createDuplicateDecisionSnapshot(duplicateCheck),
@@ -1568,6 +1613,17 @@ export async function generateDraftFromRequest(input, options = {}, prisma) {
       postId: persistedDraft.postId,
       status: "draft_saved",
       success: true,
+      preview: createDraftPreviewPayload({
+        article: composed.article,
+        duplicateCheck,
+        persistedDraft,
+        providerConfig,
+        providerExecutionMode: composed.providerExecutionMode,
+        promptBundle: composed.promptBundle,
+        request: input,
+        seoPayload: composed.seoPayload,
+        warnings: composed.warnings,
+      }),
       warnings: composed.warnings,
     };
   } catch (error) {
@@ -1576,7 +1632,7 @@ export async function generateDraftFromRequest(input, options = {}, prisma) {
         job.id,
         error,
         {
-          currentStage: "failed",
+          currentStage: generationTerminalStageIds.failed,
         },
         prisma,
       ).catch(() => {});

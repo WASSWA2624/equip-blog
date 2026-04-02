@@ -5,6 +5,7 @@ import { generationRequestDefaults } from "@/lib/validation";
 const initialState = {
   articleDepth: generationRequestDefaults.articleDepth,
   currentStage: "idle",
+  duplicateDecision: null,
   duplicateMatch: null,
   equipmentName: "",
   error: null,
@@ -13,6 +14,7 @@ const initialState = {
   includeManualLinks: generationRequestDefaults.includeManualLinks,
   includeManufacturers: generationRequestDefaults.includeManufacturers,
   includeModels: generationRequestDefaults.includeModels,
+  jobId: null,
   loading: false,
   locale: generationRequestDefaults.locale,
   preview: null,
@@ -21,6 +23,7 @@ const initialState = {
   resultPostId: null,
   schedulePublishAt: generationRequestDefaults.schedulePublishAt,
   selectedProviderConfigId: null,
+  status: "idle",
   targetAudience: [...generationRequestDefaults.targetAudience],
   warnings: [],
 };

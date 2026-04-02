@@ -326,6 +326,14 @@ describe("AI composition pipeline", () => {
       editorialStage: "GENERATED",
       jobId: "job_1",
       postId: "post_1",
+      preview: {
+        article: {
+          title: expect.any(String),
+        },
+        post: {
+          id: "post_1",
+        },
+      },
       status: "draft_saved",
       success: true,
     });
@@ -551,6 +559,11 @@ describe("AI composition pipeline", () => {
       editorialStage: "GENERATED",
       jobId: "job_1",
       postId: "post_1",
+      preview: {
+        duplicateCheck: {
+          duplicateDetected: true,
+        },
+      },
       success: true,
     });
     expect(tx.post.update).toHaveBeenCalledWith(

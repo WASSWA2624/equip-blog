@@ -1,17 +1,15 @@
-import PlaceholderPage from "@/components/common/placeholder-page";
+import GeneratePostScreen from "@/components/admin/generate-post-screen";
+import { getAdminGeneratePostSnapshot } from "@/features/generator/admin-screen";
+import { defaultLocale } from "@/features/i18n/config";
+import { getMessages } from "@/features/i18n/get-messages";
+import { requireAdminPageSession } from "@/lib/auth";
 
-export default function GeneratePage() {
-  return (
-    <PlaceholderPage
-      badges={["/admin/generate", "Generator workflow"]}
-      description="The Generate Post route is scaffolded for the future source-grounded draft workflow."
-      eyebrow="Generate post"
-      notes={[
-        "Capture equipment name, depth, audience, and toggles.",
-        "Block duplicates before generation proceeds.",
-        "Surface generation progress from Redux state.",
-      ]}
-      title="Generate a new draft"
-    />
-  );
+export default async function GeneratePage() {
+  const auth = await requireAdminPageSession("/admin/generate");
+  const [messages, snapshot] = await Promise.all([
+    getMessages(defaultLocale),
+    getAdminGeneratePostSnapshot(auth.user),
+  ]);
+
+  return <GeneratePostScreen copy={messages.admin.generatePost} initialData={snapshot} />;
 }
