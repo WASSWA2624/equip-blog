@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { SESSION_COOKIE_NAME } from "@/lib/auth/config";
+import { getAdminAuthorizationFailure, hasAdminPermission } from "@/lib/auth/rbac";
 import { env } from "@/lib/env/server";
 
 import {
@@ -55,6 +56,36 @@ export async function requireAdminApiSession(request) {
   }
 
   return validation;
+}
+
+export function createAdminAuthorizationFailureResponse(permission, user) {
+  return NextResponse.json(getAdminAuthorizationFailure(permission, user), { status: 403 });
+}
+
+export function ensureAdminApiPermission(user, permission) {
+  if (hasAdminPermission(user, permission)) {
+    return null;
+  }
+
+  return createAdminAuthorizationFailureResponse(permission, user);
+}
+
+export async function requireAdminApiPermission(request, permission) {
+  const auth = await requireAdminApiSession(request);
+
+  if (auth.response) {
+    return auth;
+  }
+
+  const authorizationResponse = ensureAdminApiPermission(auth.user, permission);
+
+  if (authorizationResponse) {
+    return {
+      response: authorizationResponse,
+    };
+  }
+
+  return auth;
 }
 
 export async function createLoginResponse({ email, password, userAgent }) {

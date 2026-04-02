@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-import { requireAdminApiSession } from "@/lib/auth/api";
+import { ensureAdminApiPermission, requireAdminApiSession } from "@/lib/auth/api";
+import { getRequiredPermissionsForPostUpdate } from "@/lib/auth/rbac";
 import {
   idParamSchema,
   scaffoldRouteResponse,
@@ -32,6 +33,14 @@ export async function PATCH(request, { params }) {
 
   if (validatedBody.response) {
     return validatedBody.response;
+  }
+
+  for (const permission of getRequiredPermissionsForPostUpdate(validatedBody.data)) {
+    const authorizationResponse = ensureAdminApiPermission(auth.user, permission);
+
+    if (authorizationResponse) {
+      return authorizationResponse;
+    }
   }
 
   return scaffoldRouteResponse({

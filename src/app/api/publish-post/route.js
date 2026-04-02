@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-import { requireAdminApiSession } from "@/lib/auth/api";
+import { ensureAdminApiPermission, requireAdminApiSession } from "@/lib/auth/api";
+import { getRequiredPermissionForPublishAction } from "@/lib/auth/rbac";
 import { scaffoldRouteResponse, validateJsonRequest } from "@/lib/validation/api-placeholders";
 
 const publishPostSchema = z.object({
@@ -19,6 +20,15 @@ export async function POST(request) {
 
   if (result.response) {
     return result.response;
+  }
+
+  const authorizationResponse = ensureAdminApiPermission(
+    auth.user,
+    getRequiredPermissionForPublishAction(result.data.publishAt),
+  );
+
+  if (authorizationResponse) {
+    return authorizationResponse;
   }
 
   return scaffoldRouteResponse({

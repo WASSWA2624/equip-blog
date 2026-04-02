@@ -4,6 +4,7 @@ import Link from "next/link";
 import styled from "styled-components";
 
 import AdminLogoutButton from "@/components/auth/admin-logout-button";
+import { getAdminNavigation } from "@/lib/auth/rbac";
 
 const Shell = styled.div`
   display: grid;
@@ -91,16 +92,9 @@ const Footer = styled.footer`
   width: 100%;
 `;
 
-const adminNav = [
-  { key: "dashboard", href: "/admin" },
-  { key: "generate", href: "/admin/generate" },
-  { key: "drafts", href: "/admin/posts/drafts" },
-  { key: "published", href: "/admin/posts/published" },
-  { key: "comments", href: "/admin/comments" },
-  { key: "media", href: "/admin/media" },
-];
-
 export default function AdminShell({ children, messages, user }) {
+  const adminNav = getAdminNavigation(user);
+
   return (
     <Shell>
       <Header>
@@ -113,7 +107,7 @@ export default function AdminShell({ children, messages, user }) {
             <Nav aria-label="Admin navigation">
               {adminNav.map((item) => (
                 <NavLink href={item.href} key={item.key}>
-                  {messages.admin.navigation[item.key]}
+                  {messages.admin.navigation[item.key] || item.key}
                 </NavLink>
               ))}
             </Nav>

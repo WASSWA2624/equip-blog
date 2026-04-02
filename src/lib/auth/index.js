@@ -1,6 +1,5 @@
 import crypto from "node:crypto";
 
-import { UserRole } from "@prisma/client";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -10,6 +9,7 @@ import {
   buildAdminLoginHref,
   normalizeAdminRedirectTarget,
 } from "@/lib/auth/config";
+import { isAdminRole } from "@/lib/auth/rbac";
 import { env } from "@/lib/env/server";
 import { getPrismaClient } from "@/lib/prisma";
 
@@ -19,8 +19,6 @@ const PASSWORD_HASH_COST = 32768;
 const PASSWORD_HASH_BLOCK_SIZE = 8;
 const PASSWORD_HASH_PARALLELIZATION = 1;
 const PASSWORD_HASH_MAX_MEMORY = 128 * 1024 * 1024;
-const ADMIN_ROLES = new Set([UserRole.SUPER_ADMIN, UserRole.EDITOR]);
-
 function getPasswordHashParameters(passwordHash) {
   const [algorithm, cost, blockSize, parallelization, salt, derivedKey] = passwordHash.split("$");
 
@@ -66,7 +64,7 @@ function getPublicAdminUser(user) {
 }
 
 function isAllowedAdminUser(user) {
-  return Boolean(user?.isActive && ADMIN_ROLES.has(user.role));
+  return Boolean(user?.isActive && isAdminRole(user.role));
 }
 
 async function createAuditEvent(db, { action, actorId = null, entityId, entityType, payloadJson }) {
@@ -243,9 +241,9 @@ export async function authenticateAdminCredentials({ email, password, userAgent 
       payloadJson: {
         reason: !user
           ? "user_not_found"
-          : !user.isActive
-            ? "user_inactive"
-            : !ADMIN_ROLES.has(user.role)
+            : !user.isActive
+              ? "user_inactive"
+            : !isAdminRole(user.role)
               ? "role_not_allowed"
               : "invalid_password",
       },

@@ -1,3 +1,4 @@
+import AdminAccessDeniedPage from "@/components/admin/admin-access-denied";
 import AdminShell from "@/components/layout/admin-shell";
 import { getOptionalAdminSession, normalizeAdminRedirectTarget, requireAdminPageSession } from "@/lib/auth";
 import {
@@ -5,6 +6,7 @@ import {
   ADMIN_REQUEST_PATH_HEADER,
   ADMIN_ROUTE_KIND_HEADER,
 } from "@/lib/auth/config";
+import { getAdminPageAccess, hasAdminPermission } from "@/lib/auth/rbac";
 import { defaultLocale } from "@/features/i18n/config";
 import { getMessages } from "@/features/i18n/get-messages";
 import { LocaleMessagesProvider } from "@/features/i18n/locale-provider";
@@ -42,10 +44,22 @@ export default async function AdminLayout({ children }) {
     );
   }
 
+  const pageAccess = getAdminPageAccess(requestPath);
+  const isAuthorizedForPage =
+    !pageAccess || hasAdminPermission(authState.user, pageAccess.permission);
+
   return (
     <LocaleMessagesProvider locale={defaultLocale} messages={messages}>
       <AdminShell messages={messages} user={authState.user}>
-        {children}
+        {isAuthorizedForPage ? (
+          children
+        ) : (
+          <AdminAccessDeniedPage
+            pathname={pageAccess.pathname}
+            permission={pageAccess.permission}
+            user={authState.user}
+          />
+        )}
       </AdminShell>
     </LocaleMessagesProvider>
   );

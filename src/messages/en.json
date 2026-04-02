@@ -20,12 +20,19 @@
     "description": "Editorial, moderation, and generation workbench.",
     "footer": "Admin scaffold ready for authenticated workflows.",
     "navigation": {
+      "categories": "Categories",
       "comments": "Comments",
       "dashboard": "Dashboard",
       "drafts": "Drafts",
       "generate": "Generate",
+      "jobs": "Jobs",
+      "localization": "Localization",
+      "manufacturers": "Manufacturers",
       "media": "Media",
-      "published": "Published"
+      "prompts": "Prompts",
+      "published": "Published",
+      "seo": "SEO",
+      "sources": "Sources"
     }
   }
 }
