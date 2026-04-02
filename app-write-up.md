@@ -4,9 +4,9 @@
 
 This project is a full-stack AI-powered blog platform for publishing educational content about medical equipment.
 
-The Release 1 target is a production-ready application where an authenticated admin can enter a general equipment name, generate a source-grounded draft in English, review the draft, schedule or publish it, and expose the finished content on a public localized website.
+The Release 1 target is a production-ready application where an authenticated admin can enter a general equipment name, generate a source-grounded draft in English, review the draft, schedule or publish it, and expose the finished content on a public English website built on a locale-ready architecture.
 
-The platform must work for many medical equipment categories, not only microscopes. Example inputs include `microscope`, `centrifuge`, `hematology analyzer`, `ultrasound machine`, `autoclave`, and `patient monitor`.
+The platform must work for many medical equipment categories, not only microscopes. Example inputs include `microscope`, `centrifuge`, `hematology analyzer`, `ultrasound machine`, `autoclave`, `patient monitor, etc`.
 
 ## 2. Primary Goal
 
@@ -71,7 +71,7 @@ Fault and remedy rules:
 
 ### 3.2 Required Disclaimer
 
-Every generated post must include this visible disclaimer text, localized per supported locale:
+Every generated post must include this visible disclaimer text in English for Release 1. Future locales must provide an equivalent localized disclaimer through the locale file system:
 
 > While care has been taken to ensure accuracy of the content in this post, this content is provided for educational and informational purposes only. It does not replace the manufacturer's official instructions, operator manual, service manual, safety procedures, or institutional biomedical engineering protocols. Always follow the official manufacturer guidelines and applicable clinical regulations.
 
@@ -125,7 +125,7 @@ Release 1 must use the following stack:
 - Validation: Zod
 - ORM and database access: Prisma
 - Database: MySQL
-- Localization: Next.js locale-prefixed routing strategy
+- Localization: Next.js locale-prefixed routing strategy with `en` as the only active locale in Release 1
 - Image and file handling: local `public/uploads` storage first, switchable to S3-compatible object storage by environment configuration
 - Search indexing: database-backed search for Release 1
 - Background jobs: internal job runner and queue
@@ -150,24 +150,24 @@ Unless explicitly marked optional or future-phase later in this document, the fo
 
 ### 5.1 Public Website
 
-Mandatory public routes and pages:
+Mandatory public routes and pages for Release 1 are the English instances of these locale-ready route families:
 
-- locale home page
-- locale blog index page
-- locale category pages
-- locale manufacturer pages
-- locale equipment pages
-- locale individual post pages
-- locale search page
-- locale About page
-- locale Contact page
-- locale Disclaimer page
-- locale Privacy Policy page
+- English home page
+- English blog index page
+- English category pages
+- English manufacturer pages
+- English equipment pages
+- English individual post pages
+- English search page
+- English About page
+- English Contact page
+- English Disclaimer page
+- English Privacy Policy page
 
 Mandatory public page behavior:
 
-- all public routes are locale-prefixed
-- root `/` redirects to the default or negotiated locale home page
+- all public routes are locale-prefixed even though only `en` is active in Release 1
+- root `/` redirects to the English home page at `/en`
 - published content only appears on public pages
 - manufacturer and equipment pages act as topical landing pages and discovery pages
 - post pages contain share actions and comments
@@ -192,7 +192,7 @@ Mandatory admin routes and pages:
 - Prompt configuration
 - Source configuration
 
-Admin routes are not locale-prefixed, but admin labels must still support localization.
+Admin routes are not locale-prefixed, but admin labels must be sourced from locale-ready message files. Release 1 only ships English admin copy.
 
 ## 6. User Roles
 
@@ -207,7 +207,7 @@ Super Admin must be able to:
 - manage provider and model configuration
 - publish, unpublish, archive, and schedule posts
 - moderate comments
-- manage translations
+- manage locale configuration and any future translations that are added
 - manage categories and manufacturers
 - view logs and analytics
 
@@ -239,7 +239,7 @@ Visitor capabilities:
 ### 7.1 Post Generation Flow
 
 1. Admin opens `Generate Post`.
-2. Admin enters equipment name and selects locale, article depth, target audiences, and content toggles.
+2. Admin enters equipment name and selects article depth, target audiences, and content toggles. The locale is fixed to `en` in Release 1.
 3. System normalizes the equipment name into a canonical equipment identity.
 4. System checks for duplicates using canonical equipment plus locale.
 5. If a duplicate exists, the system blocks generation until the admin chooses replacement or cancel.
@@ -286,7 +286,7 @@ Before AI writing begins, the system must build a structured research payload co
 
 - canonical equipment identity
 - aliases used
-- localized target locale
+- target locale, which is `en` in Release 1
 - verified definition
 - operating principle summary
 - component list
@@ -374,11 +374,11 @@ Release 1 must include:
 - server-rendered public pages
 - clean readable URLs
 - locale-prefixed canonical public routes
-- dynamic metadata per localized post
+- dynamic metadata per published English post in Release 1 and per post translation when future locales are enabled
 - Open Graph metadata
 - Twitter/X metadata
 - canonical URLs
-- locale alternate links
+- locale alternate links when additional locales are enabled
 - XML sitemap
 - robots.txt
 - breadcrumb schema
@@ -401,34 +401,34 @@ Release 1 must include:
 - descriptive image captions
 - topical cluster landing pages for categories, manufacturers, and equipment
 - related posts section
-- multilingual SEO support
+- multilingual SEO-ready architecture with English-only output in Release 1
 
 ### 10.3 SEO Page Types
 
 Canonical public routes for Release 1:
 
 - `/`
-- `/{locale}`
-- `/{locale}/blog`
-- `/{locale}/blog/{slug}`
-- `/{locale}/category/{slug}`
-- `/{locale}/manufacturer/{slug}`
-- `/{locale}/equipment/{slug}`
-- `/{locale}/search`
-- `/{locale}/about`
-- `/{locale}/contact`
-- `/{locale}/disclaimer`
-- `/{locale}/privacy`
+- `/en`
+- `/en/blog`
+- `/en/blog/{slug}`
+- `/en/category/{slug}`
+- `/en/manufacturer/{slug}`
+- `/en/equipment/{slug}`
+- `/en/search`
+- `/en/about`
+- `/en/contact`
+- `/en/disclaimer`
+- `/en/privacy`
 
 Routing rules:
 
-- `/` redirects to the default or negotiated locale home page
+- `/` redirects to `/en`
 - canonical tags on public pages must point to locale-prefixed URLs
-- alternate language links must be emitted for every available translation
+- alternate language links must be emitted only for enabled locales that actually exist
 
 ### 10.4 Metadata to Generate Per Post Translation
 
-Each localized post translation must have:
+Each persisted post translation, including the required English translation in Release 1, must have:
 
 - title
 - description
@@ -447,20 +447,30 @@ Each localized post translation must have:
 
 ### 11.1 Locale Strategy
 
-Release 1 supported locales:
+Release 1 active locale:
 
 - `en`
-- `fr`
-- `sw`
-- `ar`
 
-`en` is the default source locale.
+`en` is both the default locale and the only active locale in Release 1.
+
+Locale extensibility rules:
+
+- public routing, metadata, message loading, and content persistence must remain locale-aware even though only `en` is active in Release 1
+- adding a new locale must not require schema changes or route redesign
+- enabling a new locale should require:
+  - adding a new locale file under `messages/`
+  - registering the locale in the existing supported locale configuration
+  - providing any required locale-specific legal copy such as disclaimers
+- the existing routing, rendering, metadata, and persistence flow must then handle the new locale without architectural changes
 
 ### 11.2 Localized Routing
 
-Examples:
+Release 1 example:
 
 - `/en/blog/microscope`
+
+Future examples after a new locale is registered:
+
 - `/fr/blog/microscope`
 - `/sw/blog/microscope`
 - `/ar/blog/microscope`
@@ -468,11 +478,14 @@ Examples:
 Routing rules:
 
 - all public routes are nested under `[locale]`
-- root `/` redirects to the chosen locale
+- Release 1 only accepts `en`
+- root `/` redirects to `/en`
 - unsupported locale prefixes return `404` or redirect safely according to implementation policy
 - admin routes remain under `/admin`
 
-### 11.3 What Must Be Localized
+### 11.3 Locale-Driven Surfaces
+
+The system must be built so these surfaces are locale-driven even though Release 1 only ships English copy:
 
 - UI labels
 - buttons
@@ -484,10 +497,13 @@ Routing rules:
 - image captions where possible
 - public legal pages
 
-### 11.4 Translation Approach
+Release 1 only requires English files and English content for these surfaces.
 
-- generate source content in default locale `en` first
-- when a visitor requests a supported non-`en` locale:
+### 11.4 Translation and Locale Persistence Approach
+
+- Release 1 generates and persists English content only
+- `PostTranslation` and locale-aware render artifacts remain mandatory so future locales can be added without schema changes
+- when a new supported locale is enabled in the future:
   - if the translation does not exist, translate from the current approved `en` content and persist it
   - if the translation already exists, reuse the stored translation
 - store exactly one active translation record per post per locale
@@ -525,7 +541,7 @@ Secure external provider login is optional after Release 1 and must not replace 
 
 The data model must:
 
-- support localized content per post
+- support locale-aware content per post with `en` as the only active locale in Release 1
 - preserve stable canonical slugs
 - support duplicate detection by canonical equipment and locale
 - support scheduling, publishing, and archiving
@@ -971,13 +987,13 @@ src/
     styled-registry.js
   messages/
     en.json
-    fr.json
-    sw.json
-    ar.json
+    <new-locale>.json
   prisma/
     schema.prisma
   middleware.js
 ```
+
+Release 1 only requires `messages/en.json`. Future locales follow the same `messages/<locale>.json` pattern.
 
 ## 15. Styled-Components Architecture
 
@@ -1081,7 +1097,7 @@ Use Zod in these layers:
 The generation contract must validate:
 
 - `equipmentName`
-- `locale`
+- `locale`, validated against the configured supported locales and equal to `en` in Release 1
 - `articleDepth` enum: `fast | complete | repair | maintenance`
 - `targetAudience` as a non-empty array of:
   - `students`
@@ -1132,7 +1148,7 @@ The AI layer must:
 - generate meta titles and descriptions
 - generate image captions
 - generate related-keyword suggestions
-- rewrite for supported audiences and locales
+- rewrite for supported audiences and active locales from configuration
 - use configured provider and model settings without code changes
 
 The AI layer must not be treated as the factual source of truth.
@@ -1143,7 +1159,7 @@ The AI layer must not be treated as the factual source of truth.
 - `complete`: full depth article with all required sections
 - `repair`: fault-heavy and troubleshooting-heavy emphasis
 - `maintenance`: care-heavy and schedule-heavy emphasis
-- `translation`: localized version of an approved `en` article
+- `translation`: future locale version of an approved `en` article once an additional locale is enabled
 
 ### 18.3 AI Pipeline Components
 
@@ -1340,7 +1356,7 @@ Release 1 targets the following media when reliable legal assets exist:
 The Generate Post page must include:
 
 - equipment name
-- locale
+- locale control fixed to `en` in Release 1 and designed to expand automatically when new locales are registered
 - article depth dropdown, default `complete`
 - target audience multi-select checkboxes, all selected by default
 - include images toggle
@@ -1386,17 +1402,17 @@ If a schedule is entered during generation, it acts as a pre-filled scheduling i
 
 Release 1 must include:
 
-- locale home page with featured and recent published content
-- locale blog index page with pagination
-- locale category page with localized content list
-- locale manufacturer page with manufacturer summary, related posts, and model list where available
-- locale equipment page with equipment overview, related posts, and manufacturer coverage
-- locale post page
-- locale search page
-- locale About page
-- locale Contact page
-- locale Disclaimer page
-- locale Privacy Policy page
+- English home page with featured and recent published content
+- English blog index page with pagination
+- English category page with content list
+- English manufacturer page with manufacturer summary, related posts, and model list where available
+- English equipment page with equipment overview, related posts, and manufacturer coverage
+- English post page
+- English search page
+- English About page
+- English Contact page
+- English Disclaimer page
+- English Privacy Policy page
 
 ### 24.2 Mandatory Post Page Sections
 
@@ -1629,7 +1645,7 @@ The exact env schema may add helper variables, but Release 1 must support this c
 DATABASE_URL="mysql://user:password@localhost:3306/med_blog"
 NEXT_PUBLIC_APP_URL="https://example.com"
 DEFAULT_LOCALE="en"
-SUPPORTED_LOCALES="en,fr,sw,ar"
+SUPPORTED_LOCALES="en"
 
 SESSION_SECRET="change-me"
 SESSION_MAX_AGE_SECONDS="28800"
@@ -1773,7 +1789,7 @@ Release 1 must include:
 - draft save and edit flow
 - manual publish
 - scheduled publish
-- public localized blog pages
+- English public blog pages on a locale-ready routing foundation
 - comments with moderation
 - SEO metadata
 - sitemap and robots
@@ -1817,7 +1833,7 @@ At a high level, the build order is:
 3. define environment schema
 4. implement database schema, indexes, and seeds
 5. add authentication and RBAC
-6. add locale routing and translation persistence
+6. add locale-ready routing and English-first locale persistence
 7. add generation validation, source collection, and AI composition
 8. add duplicate handling and Generate Post admin UX
 9. add editorial lifecycle and scheduling
@@ -1858,7 +1874,7 @@ This application must be built as a Next.js App Router full-stack content platfo
 - Redux Toolkit for admin-side state
 - Zod for strict validation
 - Prisma plus MySQL for structured persistence
-- localized public routes and persisted translations
+- English-first locale-ready public routes and translation-ready persistence
 - public reading without signup
 - guest comments with moderation
 - rich SEO metadata
@@ -1910,13 +1926,14 @@ Mandatory Release 1 scope rule:
 - sections `1-39` and `42-46` are mandatory unless a specific item is explicitly labeled optional
 - sections `40-41` are future-phase only and are not part of Release 1
 - section `45` is informational only
+- Release 1 locale support is limited to `en`; additional locales are optional extensions that must reuse the existing locale-aware architecture
 
 ### 46.3 Completion Gate
 
 Implementation is incomplete unless all of the following are true:
 
 - all required content sections are generated, including SOP and model-specific differences where available
-- localization works with `en` source generation, translation reuse, and per-locale persistence
+- English-only locale behavior is correct in Release 1, and adding a new locale requires only adding a locale file, registering it in the existing locale configuration, and using the existing locale-aware routing and persistence flow
 - duplicate equipment detection and replace-or-cancel branching are enforced
 - article depth, target audience, and provider selection controls match UI and API contracts
 - scheduling works during or after generation with a date-time picker and background worker
