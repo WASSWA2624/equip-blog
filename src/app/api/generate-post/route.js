@@ -1,16 +1,7 @@
-import { z } from "zod";
-
 import { requireAdminApiPermission } from "@/lib/auth/api";
 import { ADMIN_PERMISSIONS } from "@/lib/auth/rbac";
+import { generationRequestSchema } from "@/lib/validation";
 import { scaffoldRouteResponse, validateJsonRequest } from "@/lib/validation/api-placeholders";
-
-const generatePostSchema = z.object({
-  articleDepth: z.string().optional(),
-  equipmentName: z.string().min(1).optional(),
-  locale: z.string().optional(),
-  providerConfigId: z.string().optional(),
-  targetAudience: z.array(z.string()).optional(),
-});
 
 export async function POST(request) {
   const auth = await requireAdminApiPermission(request, ADMIN_PERMISSIONS.GENERATE_POSTS);
@@ -19,7 +10,7 @@ export async function POST(request) {
     return auth.response;
   }
 
-  const result = await validateJsonRequest(request, generatePostSchema);
+  const result = await validateJsonRequest(request, generationRequestSchema);
 
   if (result.response) {
     return result.response;

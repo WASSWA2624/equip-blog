@@ -1,16 +1,8 @@
-import { z } from "zod";
-
+import { commentSubmissionSchema } from "@/lib/validation";
 import { scaffoldRouteResponse, validateJsonRequest } from "@/lib/validation/api-placeholders";
 
-const createCommentSchema = z.object({
-  body: z.string().optional(),
-  email: z.string().email().optional(),
-  name: z.string().optional(),
-  postSlug: z.string().optional(),
-});
-
 export async function POST(request) {
-  const result = await validateJsonRequest(request, createCommentSchema);
+  const result = await validateJsonRequest(request, commentSubmissionSchema);
 
   if (result.response) {
     return result.response;

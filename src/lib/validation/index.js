@@ -1,3 +1,2 @@
-export const validationScaffold = {
-  status: "pending",
-};
+export * from "./comments";
+export * from "./generation";

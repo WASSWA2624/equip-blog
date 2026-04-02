@@ -1,18 +1,27 @@
 import { createSlice } from "@reduxjs/toolkit";
 
+import { generationRequestDefaults } from "@/lib/validation";
+
 const initialState = {
-  articleDepth: "complete",
+  articleDepth: generationRequestDefaults.articleDepth,
   currentStage: "idle",
   duplicateMatch: null,
   equipmentName: "",
   error: null,
+  includeFaults: generationRequestDefaults.includeFaults,
+  includeImages: generationRequestDefaults.includeImages,
+  includeManualLinks: generationRequestDefaults.includeManualLinks,
+  includeManufacturers: generationRequestDefaults.includeManufacturers,
+  includeModels: generationRequestDefaults.includeModels,
   loading: false,
-  locale: "en",
+  locale: generationRequestDefaults.locale,
   preview: null,
   progress: 0,
+  replaceExistingPost: generationRequestDefaults.replaceExistingPost,
   resultPostId: null,
+  schedulePublishAt: generationRequestDefaults.schedulePublishAt,
   selectedProviderConfigId: null,
-  targetAudience: [],
+  targetAudience: [...generationRequestDefaults.targetAudience],
   warnings: [],
 };
 

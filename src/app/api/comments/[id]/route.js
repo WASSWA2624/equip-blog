@@ -1,17 +1,12 @@
-import { z } from "zod";
-
 import { requireAdminApiPermission } from "@/lib/auth/api";
 import { ADMIN_PERMISSIONS } from "@/lib/auth/rbac";
+import { commentModerationUpdateSchema } from "@/lib/validation";
 import {
   idParamSchema,
   scaffoldRouteResponse,
   validateJsonRequest,
   validateParams,
 } from "@/lib/validation/api-placeholders";
-
-const updateCommentSchema = z.object({
-  moderationStatus: z.string().optional(),
-});
 
 async function resolveCommentParams(params) {
   const resolvedParams = await params;
@@ -31,7 +26,7 @@ export async function PATCH(request, { params }) {
     return validatedParams.response;
   }
 
-  const validatedBody = await validateJsonRequest(request, updateCommentSchema);
+  const validatedBody = await validateJsonRequest(request, commentModerationUpdateSchema);
 
   if (validatedBody.response) {
     return validatedBody.response;
