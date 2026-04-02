@@ -220,24 +220,24 @@ function createAdapterFromDatabaseUrl(databaseUrl) {
     throw new Error("DATABASE_URL must include a database name for Prisma seeds.");
   }
 
-  return new PrismaMariaDb(
-    {
-      host: parsedUrl.hostname,
-      port: parsedUrl.port ? Number.parseInt(parsedUrl.port, 10) : 3306,
-      user: decodeURIComponent(parsedUrl.username),
-      password: decodeURIComponent(parsedUrl.password),
-      database,
-      connectionLimit: Number.parseInt(parsedUrl.searchParams.get("connection_limit") || "5", 10),
-    },
-    {
-      schema: database,
-    },
-  );
+  return new PrismaMariaDb({
+    host: parsedUrl.hostname,
+    port: parsedUrl.port ? Number.parseInt(parsedUrl.port, 10) : 3306,
+    user: decodeURIComponent(parsedUrl.username),
+    password: decodeURIComponent(parsedUrl.password),
+    database,
+    connectionLimit: Number.parseInt(parsedUrl.searchParams.get("connection_limit") || "5", 10),
+  });
 }
 
 function createPasswordHash(password) {
   const salt = crypto.randomBytes(16);
-  const derivedKey = crypto.scryptSync(password, salt, 64);
+  const derivedKey = crypto.scryptSync(password, salt, 64, {
+    maxmem: 128 * 1024 * 1024,
+    N: 32768,
+    p: 1,
+    r: 8,
+  });
 
   return `scrypt$32768$8$1$${salt.toString("base64url")}$${derivedKey.toString("base64url")}`;
 }
@@ -290,6 +290,7 @@ async function seedAdminUser(tx) {
       where: { email },
       data: {
         name: "Super Admin",
+        passwordHash: createPasswordHash(password),
         role: UserRole.SUPER_ADMIN,
         isActive: true,
       },

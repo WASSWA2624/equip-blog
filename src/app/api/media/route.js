@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { requireAdminApiSession } from "@/lib/auth/api";
 import { scaffoldRouteResponse, validateJsonRequest } from "@/lib/validation/api-placeholders";
 
 const mediaUploadSchema = z.object({
@@ -8,6 +9,12 @@ const mediaUploadSchema = z.object({
 });
 
 export async function POST(request) {
+  const auth = await requireAdminApiSession(request);
+
+  if (auth.response) {
+    return auth.response;
+  }
+
   const result = await validateJsonRequest(request, mediaUploadSchema);
 
   if (result.response) {

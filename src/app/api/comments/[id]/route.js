@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { requireAdminApiSession } from "@/lib/auth/api";
 import {
   idParamSchema,
   scaffoldRouteResponse,
@@ -17,6 +18,12 @@ async function resolveCommentParams(params) {
 }
 
 export async function PATCH(request, { params }) {
+  const auth = await requireAdminApiSession(request);
+
+  if (auth.response) {
+    return auth.response;
+  }
+
   const validatedParams = await resolveCommentParams(params);
 
   if (validatedParams.response) {
@@ -38,7 +45,13 @@ export async function PATCH(request, { params }) {
   });
 }
 
-export async function DELETE(_request, { params }) {
+export async function DELETE(request, { params }) {
+  const auth = await requireAdminApiSession(request);
+
+  if (auth.response) {
+    return auth.response;
+  }
+
   const validatedParams = await resolveCommentParams(params);
 
   if (validatedParams.response) {

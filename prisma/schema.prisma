@@ -78,9 +78,25 @@ model User {
   isActive                Boolean                  @default(true)
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
+  adminSessions           AdminSession[]
   authoredPosts           Post[]
   commentModerationEvents CommentModerationEvent[]
   auditEvents             AuditEvent[]
+}
+
+model AdminSession {
+  id            String   @id @default(cuid())
+  userId        String
+  tokenHash     String   @unique @db.VarChar(64)
+  expiresAt     DateTime
+  invalidatedAt DateTime?
+  createdAt     DateTime @default(now())
+  lastUsedAt    DateTime @default(now())
+  userAgent     String?  @db.VarChar(512)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@index([userId, expiresAt])
 }
 
 model Equipment {

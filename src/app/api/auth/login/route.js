@@ -1,10 +1,11 @@
 import { z } from "zod";
 
-import { scaffoldRouteResponse, validateJsonRequest } from "@/lib/validation/api-placeholders";
+import { createLoginResponse } from "@/lib/auth/api";
+import { validateJsonRequest } from "@/lib/validation/api-placeholders";
 
 const loginSchema = z.object({
-  email: z.string().email().optional(),
-  password: z.string().min(1).optional(),
+  email: z.string().trim().email(),
+  password: z.string().min(1).max(255),
 });
 
 export async function POST(request) {
@@ -14,10 +15,9 @@ export async function POST(request) {
     return result.response;
   }
 
-  return scaffoldRouteResponse({
-    access: "admin",
-    body: result.data,
-    method: "POST",
-    route: "/api/auth/login",
+  return createLoginResponse({
+    email: result.data.email,
+    password: result.data.password,
+    userAgent: request.headers.get("user-agent"),
   });
 }

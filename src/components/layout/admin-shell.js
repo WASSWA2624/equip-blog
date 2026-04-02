@@ -3,6 +3,8 @@
 import Link from "next/link";
 import styled from "styled-components";
 
+import AdminLogoutButton from "@/components/auth/admin-logout-button";
+
 const Shell = styled.div`
   display: grid;
   gap: ${({ theme }) => theme.spacing.lg};
@@ -48,11 +50,37 @@ const Nav = styled.nav`
   gap: ${({ theme }) => theme.spacing.sm};
 `;
 
+const HeaderActions = styled.div`
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing.sm};
+  justify-content: flex-end;
+`;
+
 const NavLink = styled(Link)`
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 999px;
   color: white;
   padding: 0.45rem 0.8rem;
+`;
+
+const UserBadge = styled.div`
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: ${({ theme }) => theme.radius.md};
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.55rem 0.8rem;
+`;
+
+const UserName = styled.strong`
+  font-size: 0.95rem;
+`;
+
+const UserMeta = styled.span`
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.82rem;
 `;
 
 const Footer = styled.footer`
@@ -72,7 +100,7 @@ const adminNav = [
   { key: "media", href: "/admin/media" },
 ];
 
-export default function AdminShell({ children, messages }) {
+export default function AdminShell({ children, messages, user }) {
   return (
     <Shell>
       <Header>
@@ -81,13 +109,22 @@ export default function AdminShell({ children, messages }) {
             <Title href="/admin">{messages.admin.title}</Title>
             <Description>{messages.admin.description}</Description>
           </BrandBlock>
-          <Nav aria-label="Admin navigation">
-            {adminNav.map((item) => (
-              <NavLink href={item.href} key={item.key}>
-                {messages.admin.navigation[item.key]}
-              </NavLink>
-            ))}
-          </Nav>
+          <HeaderActions>
+            <Nav aria-label="Admin navigation">
+              {adminNav.map((item) => (
+                <NavLink href={item.href} key={item.key}>
+                  {messages.admin.navigation[item.key]}
+                </NavLink>
+              ))}
+            </Nav>
+            <UserBadge aria-label="Authenticated admin">
+              <UserName>{user.name}</UserName>
+              <UserMeta>
+                {user.email} | {user.role}
+              </UserMeta>
+            </UserBadge>
+            <AdminLogoutButton />
+          </HeaderActions>
         </HeaderInner>
       </Header>
       {children}

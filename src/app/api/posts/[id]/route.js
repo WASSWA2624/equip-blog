@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { requireAdminApiSession } from "@/lib/auth/api";
 import {
   idParamSchema,
   scaffoldRouteResponse,
@@ -14,6 +15,12 @@ const updatePostSchema = z.object({
 });
 
 export async function PATCH(request, { params }) {
+  const auth = await requireAdminApiSession(request);
+
+  if (auth.response) {
+    return auth.response;
+  }
+
   const resolvedParams = await params;
   const validatedParams = validateParams(resolvedParams, idParamSchema);
 

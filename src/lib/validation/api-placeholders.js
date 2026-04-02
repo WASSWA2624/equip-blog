@@ -15,13 +15,45 @@ export async function validateJsonRequest(request, schema = emptyBodySchema) {
   const contentType = request.headers.get("content-type") || "";
 
   if (!contentType.includes("application/json")) {
+    const result = schema.safeParse({});
+
+    if (!result.success) {
+      return {
+        response: NextResponse.json(
+          {
+            success: false,
+            status: "invalid_payload",
+            issues: result.error.flatten(),
+          },
+          { status: 400 },
+        ),
+      };
+    }
+
     return {
-      data: schema.parse({}),
+      data: result.data,
     };
   }
 
   const rawBody = await request.text();
-  const parsedBody = rawBody ? JSON.parse(rawBody) : {};
+  let parsedBody = {};
+
+  if (rawBody) {
+    try {
+      parsedBody = JSON.parse(rawBody);
+    } catch {
+      return {
+        response: NextResponse.json(
+          {
+            success: false,
+            status: "invalid_json",
+          },
+          { status: 400 },
+        ),
+      };
+    }
+  }
+
   const result = schema.safeParse(parsedBody);
 
   if (!result.success) {

@@ -1,17 +1,14 @@
-import PlaceholderPage from "@/components/common/placeholder-page";
+import AdminLoginScreen from "@/components/auth/admin-login-screen";
+import { normalizeAdminRedirectTarget } from "@/lib/auth";
 
-export default function AdminLoginPage() {
-  return (
-    <PlaceholderPage
-      badges={["/admin/login", "Auth entry"]}
-      description="The admin login screen is in place for the email/password authentication flow defined in the architecture."
-      eyebrow="Login"
-      notes={[
-        "Add secure credential validation.",
-        "Persist admin sessions.",
-        "Separate login from protected admin surfaces.",
-      ]}
-      title="Admin login"
-    />
-  );
+export const metadata = {
+  title: "Admin Login",
+  description: "Sign in to the Equip Blog admin workspace.",
+};
+
+export default async function AdminLoginPage({ searchParams }) {
+  const resolvedSearchParams = await searchParams;
+  const nextPath = normalizeAdminRedirectTarget(resolvedSearchParams?.next);
+
+  return <AdminLoginScreen nextPath={nextPath} />;
 }
