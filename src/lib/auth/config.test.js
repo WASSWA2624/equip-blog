@@ -20,6 +20,7 @@ describe("auth route config", () => {
   it("identifies which API routes require an admin session", () => {
     expect(isProtectedAdminApiPath("/api/auth/login")).toBe(false);
     expect(isProtectedAdminApiPath("/api/auth/logout")).toBe(true);
+    expect(isProtectedAdminApiPath("/api/localization")).toBe(true);
     expect(isProtectedAdminApiPath("/api/posts")).toBe(true);
     expect(isProtectedAdminApiPath("/api/posts/cmg123")).toBe(true);
     expect(isProtectedAdminApiPath("/api/posts/slug/defibrillator")).toBe(false);

@@ -14,6 +14,7 @@ const protectedAdminApiPaths = new Set([
   "/api/auth/logout",
   "/api/generate-post",
   "/api/jobs",
+  "/api/localization",
   "/api/manufacturers",
   "/api/media",
   "/api/metrics",

@@ -1,17 +1,22 @@
-import PlaceholderPage from "@/components/common/placeholder-page";
+import LocalizationManagementScreen from "@/components/admin/localization-management-screen";
+import { defaultLocale } from "@/features/i18n/config";
+import { getMessages } from "@/features/i18n/get-messages";
+import { getLocalizationManagementSnapshot } from "@/features/posts";
 
-export default function LocalizationPage() {
+export default async function LocalizationPage({ searchParams }) {
+  const resolvedSearchParams = await searchParams;
+  const [messages, snapshot] = await Promise.all([
+    getMessages(defaultLocale),
+    getLocalizationManagementSnapshot({
+      locale: resolvedSearchParams.locale,
+      postId: resolvedSearchParams.postId,
+    }),
+  ]);
+
   return (
-    <PlaceholderPage
-      badges={["/admin/localization", "Management"]}
-      description="The localization route is available for future locale enablement and translation operations."
-      eyebrow="Localization"
-      notes={[
-        "Register new supported locales in configuration.",
-        "Manage locale-specific admin and public copy.",
-        "Preserve the locale-ready routing foundation.",
-      ]}
-      title="Localization management"
+    <LocalizationManagementScreen
+      copy={messages.admin.localizationManagement}
+      initialData={snapshot}
     />
   );
 }

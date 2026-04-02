@@ -38,6 +38,33 @@ describe("locale scaffold", () => {
     expect(supportedLocales).toContain(defaultLocale);
   });
 
+  it("can expose registered but inactive locales for future activation planning", async () => {
+    const { getInactiveLocaleDefinitions, localeRegistry } = await import("./config");
+
+    localeRegistry.fr = {
+      label: "French",
+      loadMessages: async () => ({
+        default: {
+          post: {
+            defaultDisclaimer: "French disclaimer",
+          },
+        },
+      }),
+    };
+
+    expect(getInactiveLocaleDefinitions()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "fr",
+          isActive: false,
+          label: "French",
+        }),
+      ]),
+    );
+
+    delete localeRegistry.fr;
+  });
+
   it("fails when an enabled locale has no registered definition", async () => {
     process.env.SUPPORTED_LOCALES = "en,fr";
     vi.resetModules();

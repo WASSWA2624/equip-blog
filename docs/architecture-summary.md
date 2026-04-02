@@ -13,7 +13,7 @@ This summary freezes the Release 1 architecture before scaffolding begins. The a
 - Lifecycle rule: `status` and `editorialStage` stay separate
 - Storage rule: persist Markdown, HTML, and structured JSON; media uses a driver abstraction
 - Access rule: Release 1 uses admin email/password auth and guest public comments
-- Locale extensibility rule: a new locale is added by creating `messages/<locale>.json` and registering it in the supported-locale configuration
+- Locale extensibility rule: a new locale is added by creating `src/messages/<locale>.json`, registering it in the locale configuration, and reusing the existing locale-aware persistence flow
 
 ## Route Families
 
@@ -59,4 +59,3 @@ This summary freezes the Release 1 architecture before scaffolding begins. The a
 6. The system saves the result as a draft with separate `status` and `editorialStage` values.
 7. An admin reviews, edits, schedules, or manually publishes the draft.
 8. Public routes render only published locale-aware content plus moderated comments.
-

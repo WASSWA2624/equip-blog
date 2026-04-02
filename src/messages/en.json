@@ -19,6 +19,43 @@
     "title": "Equip Blog Admin",
     "description": "Editorial, moderation, and generation workbench.",
     "footer": "Admin scaffold ready for authenticated workflows.",
+    "localizationManagement": {
+      "activationGuide": [
+        "Add a new locale message file under src/messages.",
+        "Register the locale in src/features/i18n/config.js.",
+        "Add the locale code to SUPPORTED_LOCALES when it is ready to go live.",
+        "Reuse the existing localization save flow to edit and persist the new locale."
+      ],
+      "activationGuideTitle": "Future locale activation path",
+      "description": "Edit the active English translation today while keeping future locales configuration-driven and schema-stable.",
+      "editorDescription": "Markdown, HTML, FAQ JSON, and structured content all persist per post and locale through the same storage layer.",
+      "editorTitle": "Locale editor",
+      "emptyPosts": "No posts are available yet. Generated drafts and published posts will appear here as soon as content exists.",
+      "eyebrow": "Localization",
+      "fieldDisclaimer": "Disclaimer",
+      "fieldExcerpt": "Excerpt",
+      "fieldFaqJson": "FAQ JSON",
+      "fieldHtml": "HTML artifact",
+      "fieldMarkdown": "Markdown artifact",
+      "fieldStructuredContentJson": "Structured content JSON",
+      "fieldTitle": "Localized title",
+      "inactiveLocaleHint": "Register the locale in configuration and add it to SUPPORTED_LOCALES before editing.",
+      "loadState": "Loading locale content...",
+      "localeRegistryTitle": "Locale registry",
+      "noStoredTranslation": "No translation is stored yet for this locale.",
+      "postsTitle": "Localized posts",
+      "saveAction": "Save locale content",
+      "saveErrorPrefix": "Unable to save locale content",
+      "saveSuccess": "Locale content saved.",
+      "saveWorking": "Saving locale content...",
+      "seededFromDefaultLocale": "Seeded from the current English content so future locales can reuse the same persistence flow.",
+      "selectionErrorPrefix": "Unable to load localized content",
+      "storedTranslation": "Editing the saved locale content.",
+      "statusActive": "Active",
+      "statusDefault": "Default",
+      "statusInactive": "Inactive",
+      "title": "Localization management"
+    },
     "navigation": {
       "categories": "Categories",
       "comments": "Comments",
@@ -34,5 +71,8 @@
       "seo": "SEO",
       "sources": "Sources"
     }
+  },
+  "post": {
+    "defaultDisclaimer": "While care has been taken to ensure accuracy of the content in this post, this content is provided for educational and informational purposes only. It does not replace the manufacturer's official instructions, operator manual, service manual, safety procedures, or institutional biomedical engineering protocols. Always follow the official manufacturer guidelines and applicable clinical regulations."
   }
 }

@@ -33,6 +33,8 @@ Release 1 defines a production-ready app with:
 
 Future locale integration should be a small extension: add a new locale file, register it in the existing locale configuration, and reuse the existing locale-aware routing and persistence flow.
 
+The concrete activation path is documented in [`docs/localization-workflow.md`](./docs/localization-workflow.md).
+
 ## Source Of Truth Rules
 
 All implementation decisions must follow [`app-write-up.md`](./app-write-up.md).
