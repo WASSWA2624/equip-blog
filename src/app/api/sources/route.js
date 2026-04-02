@@ -4,23 +4,21 @@ import { requireAdminApiPermission } from "@/lib/auth/api";
 import { ADMIN_PERMISSIONS } from "@/lib/auth/rbac";
 import {
   createResearchDataErrorPayload,
-  getManufacturerManagementSnapshot,
-  saveManufacturerRecord,
-  saveManufacturerRecordSchema,
+  getSourceConfigurationSnapshot,
+  saveSourceConfigurations,
+  saveSourceConfigurationsSchema,
 } from "@/lib/research";
 import { validateJsonRequest } from "@/lib/validation/api-placeholders";
 
 export async function GET(request) {
-  const auth = await requireAdminApiPermission(request, ADMIN_PERMISSIONS.MANAGE_MANUFACTURERS);
+  const auth = await requireAdminApiPermission(request, ADMIN_PERMISSIONS.MANAGE_SOURCE_CONFIG);
 
   if (auth.response) {
     return auth.response;
   }
 
   try {
-    const snapshot = await getManufacturerManagementSnapshot({
-      manufacturerId: request.nextUrl.searchParams.get("manufacturerId") || undefined,
-    });
+    const snapshot = await getSourceConfigurationSnapshot();
 
     return NextResponse.json({
       data: snapshot,
@@ -34,25 +32,25 @@ export async function GET(request) {
 }
 
 export async function PUT(request) {
-  const auth = await requireAdminApiPermission(request, ADMIN_PERMISSIONS.MANAGE_MANUFACTURERS);
+  const auth = await requireAdminApiPermission(request, ADMIN_PERMISSIONS.MANAGE_SOURCE_CONFIG);
 
   if (auth.response) {
     return auth.response;
   }
 
-  const result = await validateJsonRequest(request, saveManufacturerRecordSchema);
+  const result = await validateJsonRequest(request, saveSourceConfigurationsSchema);
 
   if (result.response) {
     return result.response;
   }
 
   try {
-    const savedManufacturer = await saveManufacturerRecord(result.data, {
+    const savedConfigurations = await saveSourceConfigurations(result.data, {
       actorId: auth.user.id,
     });
 
     return NextResponse.json({
-      data: savedManufacturer,
+      data: savedConfigurations,
       success: true,
     });
   } catch (error) {

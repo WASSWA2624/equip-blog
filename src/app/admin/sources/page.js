@@ -1,17 +1,18 @@
-import PlaceholderPage from "@/components/common/placeholder-page";
+import SourceConfigurationScreen from "@/components/admin/source-configuration-screen";
+import { defaultLocale } from "@/features/i18n/config";
+import { getMessages } from "@/features/i18n/get-messages";
+import { getSourceConfigurationSnapshot } from "@/lib/research";
 
-export default function SourcesPage() {
+export default async function SourcesPage() {
+  const [messages, snapshot] = await Promise.all([
+    getMessages(defaultLocale),
+    getSourceConfigurationSnapshot(),
+  ]);
+
   return (
-    <PlaceholderPage
-      badges={["/admin/sources", "Configuration"]}
-      description="The source configuration route is scaffolded for approved-source management and auditability."
-      eyebrow="Sources"
-      notes={[
-        "Manage approved source tiers and settings.",
-        "Restrict sensitive changes by role.",
-        "Support source-grounded draft generation.",
-      ]}
-      title="Source configuration"
+    <SourceConfigurationScreen
+      copy={messages.admin.sourceConfiguration}
+      initialData={snapshot}
     />
   );
 }

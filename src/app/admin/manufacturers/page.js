@@ -1,17 +1,21 @@
-import PlaceholderPage from "@/components/common/placeholder-page";
+import ManufacturerManagementScreen from "@/components/admin/manufacturer-management-screen";
+import { defaultLocale } from "@/features/i18n/config";
+import { getMessages } from "@/features/i18n/get-messages";
+import { getManufacturerManagementSnapshot } from "@/lib/research";
 
-export default function ManufacturersPage() {
+export default async function ManufacturersPage({ searchParams }) {
+  const resolvedSearchParams = await searchParams;
+  const [messages, snapshot] = await Promise.all([
+    getMessages(defaultLocale),
+    getManufacturerManagementSnapshot({
+      manufacturerId: resolvedSearchParams.manufacturerId,
+    }),
+  ]);
+
   return (
-    <PlaceholderPage
-      badges={["/admin/manufacturers", "Management"]}
-      description="The manufacturers management route is scaffolded for maintaining canonical manufacturer data."
-      eyebrow="Manufacturers"
-      notes={[
-        "Manage manufacturer entries and model relationships.",
-        "Feed lookup APIs used during generation.",
-        "Keep admin access protected.",
-      ]}
-      title="Manage manufacturers"
+    <ManufacturerManagementScreen
+      copy={messages.admin.manufacturerManagement}
+      initialData={snapshot}
     />
   );
 }
