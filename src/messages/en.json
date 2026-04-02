@@ -1,0 +1,31 @@
+{
+  "meta": {
+    "language": "English",
+    "locale": "en"
+  },
+  "site": {
+    "title": "Equip Blog",
+    "tagline": "Source-grounded publishing for medical equipment knowledge.",
+    "footer": "Public scaffold ready for locale-aware expansion.",
+    "navigation": {
+      "about": "About",
+      "blog": "Blog",
+      "contact": "Contact",
+      "home": "Home",
+      "search": "Search"
+    }
+  },
+  "admin": {
+    "title": "Equip Blog Admin",
+    "description": "Editorial, moderation, and generation workbench.",
+    "footer": "Admin scaffold ready for authenticated workflows.",
+    "navigation": {
+      "comments": "Comments",
+      "dashboard": "Dashboard",
+      "drafts": "Drafts",
+      "generate": "Generate",
+      "media": "Media",
+      "published": "Published"
+    }
+  }
+}
