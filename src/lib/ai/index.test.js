@@ -83,6 +83,44 @@ function createPromptLayers() {
   ];
 }
 
+function createGenerationRequest(overrides = {}) {
+  return {
+    articleDepth: "complete",
+    equipmentName: "Microscope",
+    includeFaults: true,
+    includeImages: true,
+    includeManualLinks: true,
+    includeManufacturers: true,
+    includeModels: true,
+    locale: "en",
+    providerConfigId: "provider_cfg_default_generation",
+    replaceExistingPost: false,
+    schedulePublishAt: null,
+    targetAudience: ["students", "technicians", "biomedical_staff"],
+    ...overrides,
+  };
+}
+
+function createDuplicatePost(overrides = {}) {
+  return {
+    createdAt: new Date("2026-04-03T07:00:00.000Z"),
+    editorialStage: "REVIEWED",
+    id: "post_1",
+    publishedAt: new Date("2026-04-03T08:00:00.000Z"),
+    scheduledPublishAt: null,
+    slug: "microscope",
+    status: "PUBLISHED",
+    translations: [
+      {
+        id: "translation_existing",
+        title: "Microscope",
+      },
+    ],
+    updatedAt: new Date("2026-04-03T09:00:00.000Z"),
+    ...overrides,
+  };
+}
+
 const originalEnv = process.env;
 
 describe("AI composition pipeline", () => {
@@ -186,7 +224,15 @@ describe("AI composition pipeline", () => {
       },
       equipment: {
         findFirst: vi.fn().mockResolvedValue(null),
-        findUnique: vi.fn().mockResolvedValue(null),
+        findUnique: vi
+          .fn()
+          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce({
+            id: "equipment_1",
+            name: "Microscope",
+            normalizedName: "microscope",
+            slug: "microscope",
+          }),
         upsert: vi.fn().mockResolvedValue({
           id: "equipment_1",
           slug: "microscope",
@@ -220,6 +266,7 @@ describe("AI composition pipeline", () => {
           slug: "microscope",
         }),
         findFirst: vi.fn().mockResolvedValue(null),
+        findMany: vi.fn().mockResolvedValue([]),
         update: vi.fn().mockResolvedValue({
           id: "post_1",
           slug: "microscope",
@@ -248,6 +295,9 @@ describe("AI composition pipeline", () => {
         create: generationJobCreate,
         update: generationJobUpdate,
       },
+      equipment: {
+        findUnique: vi.fn().mockResolvedValue(null),
+      },
       modelProviderConfig: {
         findUnique: vi.fn().mockResolvedValue({
           id: "provider_cfg_default_generation",
@@ -259,32 +309,18 @@ describe("AI composition pipeline", () => {
       promptTemplate: {
         findMany: vi.fn().mockResolvedValue(createPromptLayers()),
       },
+      post: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
       sourceConfig: {
         findMany: vi.fn().mockResolvedValue([]),
       },
     };
     const { generateDraftFromRequest } = await import("./index");
 
-    const result = await generateDraftFromRequest(
-      {
-        articleDepth: "complete",
-        equipmentName: "Microscope",
-        includeFaults: true,
-        includeImages: true,
-        includeManualLinks: true,
-        includeManufacturers: true,
-        includeModels: true,
-        locale: "en",
-        providerConfigId: "provider_cfg_default_generation",
-        replaceExistingPost: false,
-        schedulePublishAt: null,
-        targetAudience: ["students", "technicians", "biomedical_staff"],
-      },
-      {
+    const result = await generateDraftFromRequest(createGenerationRequest(), {
         actorId: "user_1",
-      },
-      prisma,
-    );
+      }, prisma);
 
     expect(result).toMatchObject({
       editorialStage: "GENERATED",
@@ -300,5 +336,252 @@ describe("AI composition pipeline", () => {
     expect(tx.fault.create).toHaveBeenCalled();
     expect(tx.maintenanceTask.create).toHaveBeenCalled();
     expect(tx.sourceReference.create).toHaveBeenCalled();
+  });
+
+  it("blocks duplicate generation before composition and leaves the existing post unchanged", async () => {
+    const generationJobCreate = vi.fn().mockResolvedValue({
+      id: "job_1",
+    });
+    const generationJobUpdate = vi.fn().mockResolvedValue(null);
+    const duplicatePost = createDuplicatePost();
+    const prisma = {
+      auditEvent: {
+        create: vi.fn().mockResolvedValue(null),
+      },
+      equipment: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "equipment_1",
+          name: "Microscope",
+          normalizedName: "microscope",
+          slug: "microscope",
+        }),
+      },
+      generationJob: {
+        create: generationJobCreate,
+        update: generationJobUpdate,
+      },
+      modelProviderConfig: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "provider_cfg_default_generation",
+          isEnabled: true,
+          model: "gpt-5.4",
+          provider: "openai",
+        }),
+      },
+      post: {
+        findMany: vi.fn().mockResolvedValue([duplicatePost]),
+      },
+    };
+    const { generateDraftFromRequest } = await import("./index");
+
+    await expect(
+      generateDraftFromRequest(
+        createGenerationRequest(),
+        {
+          actorId: "user_1",
+        },
+        prisma,
+      ),
+    ).rejects.toMatchObject({
+      details: {
+        duplicateDecision: "replace_required",
+      },
+      status: "duplicate_post_detected",
+    });
+
+    expect(generationJobCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          currentStage: "duplicate_check",
+        }),
+      }),
+    );
+    expect(generationJobUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          currentStage: "duplicate_check_blocked",
+          postId: "post_1",
+          status: "CANCELLED",
+        }),
+      }),
+    );
+    expect(generationJobUpdate).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: "FAILED",
+        }),
+      }),
+    );
+    expect(prisma.auditEvent.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: "POST_GENERATION_DUPLICATE_BLOCKED",
+          entityId: "job_1",
+          entityType: "generation_job",
+        }),
+      }),
+    );
+  });
+
+  it("replaces the matched post record and preserves its slug when replacement is confirmed", async () => {
+    const generationJobCreate = vi.fn().mockResolvedValue({
+      id: "job_1",
+    });
+    const generationJobUpdate = vi.fn().mockResolvedValue(null);
+    const duplicatePost = createDuplicatePost();
+    const tx = {
+      auditEvent: {
+        create: vi.fn().mockResolvedValue(null),
+      },
+      equipment: {
+        findFirst: vi.fn().mockResolvedValue(null),
+        findUnique: vi
+          .fn()
+          .mockResolvedValueOnce({
+            id: "equipment_1",
+            slug: "microscope",
+          })
+          .mockResolvedValueOnce({
+            id: "equipment_1",
+            name: "Microscope",
+            normalizedName: "microscope",
+            slug: "microscope",
+          }),
+        upsert: vi.fn().mockResolvedValue({
+          id: "equipment_1",
+          slug: "microscope",
+        }),
+      },
+      fault: {
+        create: vi.fn().mockResolvedValue(null),
+        deleteMany: vi.fn().mockResolvedValue(null),
+      },
+      maintenanceTask: {
+        create: vi.fn().mockResolvedValue(null),
+        deleteMany: vi.fn().mockResolvedValue(null),
+      },
+      manufacturer: {
+        upsert: vi
+          .fn()
+          .mockResolvedValueOnce({ id: "manufacturer_1" })
+          .mockResolvedValueOnce({ id: "manufacturer_2" })
+          .mockResolvedValueOnce({ id: "manufacturer_3" }),
+      },
+      manufacturerAlias: {
+        create: vi.fn().mockResolvedValue(null),
+        findMany: vi.fn().mockResolvedValue([]),
+      },
+      model: {
+        upsert: vi.fn().mockResolvedValue(null),
+      },
+      post: {
+        create: vi.fn().mockResolvedValue({
+          id: "post_2",
+          slug: "microscope-2",
+        }),
+        findFirst: vi.fn().mockResolvedValue(null),
+        findMany: vi.fn().mockResolvedValue([duplicatePost]),
+        update: vi.fn().mockResolvedValue({
+          id: "post_1",
+          slug: "microscope",
+        }),
+      },
+      postManufacturer: {
+        create: vi.fn().mockResolvedValue(null),
+        deleteMany: vi.fn().mockResolvedValue(null),
+      },
+      postTranslation: {
+        upsert: vi.fn().mockResolvedValue({
+          id: "translation_1",
+        }),
+      },
+      seoRecord: {
+        upsert: vi.fn().mockResolvedValue(null),
+      },
+      sourceReference: {
+        create: vi.fn().mockResolvedValue(null),
+        deleteMany: vi.fn().mockResolvedValue(null),
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn(async (callback) => callback(tx)),
+      equipment: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "equipment_1",
+          name: "Microscope",
+          normalizedName: "microscope",
+          slug: "microscope",
+        }),
+      },
+      generationJob: {
+        create: generationJobCreate,
+        update: generationJobUpdate,
+      },
+      modelProviderConfig: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "provider_cfg_default_generation",
+          isEnabled: true,
+          model: "gpt-5.4",
+          provider: "openai",
+        }),
+      },
+      post: {
+        findMany: vi.fn().mockResolvedValue([duplicatePost]),
+      },
+      promptTemplate: {
+        findMany: vi.fn().mockResolvedValue(createPromptLayers()),
+      },
+      sourceConfig: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
+    };
+    const { generateDraftFromRequest } = await import("./index");
+
+    const result = await generateDraftFromRequest(
+      createGenerationRequest({
+        replaceExistingPost: true,
+      }),
+      {
+        actorId: "user_1",
+      },
+      prisma,
+    );
+
+    expect(result).toMatchObject({
+      editorialStage: "GENERATED",
+      jobId: "job_1",
+      postId: "post_1",
+      success: true,
+    });
+    expect(tx.post.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          slug: "microscope",
+        }),
+        where: {
+          id: "post_1",
+        },
+      }),
+    );
+    expect(tx.post.create).not.toHaveBeenCalled();
+    expect(tx.auditEvent.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: "POST_DUPLICATE_REPLACED",
+          entityId: "post_1",
+        }),
+      }),
+    );
+    expect(generationJobUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          postId: "post_1",
+          responseJson: expect.objectContaining({
+            duplicateDecision: "replace_existing",
+          }),
+          status: "COMPLETED",
+        }),
+      }),
+    );
   });
 });

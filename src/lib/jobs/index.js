@@ -69,6 +69,18 @@ export async function completeGenerationJob(jobId, data, prisma) {
   );
 }
 
+export async function cancelGenerationJob(jobId, data = {}, prisma) {
+  return updateGenerationJobRecord(
+    jobId,
+    {
+      ...data,
+      finishedAt: new Date(),
+      status: "CANCELLED",
+    },
+    prisma,
+  );
+}
+
 export async function failGenerationJob(jobId, error, data = {}, prisma) {
   const failure = error instanceof Error ? error : new Error(`${error}`);
 

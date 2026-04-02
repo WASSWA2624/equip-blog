@@ -2,6 +2,7 @@ import { PostStatus } from "@prisma/client";
 import { z } from "zod";
 
 import { getMessages } from "@/features/i18n/get-messages";
+import { detectDuplicateEquipmentPost } from "@/lib/generation/duplicates";
 import { buildMarkdownFromStructuredArticle, buildHtmlFromStructuredArticle } from "@/lib/markdown";
 import { createCanonicalEquipmentIdentity, normalizeDisplayText } from "@/lib/normalization";
 import { buildVerifiedResearchPayload } from "@/lib/research";
@@ -55,9 +56,10 @@ export const savePromptTemplatesSchema = z.object({
 });
 
 export class AiCompositionError extends Error {
-  constructor(message, { status = "ai_composition_error", statusCode = 500 } = {}) {
+  constructor(message, { details = null, status = "ai_composition_error", statusCode = 500 } = {}) {
     super(message);
     this.name = "AiCompositionError";
+    this.details = details;
     this.status = status;
     this.statusCode = statusCode;
   }
@@ -1158,35 +1160,72 @@ async function syncSourceReferences(tx, postId, equipmentId, researchPayload) {
   }
 }
 
+function createDuplicateDecisionSnapshot(duplicateCheck) {
+  return {
+    canonicalEquipment: duplicateCheck.canonicalEquipment,
+    duplicateDetected: duplicateCheck.duplicateDetected,
+    duplicateMatch: duplicateCheck.duplicateMatch,
+    equipment: duplicateCheck.equipment,
+    locale: duplicateCheck.locale,
+    matchCount: duplicateCheck.matchCount,
+  };
+}
+
+function createDuplicateBlockedWarning(request, duplicateCheck) {
+  const duplicateSlug = duplicateCheck.duplicateMatch?.slug || "existing-post";
+
+  return `Duplicate detection blocked generation for "${request.equipmentName}" in locale "${request.locale}". Existing post slug: ${duplicateSlug}.`;
+}
+
+async function recordDuplicateBlockedAuditEvent(
+  { actorId, duplicateCheck, jobId, request },
+  prisma,
+) {
+  if (!actorId || !duplicateCheck.duplicateMatch) {
+    return;
+  }
+
+  const db = await resolvePrismaClient(prisma);
+
+  await db.auditEvent.create({
+    data: {
+      action: "POST_GENERATION_DUPLICATE_BLOCKED",
+      actorId,
+      entityId: jobId,
+      entityType: "generation_job",
+      payloadJson: {
+        duplicateCheck: createDuplicateDecisionSnapshot(duplicateCheck),
+        locale: request.locale,
+        replaceExistingPost: false,
+      },
+    },
+  });
+}
+
 async function persistDraftPackage({ actorId, article, request, researchPayload, seoPayload }, prisma) {
   const db = await resolvePrismaClient(prisma);
   const editorialStage = "GENERATED";
-  const nonArchivedStatuses = ["DRAFT", "SCHEDULED", "PUBLISHED"];
 
   return db.$transaction(async (tx) => {
     const equipment = await upsertEquipmentRecord(tx, researchPayload);
-    const duplicatePost = await tx.post.findFirst({
-      where: {
+    const duplicateCheck = await detectDuplicateEquipmentPost(
+      {
         equipmentId: equipment.id,
-        status: {
-          in: nonArchivedStatuses,
-        },
-        translations: {
-          some: {
-            locale: request.locale,
-          },
-        },
+        equipmentName: researchPayload.equipment.name,
+        locale: request.locale,
       },
-      select: {
-        id: true,
-        slug: true,
-      },
-    });
+      tx,
+    );
+    const duplicatePost = duplicateCheck.duplicateMatch;
 
     if (duplicatePost && !request.replaceExistingPost) {
       throw new AiCompositionError(
-        `A non-archived ${request.locale} draft already exists for "${request.equipmentName}". Duplicate confirmation is handled in a later step.`,
+        `A non-archived ${request.locale} post already exists for "${request.equipmentName}". Choose replace to update it or cancel to keep the current post unchanged.`,
         {
+          details: {
+            duplicateCheck: createDuplicateDecisionSnapshot(duplicateCheck),
+            duplicateDecision: "replace_required",
+          },
           status: "duplicate_post_detected",
           statusCode: 409,
         },
@@ -1196,12 +1235,12 @@ async function persistDraftPackage({ actorId, article, request, researchPayload,
     const canonicalPostSlug = await buildUniquePostSlug(
       tx,
       researchPayload.equipment.slug,
-      duplicatePost?.id,
+      duplicatePost?.postId,
     );
     const post = duplicatePost
       ? await tx.post.update({
           where: {
-            id: duplicatePost.id,
+            id: duplicatePost.postId,
           },
           data: {
             authorId: actorId,
@@ -1289,6 +1328,24 @@ async function persistDraftPackage({ actorId, article, request, researchPayload,
     await syncPostStructuredRecords(tx, post.id, article);
     await upsertManufacturersAndModels(tx, equipment.id, post.id, researchPayload);
     await syncSourceReferences(tx, post.id, equipment.id, researchPayload);
+
+    if (duplicatePost && request.replaceExistingPost) {
+      await tx.auditEvent.create({
+        data: {
+          action: "POST_DUPLICATE_REPLACED",
+          actorId,
+          entityId: post.id,
+          entityType: "post",
+          payloadJson: {
+            duplicateCheck: createDuplicateDecisionSnapshot(duplicateCheck),
+            locale: request.locale,
+            providerConfigId: request.providerConfigId,
+            slug: post.slug,
+          },
+        },
+      });
+    }
+
     await tx.auditEvent.create({
       data: {
         action: "POST_GENERATED",
@@ -1388,15 +1445,23 @@ export async function composeDraftPackage(input, options = {}, prisma) {
 
 export async function generateDraftFromRequest(input, options = {}, prisma) {
   const {
+    cancelGenerationJob,
     completeGenerationJob,
     createGenerationJobRecord,
     failGenerationJob,
     markGenerationJobRunning,
   } = await import("@/lib/jobs");
   const providerConfig = await resolveProviderConfig(input.providerConfigId, prisma);
+  const duplicateCheck = await detectDuplicateEquipmentPost(
+    {
+      equipmentName: input.equipmentName,
+      locale: input.locale,
+    },
+    prisma,
+  );
   const job = await createGenerationJobRecord(
     {
-      currentStage: "research_payload",
+      currentStage: "duplicate_check",
       equipmentName: input.equipmentName,
       locale: input.locale,
       providerConfigId: providerConfig.id,
@@ -1407,8 +1472,54 @@ export async function generateDraftFromRequest(input, options = {}, prisma) {
     },
     prisma,
   );
+  let jobFinalized = false;
 
   try {
+    await markGenerationJobRunning(job.id, "duplicate_check", prisma);
+
+    if (duplicateCheck.duplicateDetected && !input.replaceExistingPost) {
+      const duplicateDecision = createDuplicateDecisionSnapshot(duplicateCheck);
+      const blockedWarning = createDuplicateBlockedWarning(input, duplicateCheck);
+
+      await cancelGenerationJob(
+        job.id,
+        {
+          currentStage: "duplicate_check_blocked",
+          postId: duplicateCheck.duplicateMatch?.postId || null,
+          responseJson: {
+            duplicateCheck: duplicateDecision,
+            duplicateDecision: "replace_required",
+          },
+          warningJson: [blockedWarning],
+        },
+        prisma,
+      );
+      jobFinalized = true;
+
+      await recordDuplicateBlockedAuditEvent(
+        {
+          actorId: options.actorId,
+          duplicateCheck,
+          jobId: job.id,
+          request: input,
+        },
+        prisma,
+      );
+
+      throw new AiCompositionError(
+        `A non-archived ${input.locale} post already exists for "${input.equipmentName}". Choose replace to update it or cancel to keep the current post unchanged.`,
+        {
+          details: {
+            duplicateCheck: duplicateDecision,
+            duplicateDecision: "replace_required",
+            jobId: job.id,
+          },
+          status: "duplicate_post_detected",
+          statusCode: 409,
+        },
+      );
+    }
+
     await markGenerationJobRunning(job.id, "composing_draft", prisma);
 
     const composed = await composeDraftPackage(
@@ -1439,6 +1550,8 @@ export async function generateDraftFromRequest(input, options = {}, prisma) {
         currentStage: "draft_saved",
         postId: persistedDraft.postId,
         responseJson: {
+          duplicateCheck: createDuplicateDecisionSnapshot(duplicateCheck),
+          duplicateDecision: duplicateCheck.duplicateDetected ? "replace_existing" : "create_new",
           promptBundle: composed.promptBundle,
           providerExecutionMode: composed.providerExecutionMode,
           seoPayload: composed.seoPayload,
@@ -1458,14 +1571,16 @@ export async function generateDraftFromRequest(input, options = {}, prisma) {
       warnings: composed.warnings,
     };
   } catch (error) {
-    await failGenerationJob(
-      job.id,
-      error,
-      {
-        currentStage: "failed",
-      },
-      prisma,
-    ).catch(() => {});
+    if (!jobFinalized) {
+      await failGenerationJob(
+        job.id,
+        error,
+        {
+          currentStage: "failed",
+        },
+        prisma,
+      ).catch(() => {});
+    }
     throw error;
   }
 }
@@ -1474,6 +1589,7 @@ export function createAiCompositionErrorPayload(error) {
   if (error instanceof AiCompositionError) {
     return {
       body: {
+        details: error.details || undefined,
         message: error.message,
         status: error.status,
         success: false,
