@@ -12,9 +12,11 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "prisma:generate": "prisma generate",
-    "prisma:validate": "prisma validate"
+    "prisma:validate": "prisma validate",
+    "prisma:seed": "prisma db seed"
   },
   "dependencies": {
+    "@prisma/adapter-mariadb": "^7.6.0",
     "@prisma/client": "^7.6.0",
     "@reduxjs/toolkit": "^2.11.2",
     "next": "16.2.2",

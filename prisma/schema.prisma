@@ -131,6 +131,9 @@ model Post {
   tags               PostTag[]
   manufacturers      PostManufacturer[]
   viewEvents         ViewEvent[]
+
+  @@index([status, publishedAt])
+  @@index([status, scheduledPublishAt])
 }
 
 model PostTranslation {
@@ -152,6 +155,7 @@ model PostTranslation {
   seoRecord             SEORecord?
 
   @@unique([postId, locale])
+  @@index([locale, postId])
 }
 
 model Category {
@@ -410,6 +414,9 @@ model ViewEvent {
   createdAt    DateTime      @default(now())
   post         Post?         @relation(fields: [postId], references: [id], onDelete: SetNull)
   localeRecord Locale        @relation(fields: [locale], references: [code], onDelete: Restrict)
+
+  @@index([eventType, createdAt])
+  @@index([postId, createdAt])
 }
 
 model AuditEvent {
