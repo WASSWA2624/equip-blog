@@ -3,6 +3,12 @@
 import Link from "next/link";
 import styled from "styled-components";
 
+import {
+  buildLocalizedPath,
+  publicNavigationRoutes,
+  publicRouteSegments,
+} from "@/features/i18n/routing";
+
 const Shell = styled.div`
   display: grid;
   gap: ${({ theme }) => theme.spacing.lg};
@@ -69,26 +75,20 @@ const Footer = styled.footer`
   width: 100%;
 `;
 
-const publicNav = [
-  { key: "home", suffix: "" },
-  { key: "blog", suffix: "/blog" },
-  { key: "search", suffix: "/search" },
-  { key: "about", suffix: "/about" },
-  { key: "contact", suffix: "/contact" },
-];
-
 export default function SiteShell({ children, locale, messages }) {
   return (
     <Shell>
       <Header>
         <HeaderInner>
           <BrandBlock>
-            <Brand href={`/${locale}`}>{messages.site.title}</Brand>
+            <Brand href={buildLocalizedPath(locale, publicRouteSegments.home)}>
+              {messages.site.title}
+            </Brand>
             <Tagline>{messages.site.tagline}</Tagline>
           </BrandBlock>
           <Nav aria-label="Public navigation">
-            {publicNav.map((item) => (
-              <NavLink href={`/${locale}${item.suffix}`} key={item.key}>
+            {publicNavigationRoutes.map((item) => (
+              <NavLink href={buildLocalizedPath(locale, item.segments)} key={item.key}>
                 {messages.site.navigation[item.key]}
               </NavLink>
             ))}

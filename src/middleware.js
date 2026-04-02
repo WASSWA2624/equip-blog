@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { getPathLocalePrefix } from "@/features/i18n/routing";
 import {
   ADMIN_REQUEST_PATH_HEADER,
   ADMIN_ROUTE_KIND_HEADER,
@@ -27,6 +28,20 @@ export function middleware(request) {
   const { pathname, search } = request.nextUrl;
   const requestPath = `${pathname}${search}`;
   const sessionToken = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+  const localePrefix = getPathLocalePrefix(pathname);
+
+  if (
+    localePrefix.kind !== "none" &&
+    (localePrefix.remainingPath === "/admin" || localePrefix.remainingPath.startsWith("/admin/"))
+  ) {
+    return NextResponse.redirect(new URL(`${localePrefix.remainingPath}${search}`, request.url));
+  }
+
+  if (localePrefix.kind === "supported" && localePrefix.rawLocale !== localePrefix.locale) {
+    return NextResponse.redirect(
+      new URL(`/${localePrefix.locale}${localePrefix.remainingPath === "/" ? "" : localePrefix.remainingPath}${search}`, request.url),
+    );
+  }
 
   if (isAdminLoginPath(pathname)) {
     return createForwardResponse(request, "login");

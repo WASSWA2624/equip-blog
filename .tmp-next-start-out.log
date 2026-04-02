@@ -1,0 +1,87 @@
+
+> equip-blog@0.1.0 prestart
+> next build
+
+▲ Next.js 16.2.2 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 8.3s
+  Running TypeScript ...
+  Finished TypeScript in 526ms ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/41) ...
+  Generating static pages using 7 workers (10/41) 
+  Generating static pages using 7 workers (20/41) 
+  Generating static pages using 7 workers (30/41) 
+✓ Generating static pages using 7 workers (41/41) in 1111ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ● /[locale]
+│ └ /en
+├ ● /[locale]/about
+│ └ /en/about
+├ ● /[locale]/blog
+│ └ /en/blog
+├ ƒ /[locale]/blog/[slug]
+├ ƒ /[locale]/category/[slug]
+├ ● /[locale]/contact
+│ └ /en/contact
+├ ● /[locale]/disclaimer
+│ └ /en/disclaimer
+├ ƒ /[locale]/equipment/[slug]
+├ ƒ /[locale]/manufacturer/[slug]
+├ ● /[locale]/privacy
+│ └ /en/privacy
+├ ● /[locale]/search
+│ └ /en/search
+├ ƒ /admin
+├ ƒ /admin/categories
+├ ƒ /admin/comments
+├ ƒ /admin/generate
+├ ƒ /admin/jobs
+├ ƒ /admin/localization
+├ ƒ /admin/login
+├ ƒ /admin/manufacturers
+├ ƒ /admin/media
+├ ƒ /admin/posts/[id]
+├ ƒ /admin/posts/drafts
+├ ƒ /admin/posts/published
+├ ƒ /admin/prompts
+├ ƒ /admin/seo
+├ ƒ /admin/sources
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/comments
+├ ƒ /api/comments/[id]
+├ ƒ /api/generate-post
+├ ƒ /api/jobs
+├ ƒ /api/manufacturers
+├ ƒ /api/media
+├ ƒ /api/metrics
+├ ƒ /api/models
+├ ƒ /api/posts
+├ ƒ /api/posts/[id]
+├ ƒ /api/posts/slug/[slug]
+├ ƒ /api/publish-post
+├ ƒ /api/revalidate
+├ ƒ /api/save-draft
+├ ○ /opengraph-image
+├ ○ /robots.txt
+├ ○ /sitemap.xml
+└ ○ /twitter-image
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand
+
+
+> equip-blog@0.1.0 start
+> next start --port 3005
+
