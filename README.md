@@ -12,6 +12,7 @@ The two most important files are:
 
 - [`app-write-up.md`](./app-write-up.md): the single source of truth for the application
 - [`dev-plan/00_plan_index.md`](./dev-plan/00_plan_index.md): the ordered execution plan used to build the app step by step
+- [`docs/architecture-summary.md`](./docs/architecture-summary.md): the frozen Release 1 architecture summary and ADR entry point
 
 ## Release 1 Scope
 
