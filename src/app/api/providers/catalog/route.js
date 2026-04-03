@@ -4,6 +4,7 @@ import { requireAdminApiPermission } from "@/lib/auth/api";
 import { ADMIN_PERMISSIONS } from "@/lib/auth/rbac";
 import {
   createProviderCatalogErrorPayload,
+  searchAiProviderCatalog,
   searchAiProviderModels,
 } from "@/lib/ai/provider-catalog";
 
@@ -20,6 +21,13 @@ export async function GET(request) {
   const forceRefresh = searchParams.get("force") === "1";
 
   try {
+    if (!provider) {
+      return NextResponse.json({
+        data: searchAiProviderCatalog(query),
+        success: true,
+      });
+    }
+
     const result = await searchAiProviderModels(provider, query, {
       forceRefresh,
     });

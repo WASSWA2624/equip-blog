@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useEffect, useMemo, useRef, useState } from "react";
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 
 import SearchableSelect from "@/components/common/searchable-select";
@@ -526,25 +526,32 @@ function buildModelOptions(config, catalogItems) {
 
 export default function ProviderConfigurationScreen({ copy, initialData }) {
   const suggestionTimersRef = useRef(new Map());
+  const providerSuggestionTimerRef = useRef(null);
   const [data, setData] = useState(initialData);
   const [draftConfigs, setDraftConfigs] = useState(() =>
     initialData.configs.map(createDraftConfig),
   );
+  const [providerSearchState, setProviderSearchState] = useState(() => ({
+    items: initialData.providerCatalog.providers || [],
+    loading: false,
+    message: "",
+  }));
   const [modelCatalogState, setModelCatalogState] = useState({});
   const [notice, setNotice] = useState(null);
   const [isBusy, setIsBusy] = useState(false);
 
   const dirtyCount = useMemo(() => getDirtyCount(data, draftConfigs), [data, draftConfigs]);
   const orderedDraftConfigs = useMemo(() => [...draftConfigs].sort(sortConfigs), [draftConfigs]);
+  const providerCatalogItems = providerSearchState.items;
   const providerOptions = useMemo(
     () =>
-      data.providerCatalog.providers.map((provider) => ({
+      providerCatalogItems.map((provider) => ({
         description: provider.searchHint,
         keywords: [provider.value, provider.catalogSourceLabel],
         label: provider.label,
         value: provider.value,
       })),
-    [data.providerCatalog.providers],
+    [providerCatalogItems],
   );
   const purposeOptions = useMemo(
     () => [
@@ -566,11 +573,19 @@ export default function ProviderConfigurationScreen({ copy, initialData }) {
     const suggestionTimers = suggestionTimersRef.current;
 
     return () => {
+      if (providerSuggestionTimerRef.current) {
+        window.clearTimeout(providerSuggestionTimerRef.current);
+      }
+
       for (const timerId of suggestionTimers.values()) {
         window.clearTimeout(timerId);
       }
     };
   }, []);
+
+  useEffect(() => {
+    void requestProviderSuggestions("");
+  }, [requestProviderSuggestions]);
 
   function updateDraftConfig(configId, updates) {
     setDraftConfigs((currentConfigs) => {
@@ -606,6 +621,63 @@ export default function ProviderConfigurationScreen({ copy, initialData }) {
       ),
     ]);
   }
+
+  const requestProviderSuggestions = useCallback(async (query = "") => {
+    setProviderSearchState((currentState) => ({
+      ...currentState,
+      loading: true,
+    }));
+
+    try {
+      const response = await fetch(
+        `/api/providers/catalog?q=${encodeURIComponent(query)}`,
+      );
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(payload?.message || copy.catalogLoadErrorPrefix);
+      }
+
+      const nextItems = payload.data.providers || [];
+
+      setProviderSearchState({
+        items: nextItems,
+        loading: false,
+        message: nextItems.length ? "" : copy.providerUnknownHint,
+      });
+
+      if (!payload.data.query) {
+        startTransition(() => {
+          setData((currentData) => ({
+            ...currentData,
+            providerCatalog: {
+              ...currentData.providerCatalog,
+              providers: nextItems,
+              supportedProviderCount:
+                payload.data.supportedProviderCount || currentData.providerCatalog.supportedProviderCount,
+            },
+          }));
+        });
+      }
+    } catch (error) {
+      setProviderSearchState((currentState) => ({
+        ...currentState,
+        loading: false,
+        message: `${copy.catalogLoadErrorPrefix}: ${error.message}`,
+      }));
+    }
+  }, [copy.catalogLoadErrorPrefix, copy.providerUnknownHint]);
+
+  const queueProviderSuggestions = useCallback((query = "") => {
+    if (providerSuggestionTimerRef.current) {
+      window.clearTimeout(providerSuggestionTimerRef.current);
+    }
+
+    providerSuggestionTimerRef.current = window.setTimeout(() => {
+      requestProviderSuggestions(query);
+      providerSuggestionTimerRef.current = null;
+    }, 180);
+  }, [requestProviderSuggestions]);
 
   async function requestModelSuggestions(configId, providerValue, query = "", forceRefresh = false) {
     const normalizedProvider = normalizeProviderInput(providerValue);
@@ -871,6 +943,9 @@ export default function ProviderConfigurationScreen({ copy, initialData }) {
                         <FieldLabel>{copy.providerLabel}</FieldLabel>
                         <SearchableSelect
                           ariaLabel={copy.providerLabel}
+                          emptyMessage={providerSearchState.message || copy.providerUnknownHint}
+                          loading={Boolean(providerSearchState.loading && !providerOptions.length)}
+                          loadingMessage={copy.catalogLoading}
                           onChange={(nextValue) => {
                             const nextProviderValue = normalizeProviderInput(nextValue);
                             const nextProviderOption = getProviderOption(
@@ -892,6 +967,8 @@ export default function ProviderConfigurationScreen({ copy, initialData }) {
                               queueModelSuggestions(config.id, nextProviderValue, "");
                             }
                           }}
+                          onOpen={() => queueProviderSuggestions("")}
+                          onSearchChange={(nextQuery) => queueProviderSuggestions(nextQuery)}
                           placeholder={copy.providerPlaceholder}
                           options={providerOptions}
                           searchPlaceholder="Search AI providers"

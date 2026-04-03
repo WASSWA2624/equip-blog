@@ -988,6 +988,19 @@ export function getAiProviderCatalogSummary() {
   };
 }
 
+export function searchAiProviderCatalog(query = "") {
+  const providers = searchAiProviders(query).map((provider) =>
+    buildCatalogSourceSummary(provider.value, PROVIDER_MODEL_CACHE.get(buildCacheKey(provider.value))),
+  );
+
+  return {
+    providers,
+    query: collapseWhitespace(query),
+    resultCount: providers.length,
+    supportedProviderCount: searchAiProviders("").length,
+  };
+}
+
 export async function searchAiProviderModels(providerValue, query, options = {}, prisma) {
   return loadProviderCatalog(providerValue, query, options, prisma);
 }
