@@ -11,6 +11,11 @@ export const metadata = {
   },
   description:
     "Locale-ready scaffold for the Equip Blog public site and admin workspace.",
+  icons: {
+    icon: [{ type: "image/svg+xml", url: "/favicon.svg" }],
+    shortcut: ["/favicon.svg"],
+    apple: [{ type: "image/svg+xml", url: "/favicon.svg" }],
+  },
   metadataBase: new URL(env.app.url),
   openGraph: {
     description: "Locale-ready scaffold for the Equip Blog public site and admin workspace.",
@@ -29,6 +34,7 @@ export const metadata = {
     follow: true,
     index: true,
   },
+  themeColor: "#102033",
   twitter: {
     card: "summary_large_image",
     description: "Locale-ready scaffold for the Equip Blog public site and admin workspace.",

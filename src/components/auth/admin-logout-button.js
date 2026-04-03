@@ -6,12 +6,23 @@ import styled from "styled-components";
 
 const Button = styled.button`
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 999px;
   color: white;
   cursor: pointer;
-  min-height: 42px;
-  padding: 0.65rem 1rem;
+  font-weight: 700;
+  min-height: 38px;
+  padding: 0.55rem 0.9rem;
+  transition:
+    transform 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease;
+
+  &:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+  }
 
   &:disabled {
     cursor: wait;
