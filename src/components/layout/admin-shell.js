@@ -134,7 +134,7 @@ const UserBadge = styled.div`
   align-items: center;
   background: rgba(255, 255, 255, 0.09);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 18px;
+  border-radius: ${({ theme }) => theme.radius.md};
   display: grid;
   gap: 0.65rem;
   grid-template-columns: minmax(0, 1fr) auto;

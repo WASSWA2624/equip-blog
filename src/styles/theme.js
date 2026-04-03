@@ -11,8 +11,8 @@ export const lightTheme = {
     text: "#102033",
   },
   radius: {
-    lg: "20px",
-    md: "12px",
+    lg: "16px",
+    md: "10px",
     sm: "6px",
   },
   spacing: {

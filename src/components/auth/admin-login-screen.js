@@ -15,7 +15,7 @@ const Panel = styled.section`
   background:
     radial-gradient(circle at top left, rgba(201, 123, 42, 0.22), transparent 36%),
     linear-gradient(135deg, rgba(0, 95, 115, 0.96), rgba(16, 32, 51, 0.98));
-  border-radius: 28px;
+  border-radius: ${({ theme }) => theme.radius.lg};
   box-shadow: 0 30px 90px rgba(16, 32, 51, 0.22);
   color: white;
   display: grid;
