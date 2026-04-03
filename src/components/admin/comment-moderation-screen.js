@@ -3,6 +3,8 @@
 import { startTransition, useEffect, useState } from "react";
 import styled from "styled-components";
 
+import SearchableSelect from "@/components/common/searchable-select";
+
 function formatDate(value) {
   if (!value) {
     return "N/A";
@@ -392,27 +394,6 @@ const Input = styled.input`
   }
 `;
 
-const Select = styled.select`
-  background: white;
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.radius.sm};
-  box-sizing: border-box;
-  color: ${({ theme }) => theme.colors.text};
-  font: inherit;
-  min-width: 0;
-  padding: 0.7rem 0.82rem;
-  transition:
-    border-color 160ms ease,
-    box-shadow 160ms ease;
-  width: 100%;
-
-  &:focus {
-    border-color: ${({ theme }) => theme.colors.primary};
-    box-shadow: 0 0 0 4px rgba(0, 95, 115, 0.12);
-    outline: none;
-  }
-`;
-
 const Textarea = styled.textarea`
   background: white;
   border: 1px solid ${({ theme }) => theme.colors.border};
@@ -710,6 +691,13 @@ export default function CommentModerationScreen({ copy, initialData }) {
   const [notesDraft, setNotesDraft] = useState("");
   const [notice, setNotice] = useState(null);
   const [isBusy, setIsBusy] = useState(false);
+  const statusOptions = [
+    { label: resolvedCopy.allStatusLabel, value: "ALL" },
+    { label: resolvedCopy.pendingCountLabel, value: "PENDING" },
+    { label: resolvedCopy.approvedCountLabel, value: "APPROVED" },
+    { label: resolvedCopy.rejectedCountLabel, value: "REJECTED" },
+    { label: resolvedCopy.spamCountLabel, value: "SPAM" },
+  ];
 
   useEffect(() => {
     setNotesDraft("");
@@ -914,18 +902,16 @@ export default function CommentModerationScreen({ copy, initialData }) {
                     value={queryDraft}
                   />
                 </Field>
-                <Field>
+                <Field as="div">
                   <FieldLabel>{resolvedCopy.statusFilterLabel}</FieldLabel>
-                  <Select
-                    onChange={(event) => setStatusDraft(event.target.value)}
+                  <SearchableSelect
+                    ariaLabel={resolvedCopy.statusFilterLabel}
+                    onChange={(nextValue) => setStatusDraft(nextValue)}
+                    options={statusOptions}
+                    placeholder={resolvedCopy.statusFilterLabel}
+                    searchPlaceholder="Search moderation statuses"
                     value={statusDraft}
-                  >
-                    <option value="ALL">{resolvedCopy.allStatusLabel}</option>
-                    <option value="PENDING">{resolvedCopy.pendingCountLabel}</option>
-                    <option value="APPROVED">{resolvedCopy.approvedCountLabel}</option>
-                    <option value="REJECTED">{resolvedCopy.rejectedCountLabel}</option>
-                    <option value="SPAM">{resolvedCopy.spamCountLabel}</option>
-                  </Select>
+                  />
                 </Field>
               </FilterGrid>
               <ButtonRow>

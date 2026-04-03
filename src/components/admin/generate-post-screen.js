@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { startTransition, useEffect, useRef, useState } from "react";
+import { startTransition, useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import styled from "styled-components";
 
+import SearchableSelect from "@/components/common/searchable-select";
 import { createAdminGenerationFormState, validateAdminGenerationInput } from "@/features/generator/admin-input";
 import { generationStageOrder, generationTerminalStageIds } from "@/lib/generation/stages";
 import {
@@ -50,6 +51,26 @@ function formatProviderLabel(providerConfig) {
   }
 
   return `${providerConfig.providerLabel || providerConfig.provider} / ${providerConfig.model}`;
+}
+
+function formatSelectBadge(copyValue) {
+  return `${copyValue || ""}`.replace(/[()]/g, "").trim();
+}
+
+function getArticleDepthDescription(value) {
+  if (value === "fast") {
+    return "Short orientation focused on the essentials and immediate context.";
+  }
+
+  if (value === "maintenance") {
+    return "Prioritizes servicing, preventive checks, and ongoing upkeep guidance.";
+  }
+
+  if (value === "repair") {
+    return "Emphasizes diagnostics, likely faults, and repair workflow details.";
+  }
+
+  return "Broad coverage with usage, maintenance, troubleshooting, and support context.";
 }
 
 function toLocalDateTimeInputValue(value) {
@@ -413,15 +434,6 @@ const TextInput = styled.input`
   padding: 0.82rem 0.92rem;
 `;
 
-const Select = styled.select`
-  appearance: none;
-  background: white;
-  border: 1px solid ${({ $invalid, theme }) => ($invalid ? theme.colors.danger : theme.colors.border)};
-  border-radius: ${({ theme }) => theme.radius.sm};
-  color: ${({ theme }) => theme.colors.text};
-  padding: 0.82rem 0.92rem;
-`;
-
 const Textarea = styled.textarea`
   background: white;
   border: 1px solid ${({ $invalid, theme }) => ($invalid ? theme.colors.danger : theme.colors.border)};
@@ -647,6 +659,42 @@ export default function GeneratePostScreen({ copy, initialData }) {
   const activeProviderConfig =
     initialData.providerConfigs.find((providerConfig) => providerConfig.id === formData.providerConfigId) ||
     null;
+  const providerBadgeLabel = formatSelectBadge(copy.defaultProviderSuffix) || "Default";
+  const providerOptions = useMemo(
+    () =>
+      initialData.providerConfigs.map((providerConfig) => ({
+        badge: providerConfig.isDefault
+          ? providerBadgeLabel
+          : providerConfig.purpose === "draft_generation_fallback"
+            ? "Fallback"
+            : "",
+        description:
+          providerConfig.purpose === "draft_generation_fallback"
+            ? `Fallback config. ${providerConfig.credentialLabel || ""}`.trim()
+            : providerConfig.credentialLabel || "",
+        label: formatProviderLabel(providerConfig),
+        value: providerConfig.id,
+      })),
+    [initialData.providerConfigs, providerBadgeLabel],
+  );
+  const localeOptions = useMemo(
+    () =>
+      initialData.localeOptions.map((localeOption) => ({
+        badge: localeOption.isDefault ? "Default" : "",
+        label: `${localeOption.name} (${localeOption.code})`,
+        value: localeOption.code,
+      })),
+    [initialData.localeOptions],
+  );
+  const articleDepthOptions = useMemo(
+    () =>
+      generationArticleDepthValues.map((value) => ({
+        description: getArticleDepthDescription(value),
+        label: articleDepthLabels[value],
+        value,
+      })),
+    [],
+  );
 
   function clearProgressTimers() {
     for (const timerId of timersRef.current) {
@@ -1116,29 +1164,26 @@ export default function GeneratePostScreen({ copy, initialData }) {
                     <FieldError>{getFirstFieldError(fieldErrors, "equipmentName")}</FieldError>
                   ) : null}
                 </Field>
-                <Field>
+                <Field as="div">
                   <FieldLabelRow>
                     <FieldLabel>{copy.providerLabel}</FieldLabel>
                     {initialData.permissions.canManageProviders ? (
                       <FieldLink href="/admin/providers">{copy.manageProvidersAction}</FieldLink>
                     ) : null}
                   </FieldLabelRow>
-                  <Select
-                    $invalid={Boolean(getFirstFieldError(fieldErrors, "providerConfigId"))}
-                    onChange={(event) =>
+                  <SearchableSelect
+                    ariaLabel={copy.providerLabel}
+                    invalid={Boolean(getFirstFieldError(fieldErrors, "providerConfigId"))}
+                    onChange={(nextValue) =>
                       handleFormPatch({
-                        providerConfigId: event.target.value,
+                        providerConfigId: nextValue,
                       })
                     }
+                    options={providerOptions}
+                    placeholder={copy.providerLabel}
+                    searchPlaceholder="Search provider configurations"
                     value={formData.providerConfigId}
-                  >
-                    {initialData.providerConfigs.map((providerConfig) => (
-                      <option key={providerConfig.id} value={providerConfig.id}>
-                        {formatProviderLabel(providerConfig)}
-                        {providerConfig.isDefault ? ` ${copy.defaultProviderSuffix}` : ""}
-                      </option>
-                    ))}
-                  </Select>
+                  />
                   {getFirstFieldError(fieldErrors, "providerConfigId") ? (
                     <FieldError>{getFirstFieldError(fieldErrors, "providerConfigId")}</FieldError>
                   ) : null}
@@ -1151,33 +1196,32 @@ export default function GeneratePostScreen({ copy, initialData }) {
                 </Field>
               </FieldGrid>
               <FieldGrid>
-                <Field>
+                <Field as="div">
                   <FieldLabel>{copy.localeLabel}</FieldLabel>
-                  <Select disabled value={formData.locale}>
-                    {initialData.localeOptions.map((localeOption) => (
-                      <option key={localeOption.code} value={localeOption.code}>
-                        {localeOption.name} ({localeOption.code})
-                      </option>
-                    ))}
-                  </Select>
+                  <SearchableSelect
+                    ariaLabel={copy.localeLabel}
+                    disabled
+                    options={localeOptions}
+                    placeholder={copy.localeLabel}
+                    searchPlaceholder="Search locales"
+                    value={formData.locale}
+                  />
                   <SmallText>{copy.localeHint}</SmallText>
                 </Field>
-                <Field>
+                <Field as="div">
                   <FieldLabel>{copy.articleDepthLabel}</FieldLabel>
-                  <Select
-                    onChange={(event) =>
+                  <SearchableSelect
+                    ariaLabel={copy.articleDepthLabel}
+                    onChange={(nextValue) =>
                       handleFormPatch({
-                        articleDepth: event.target.value,
+                        articleDepth: nextValue,
                       })
                     }
+                    options={articleDepthOptions}
+                    placeholder={copy.articleDepthLabel}
+                    searchPlaceholder="Search article depths"
                     value={formData.articleDepth}
-                  >
-                    {generationArticleDepthValues.map((value) => (
-                      <option key={value} value={value}>
-                        {articleDepthLabels[value]}
-                      </option>
-                    ))}
-                  </Select>
+                  />
                 </Field>
               </FieldGrid>
               <Divider />

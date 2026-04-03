@@ -3,6 +3,8 @@
 import Link from "next/link";
 import styled from "styled-components";
 
+import SearchableSelect from "@/components/common/searchable-select";
+
 function formatDateTime(value) {
   if (!value) {
     return null;
@@ -211,25 +213,6 @@ const FieldLabel = styled.span`
 `;
 
 const Input = styled.input`
-  background: white;
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.radius.md};
-  box-sizing: border-box;
-  color: ${({ theme }) => theme.colors.text};
-  font: inherit;
-  min-height: 46px;
-  min-width: 0;
-  padding: 0.76rem 0.95rem;
-  width: 100%;
-
-  &:focus {
-    border-color: ${({ theme }) => theme.colors.primary};
-    box-shadow: 0 0 0 4px rgba(0, 95, 115, 0.12);
-    outline: none;
-  }
-`;
-
-const Select = styled.select`
   background: white;
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radius.md};
@@ -461,15 +444,16 @@ export default function JobLogsScreen({ copy, initialData }) {
               type="search"
             />
           </Field>
-          <Field>
+          <Field as="div">
             <FieldLabel>{copy.filterStatusLabel}</FieldLabel>
-            <Select defaultValue={initialData.filters.status} name="status">
-              {statusOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </Select>
+            <SearchableSelect
+              ariaLabel={copy.filterStatusLabel}
+              defaultValue={initialData.filters.status}
+              name="status"
+              options={statusOptions}
+              placeholder={copy.filterStatusLabel}
+              searchPlaceholder="Search job statuses"
+            />
           </Field>
           <Button type="submit">{copy.filterApplyAction}</Button>
           <LinkButton href="/admin/jobs">{copy.filterClearAction}</LinkButton>

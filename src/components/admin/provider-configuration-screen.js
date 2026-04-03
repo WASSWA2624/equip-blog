@@ -3,6 +3,8 @@
 import { startTransition, useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 
+import SearchableSelect from "@/components/common/searchable-select";
+
 const purposeOrder = Object.freeze({
   draft_generation: 1,
   draft_generation_fallback: 2,
@@ -273,16 +275,6 @@ const Input = styled.input`
   padding: 0.78rem 0.88rem;
 `;
 
-const Select = styled.select`
-  appearance: none;
-  background: white;
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.radius.sm};
-  color: ${({ theme }) => theme.colors.text};
-  font: inherit;
-  padding: 0.78rem 0.88rem;
-`;
-
 const CredentialCard = styled.div`
   background: rgba(247, 249, 252, 0.96);
   border: 1px solid ${({ theme }) => theme.colors.border};
@@ -514,6 +506,31 @@ export default function ProviderConfigurationScreen({ copy, initialData }) {
 
   const dirtyCount = useMemo(() => getDirtyCount(data, draftConfigs), [data, draftConfigs]);
   const orderedDraftConfigs = useMemo(() => [...draftConfigs].sort(sortConfigs), [draftConfigs]);
+  const providerOptions = useMemo(
+    () =>
+      data.providerCatalog.providers.map((provider) => ({
+        description: provider.searchHint,
+        keywords: [provider.value, provider.catalogSourceLabel],
+        label: provider.label,
+        value: provider.value,
+      })),
+    [data.providerCatalog.providers],
+  );
+  const purposeOptions = useMemo(
+    () => [
+      {
+        description: "Used for normal draft generation requests.",
+        label: copy.purposePrimary,
+        value: "draft_generation",
+      },
+      {
+        description: "Used only when the primary generation config fails.",
+        label: copy.purposeFallback,
+        value: "draft_generation_fallback",
+      },
+    ],
+    [copy.purposeFallback, copy.purposePrimary],
+  );
 
   useEffect(() => {
     const suggestionTimers = suggestionTimersRef.current;
@@ -688,14 +705,6 @@ export default function ProviderConfigurationScreen({ copy, initialData }) {
 
   return (
     <Page>
-      <datalist id="provider-config-provider-options">
-        {data.providerCatalog.providers.map((provider) => (
-          <option key={provider.value} value={provider.value}>
-            {provider.label}
-          </option>
-        ))}
-      </datalist>
-
       <Hero>
         <Eyebrow>{copy.eyebrow}</Eyebrow>
         <Title>{copy.title}</Title>
@@ -836,12 +845,12 @@ export default function ProviderConfigurationScreen({ copy, initialData }) {
                     </ConfigHeader>
 
                     <FieldGrid>
-                      <Field>
+                      <Field as="div">
                         <FieldLabel>{copy.providerLabel}</FieldLabel>
-                        <Input
-                          list="provider-config-provider-options"
-                          onChange={(event) => {
-                            const nextProviderValue = normalizeProviderInput(event.target.value);
+                        <SearchableSelect
+                          ariaLabel={copy.providerLabel}
+                          onChange={(nextValue) => {
+                            const nextProviderValue = normalizeProviderInput(nextValue);
                             const nextProviderOption = getProviderOption(
                               data.providerCatalog,
                               nextProviderValue,
@@ -858,11 +867,13 @@ export default function ProviderConfigurationScreen({ copy, initialData }) {
                             }));
                           }}
                           placeholder={copy.providerPlaceholder}
+                          options={providerOptions}
+                          searchPlaceholder="Search AI providers"
                           value={config.provider}
                         />
                         {providerOption ? (
                           <SmallText>
-                            {providerOption.label} • {providerOption.catalogSourceLabel}
+                            {providerOption.label} - {providerOption.catalogSourceLabel}
                           </SmallText>
                         ) : (
                           <SmallText>{copy.providerUnknownHint}</SmallText>
@@ -895,19 +906,20 @@ export default function ProviderConfigurationScreen({ copy, initialData }) {
                     </FieldGrid>
 
                     <FieldGrid>
-                      <Field>
+                      <Field as="div">
                         <FieldLabel>{copy.purposeLabel}</FieldLabel>
-                        <Select
-                          onChange={(event) =>
+                        <SearchableSelect
+                          ariaLabel={copy.purposeLabel}
+                          onChange={(nextValue) =>
                             updateDraftConfig(config.id, {
-                              purpose: event.target.value,
+                              purpose: nextValue,
                             })
                           }
+                          options={purposeOptions}
+                          placeholder={copy.purposeLabel}
+                          searchPlaceholder="Search provider purposes"
                           value={config.purpose}
-                        >
-                          <option value="draft_generation">{copy.purposePrimary}</option>
-                          <option value="draft_generation_fallback">{copy.purposeFallback}</option>
-                        </Select>
+                        />
                         <SmallText>{copy.purposeHint}</SmallText>
                       </Field>
 
