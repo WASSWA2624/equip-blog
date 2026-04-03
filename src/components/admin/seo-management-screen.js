@@ -90,9 +90,11 @@ const SmallText = styled.p`
   font-size: 0.94rem;
   line-height: 1.45;
   margin: 0;
+  overflow-wrap: anywhere;
 `;
 
 const Layout = styled.section`
+  align-items: start;
   display: grid;
   gap: clamp(1rem, 2vw, 1.25rem);
 
@@ -102,8 +104,10 @@ const Layout = styled.section`
 `;
 
 const Stack = styled.div`
+  align-content: start;
   display: grid;
   gap: clamp(0.95rem, 1.8vw, 1.2rem);
+  min-width: 0;
 `;
 
 const Card = styled.section`
@@ -113,7 +117,18 @@ const Card = styled.section`
   box-shadow: 0 14px 38px rgba(16, 32, 51, 0.08);
   display: grid;
   gap: 0.78rem;
+  min-width: 0;
+  overflow: hidden;
   padding: clamp(0.95rem, 2.1vw, 1.15rem);
+  position: relative;
+
+  &::before {
+    background: linear-gradient(90deg, rgba(0, 95, 115, 0.16), rgba(201, 123, 42, 0.12));
+    content: "";
+    height: 3px;
+    inset: 0 0 auto;
+    position: absolute;
+  }
 `;
 
 const CardTitle = styled.h2`
@@ -124,11 +139,13 @@ const CardTitle = styled.h2`
 const MetaGrid = styled.dl`
   display: grid;
   gap: 0.78rem;
+  min-width: 0;
 `;
 
 const MetaItem = styled.div`
   display: grid;
   gap: ${({ theme }) => theme.spacing.xs};
+  min-width: 0;
 `;
 
 const MetaTerm = styled.dt`
@@ -155,8 +172,10 @@ const Anchor = styled.a`
 `;
 
 const RouteList = styled.div`
+  align-content: start;
   display: grid;
   gap: 0.7rem;
+  min-width: 0;
 `;
 
 const RouteRow = styled.div`
@@ -165,6 +184,7 @@ const RouteRow = styled.div`
   border-radius: ${({ theme }) => theme.radius.md};
   display: grid;
   gap: 0.55rem;
+  min-width: 0;
   padding: 0.82rem 0.9rem;
 `;
 
@@ -173,8 +193,10 @@ const RouteLabel = styled.strong`
 `;
 
 const PostList = styled.div`
+  align-content: start;
   display: grid;
   gap: 0.78rem;
+  min-width: 0;
 `;
 
 const PostCard = styled.article`
@@ -183,6 +205,8 @@ const PostCard = styled.article`
   border-radius: ${({ theme }) => theme.radius.md};
   display: grid;
   gap: 0.78rem;
+  min-width: 0;
+  overflow: hidden;
   padding: 0.95rem 1rem;
 `;
 
@@ -192,8 +216,10 @@ const PostTitle = styled.h3`
 `;
 
 const PostMetaGrid = styled.dl`
+  align-items: start;
   display: grid;
   gap: 0.78rem;
+  min-width: 0;
 
   @media (min-width: 760px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));

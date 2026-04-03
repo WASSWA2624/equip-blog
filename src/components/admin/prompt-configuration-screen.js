@@ -45,6 +45,7 @@ const Description = styled.p`
 `;
 
 const Layout = styled.section`
+  align-items: start;
   display: grid;
   gap: ${({ theme }) => theme.spacing.lg};
 
@@ -54,8 +55,10 @@ const Layout = styled.section`
 `;
 
 const Stack = styled.div`
+  align-content: start;
   display: grid;
   gap: ${({ theme }) => theme.spacing.lg};
+  min-width: 0;
 `;
 
 const Card = styled.section`
@@ -65,7 +68,18 @@ const Card = styled.section`
   box-shadow: 0 20px 60px rgba(16, 32, 51, 0.08);
   display: grid;
   gap: ${({ theme }) => theme.spacing.md};
+  min-width: 0;
+  overflow: hidden;
   padding: ${({ theme }) => theme.spacing.lg};
+  position: relative;
+
+  &::before {
+    background: linear-gradient(90deg, rgba(0, 95, 115, 0.16), rgba(201, 123, 42, 0.12));
+    content: "";
+    height: 3px;
+    inset: 0 0 auto;
+    position: absolute;
+  }
 `;
 
 const CardTitle = styled.h2`
@@ -77,11 +91,25 @@ const SmallText = styled.p`
   color: ${({ theme }) => theme.colors.muted};
   line-height: 1.6;
   margin: 0;
+  overflow-wrap: anywhere;
+`;
+
+const SummaryGrid = styled.div`
+  align-items: start;
+  display: grid;
+  gap: ${({ theme }) => theme.spacing.sm};
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10.5rem), 1fr));
 `;
 
 const SummaryStat = styled.div`
+  align-content: start;
+  background: rgba(247, 249, 252, 0.92);
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radius.md};
   display: grid;
   gap: ${({ theme }) => theme.spacing.xs};
+  min-width: 0;
+  padding: ${({ theme }) => theme.spacing.md};
 `;
 
 const StatValue = styled.strong`
@@ -92,6 +120,7 @@ const StatValue = styled.strong`
 const Form = styled.form`
   display: grid;
   gap: ${({ theme }) => theme.spacing.md};
+  min-width: 0;
 `;
 
 const TemplateCard = styled.article`
@@ -100,10 +129,13 @@ const TemplateCard = styled.article`
   border-radius: ${({ theme }) => theme.radius.md};
   display: grid;
   gap: ${({ theme }) => theme.spacing.md};
+  min-width: 0;
+  overflow: hidden;
   padding: ${({ theme }) => theme.spacing.lg};
 `;
 
 const TemplateHeader = styled.div`
+  align-items: start;
   display: flex;
   flex-wrap: wrap;
   gap: ${({ theme }) => theme.spacing.sm};
@@ -167,20 +199,26 @@ const Input = styled.input`
   background: white;
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radius.sm};
+  box-sizing: border-box;
   color: ${({ theme }) => theme.colors.text};
   font: inherit;
+  min-width: 0;
   padding: 0.8rem 0.9rem;
+  width: 100%;
 `;
 
 const Textarea = styled.textarea`
   background: white;
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radius.sm};
+  box-sizing: border-box;
   color: ${({ theme }) => theme.colors.text};
   font: inherit;
   min-height: ${({ $rows }) => `${$rows * 1.65}rem`};
+  min-width: 0;
   padding: 0.8rem 0.9rem;
   resize: vertical;
+  width: 100%;
 `;
 
 const StatusBanner = styled.div`
@@ -290,18 +328,20 @@ export default function PromptConfigurationScreen({ copy, initialData }) {
         <Stack>
           <Card>
             <CardTitle>{copy.summaryTitle}</CardTitle>
-            <SummaryStat>
-              <StatValue>{data.summary.templateCount}</StatValue>
-              <SmallText>{copy.templateSummary}</SmallText>
-            </SummaryStat>
-            <SummaryStat>
-              <StatValue>{data.summary.activeTemplateCount}</StatValue>
-              <SmallText>{copy.activeSummary}</SmallText>
-            </SummaryStat>
-            <SummaryStat>
-              <StatValue>{data.summary.purposeCount}</StatValue>
-              <SmallText>{copy.purposeSummary}</SmallText>
-            </SummaryStat>
+            <SummaryGrid>
+              <SummaryStat>
+                <StatValue>{data.summary.templateCount}</StatValue>
+                <SmallText>{copy.templateSummary}</SmallText>
+              </SummaryStat>
+              <SummaryStat>
+                <StatValue>{data.summary.activeTemplateCount}</StatValue>
+                <SmallText>{copy.activeSummary}</SmallText>
+              </SummaryStat>
+              <SummaryStat>
+                <StatValue>{data.summary.purposeCount}</StatValue>
+                <SmallText>{copy.purposeSummary}</SmallText>
+              </SummaryStat>
+            </SummaryGrid>
           </Card>
         </Stack>
         <Stack>

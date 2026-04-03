@@ -253,6 +253,7 @@ const Description = styled.p`
 `;
 
 const Layout = styled.section`
+  align-items: start;
   display: grid;
   gap: ${({ theme }) => theme.spacing.lg};
 
@@ -262,8 +263,10 @@ const Layout = styled.section`
 `;
 
 const Stack = styled.div`
+  align-content: start;
   display: grid;
   gap: ${({ theme }) => theme.spacing.lg};
+  min-width: 0;
 `;
 
 const Card = styled.section`
@@ -273,7 +276,18 @@ const Card = styled.section`
   box-shadow: 0 22px 60px rgba(16, 32, 51, 0.08);
   display: grid;
   gap: ${({ theme }) => theme.spacing.md};
+  min-width: 0;
+  overflow: hidden;
   padding: ${({ theme }) => theme.spacing.lg};
+  position: relative;
+
+  &::before {
+    background: linear-gradient(90deg, rgba(0, 95, 115, 0.16), rgba(201, 123, 42, 0.12));
+    content: "";
+    height: 3px;
+    inset: 0 0 auto;
+    position: absolute;
+  }
 `;
 
 const CardTitle = styled.h2`
@@ -294,19 +308,23 @@ const MutedValue = styled.span`
 const SummaryList = styled.dl`
   display: grid;
   gap: ${({ theme }) => theme.spacing.sm};
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
   margin: 0;
 `;
 
 const SummaryRow = styled.div`
-  align-items: start;
+  background: rgba(247, 249, 252, 0.92);
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radius.md};
   display: grid;
   gap: ${({ theme }) => theme.spacing.xs};
-  grid-template-columns: minmax(0, 112px) minmax(0, 1fr);
+  min-width: 0;
+  padding: ${({ theme }) => theme.spacing.md};
 `;
 
 const SummaryLabel = styled.dt`
   color: ${({ theme }) => theme.colors.muted};
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   margin: 0;
@@ -314,7 +332,23 @@ const SummaryLabel = styled.dt`
 `;
 
 const SummaryValue = styled.dd`
+  font-weight: 700;
+  line-height: 1.45;
   margin: 0;
+  overflow-wrap: anywhere;
+`;
+
+const ProgressHeader = styled.div`
+  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing.sm};
+  justify-content: space-between;
+`;
+
+const ProgressValue = styled.strong`
+  font-size: clamp(1.8rem, 3vw, 2.3rem);
+  line-height: 1;
 `;
 
 const ProgressBarTrack = styled.div`
@@ -335,18 +369,70 @@ const ProgressBarFill = styled.div`
 const StageList = styled.ol`
   display: grid;
   gap: ${({ theme }) => theme.spacing.sm};
+  list-style: none;
   margin: 0;
-  padding-left: 1.2rem;
+  padding: 0;
 `;
 
 const StageItem = styled.li`
+  align-items: start;
+  background: ${({ $state }) =>
+    $state === "error"
+      ? "rgba(180, 35, 24, 0.08)"
+      : $state === "current"
+        ? "rgba(0, 95, 115, 0.08)"
+        : $state === "complete"
+          ? "rgba(21, 115, 71, 0.08)"
+          : "rgba(247, 249, 252, 0.92)"};
+  border: 1px solid
+    ${({ $state, theme }) =>
+      $state === "error"
+        ? "rgba(180, 35, 24, 0.24)"
+        : $state === "current"
+          ? "rgba(0, 95, 115, 0.24)"
+          : $state === "complete"
+            ? "rgba(21, 115, 71, 0.24)"
+            : theme.colors.border};
+  border-radius: ${({ theme }) => theme.radius.md};
+  display: grid;
+  gap: ${({ theme }) => theme.spacing.sm};
+  grid-template-columns: auto minmax(0, 1fr);
+  min-width: 0;
+  padding: ${({ theme }) => theme.spacing.md};
+`;
+
+const StageMarker = styled.span`
+  align-items: center;
+  background: ${({ $state, theme }) =>
+    $state === "error"
+      ? theme.colors.danger
+      : $state === "current"
+        ? theme.colors.primary
+        : $state === "complete"
+          ? theme.colors.success
+          : "rgba(88, 97, 116, 0.2)"};
+  border-radius: 999px;
+  color: ${({ $state }) => ($state === "pending" ? "#102033" : "white")};
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 700;
+  height: 1.8rem;
+  justify-content: center;
+  width: 1.8rem;
+`;
+
+const StageText = styled.span`
   color: ${({ $state, theme }) =>
     $state === "error"
       ? theme.colors.danger
       : $state === "current"
         ? theme.colors.primary
-        : theme.colors.text};
-  font-weight: ${({ $state }) => ($state === "current" ? 700 : 500)};
+        : $state === "complete"
+          ? theme.colors.success
+          : theme.colors.text};
+  font-weight: ${({ $state }) => ($state === "current" ? 700 : 600)};
+  line-height: 1.45;
+  overflow-wrap: anywhere;
 `;
 
 const PillRow = styled.div`
@@ -1248,19 +1334,33 @@ export default function GeneratePostScreen({ copy, initialData }) {
             </PillRow>
           </Card>
           <Card>
-            <CardTitle>{copy.stageTitle}</CardTitle>
-            <SmallText>
-              {generator.loading ? copy.stageActiveHint : generator.preview ? copy.stageSuccessHint : copy.stageIdle}
-            </SmallText>
+            <ProgressHeader>
+              <div>
+                <CardTitle>{copy.stageTitle}</CardTitle>
+                <SmallText>
+                  {generator.loading
+                    ? copy.stageActiveHint
+                    : generator.preview
+                      ? copy.stageSuccessHint
+                      : copy.stageIdle}
+                </SmallText>
+              </div>
+              <ProgressValue>{Math.round(stageProgress)}%</ProgressValue>
+            </ProgressHeader>
             <ProgressBarTrack aria-hidden="true">
               <ProgressBarFill $value={stageProgress} />
             </ProgressBarTrack>
             <StageList>
-              {initialData.stageOrder.map((stageId) => (
-                <StageItem key={stageId} $state={getStageStatus(generator, stageId)}>
-                  {formatStageLabel(copy, stageId)}
-                </StageItem>
-              ))}
+              {initialData.stageOrder.map((stageId, index) => {
+                const stageState = getStageStatus(generator, stageId);
+
+                return (
+                  <StageItem key={stageId} $state={stageState}>
+                    <StageMarker $state={stageState}>{index + 1}</StageMarker>
+                    <StageText $state={stageState}>{formatStageLabel(copy, stageId)}</StageText>
+                  </StageItem>
+                );
+              })}
             </StageList>
             {generator.jobId ? (
               <SmallText>

@@ -127,6 +127,7 @@ const StatValue = styled.strong`
 `;
 
 const List = styled.div`
+  align-content: start;
   display: grid;
   gap: ${({ theme }) => theme.spacing.sm};
   min-width: 0;
@@ -325,6 +326,9 @@ const SaveButton = styled.button`
 
 const StickyCard = styled(Card)`
   @media (min-width: 1240px) {
+    grid-template-rows: auto auto minmax(0, 1fr);
+    max-height: calc(100vh - 2rem);
+    overflow: hidden;
     position: sticky;
     top: 1rem;
   }
@@ -356,14 +360,16 @@ const FilterStack = styled.div`
 `;
 
 const ScrollArea = styled.div`
+  align-content: start;
   display: grid;
   gap: ${({ theme }) => theme.spacing.sm};
+  min-height: 0;
   min-width: 0;
 
   @media (min-width: 1240px) {
-    max-height: min(62vh, 760px);
     overflow: auto;
     padding-right: 0.15rem;
+    scrollbar-gutter: stable;
   }
 `;
 
@@ -513,10 +519,13 @@ const DetailLink = styled.a`
 `;
 
 const EmptyPanel = styled.div`
+  align-content: center;
   background: rgba(247, 249, 252, 0.9);
   border: 1px dashed ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radius.md};
   color: ${({ theme }) => theme.colors.muted};
+  display: grid;
+  min-height: 14rem;
   padding: ${({ theme }) => theme.spacing.lg};
 `;
 
