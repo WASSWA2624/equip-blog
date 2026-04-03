@@ -1,7 +1,24 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import styled from "styled-components";
+
+const VIEWPORT_MARGIN = 12;
+const DROPDOWN_GAP = 8;
+const MIN_DROPDOWN_WIDTH = 280;
+const BASE_DROPDOWN_WIDTH = 340;
+const MAX_DROPDOWN_WIDTH = 520;
+const DEFAULT_DROPDOWN_HEIGHT = 360;
+const MIN_FIT_THRESHOLD = 220;
+
+function clampValue(value, minimum, maximum) {
+  if (maximum < minimum) {
+    return minimum;
+  }
+
+  return Math.min(Math.max(value, minimum), maximum);
+}
 
 function normalizeText(value) {
   return `${value ?? ""}`.trim().toLowerCase();
@@ -61,9 +78,109 @@ function getNextEnabledOptionIndex(options, currentIndex, direction) {
   return enabledIndexes[nextEnabledIndex];
 }
 
+function getViewportSnapshot() {
+  return {
+    height: window.innerHeight,
+    width: window.innerWidth,
+  };
+}
+
+function resolveDropdownLayout(triggerRect, dropdownRect = null) {
+  if (!triggerRect) {
+    return null;
+  }
+
+  const viewport = getViewportSnapshot();
+  const maxViewportWidth = Math.max(
+    MIN_DROPDOWN_WIDTH,
+    viewport.width - VIEWPORT_MARGIN * 2,
+  );
+  const preferredWidth = Math.max(
+    triggerRect.width,
+    Math.min(dropdownRect?.width || BASE_DROPDOWN_WIDTH, MAX_DROPDOWN_WIDTH),
+  );
+  const width = clampValue(
+    preferredWidth,
+    Math.min(MIN_DROPDOWN_WIDTH, maxViewportWidth),
+    maxViewportWidth,
+  );
+  const desiredHeight = Math.min(
+    dropdownRect?.height || DEFAULT_DROPDOWN_HEIGHT,
+    viewport.height - VIEWPORT_MARGIN * 2,
+  );
+  const availableSpace = {
+    bottom: viewport.height - triggerRect.bottom - VIEWPORT_MARGIN - DROPDOWN_GAP,
+    left: triggerRect.left - VIEWPORT_MARGIN - DROPDOWN_GAP,
+    right: viewport.width - triggerRect.right - VIEWPORT_MARGIN - DROPDOWN_GAP,
+    top: triggerRect.top - VIEWPORT_MARGIN - DROPDOWN_GAP,
+  };
+  const fitThreshold = Math.min(desiredHeight, MIN_FIT_THRESHOLD);
+  const fits = {
+    bottom: availableSpace.bottom >= fitThreshold,
+    left: availableSpace.left >= Math.min(width, MIN_FIT_THRESHOLD),
+    right: availableSpace.right >= Math.min(width, MIN_FIT_THRESHOLD),
+    top: availableSpace.top >= fitThreshold,
+  };
+  let placement = "bottom";
+
+  if (fits.bottom) {
+    placement = "bottom";
+  } else if (fits.top) {
+    placement = "top";
+  } else if (fits.right || fits.left) {
+    placement = availableSpace.right >= availableSpace.left ? "right" : "left";
+  } else {
+    placement = Object.entries(availableSpace).sort((leftEntry, rightEntry) => rightEntry[1] - leftEntry[1])[0][0];
+  }
+
+  const maxHeight =
+    placement === "bottom"
+      ? Math.max(160, availableSpace.bottom)
+      : placement === "top"
+        ? Math.max(160, availableSpace.top)
+        : Math.max(220, viewport.height - VIEWPORT_MARGIN * 2);
+  const horizontalWidth =
+    placement === "left"
+      ? clampValue(width, Math.min(MIN_DROPDOWN_WIDTH, maxViewportWidth), Math.max(availableSpace.left, MIN_DROPDOWN_WIDTH))
+      : placement === "right"
+        ? clampValue(width, Math.min(MIN_DROPDOWN_WIDTH, maxViewportWidth), Math.max(availableSpace.right, MIN_DROPDOWN_WIDTH))
+        : width;
+  let left = triggerRect.left;
+  let top = triggerRect.bottom + DROPDOWN_GAP;
+
+  if (placement === "top") {
+    top = triggerRect.top - DROPDOWN_GAP - Math.min(desiredHeight, maxHeight);
+  } else if (placement === "right") {
+    left = triggerRect.right + DROPDOWN_GAP;
+    top = triggerRect.top;
+  } else if (placement === "left") {
+    left = triggerRect.left - DROPDOWN_GAP - horizontalWidth;
+    top = triggerRect.top;
+  }
+
+  if (placement === "bottom" || placement === "top") {
+    left = clampValue(left, VIEWPORT_MARGIN, viewport.width - horizontalWidth - VIEWPORT_MARGIN);
+    top = clampValue(
+      top,
+      VIEWPORT_MARGIN,
+      viewport.height - Math.min(desiredHeight, maxHeight) - VIEWPORT_MARGIN,
+    );
+  } else {
+    left = clampValue(left, VIEWPORT_MARGIN, viewport.width - horizontalWidth - VIEWPORT_MARGIN);
+    top = clampValue(top, VIEWPORT_MARGIN, viewport.height - Math.min(desiredHeight, maxHeight) - VIEWPORT_MARGIN);
+  }
+
+  return {
+    left,
+    maxHeight,
+    placement,
+    top,
+    width: horizontalWidth,
+  };
+}
+
 const SelectRoot = styled.div`
   min-width: 0;
-  position: relative;
   width: 100%;
 `;
 
@@ -162,7 +279,7 @@ const Caret = styled.span`
   transition: transform 160ms ease;
 `;
 
-const Dropdown = styled.div`
+const DropdownSurface = styled.div`
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.995), rgba(246, 250, 255, 0.985)),
     radial-gradient(circle at top right, rgba(36, 75, 115, 0.09), transparent 58%);
@@ -173,12 +290,15 @@ const Dropdown = styled.div`
     0 6px 16px rgba(16, 32, 51, 0.05);
   display: grid;
   gap: 0.55rem;
-  left: 0;
+  grid-template-rows: auto minmax(0, 1fr);
+  left: ${({ $layout }) => `${$layout?.left || 0}px`};
+  max-height: ${({ $layout }) => `${$layout?.maxHeight || DEFAULT_DROPDOWN_HEIGHT}px`};
+  overflow: hidden;
   padding: 0.68rem;
-  position: absolute;
-  right: 0;
-  top: calc(100% + 0.45rem);
-  z-index: 80;
+  position: fixed;
+  top: ${({ $layout }) => `${$layout?.top || 0}px`};
+  width: ${({ $layout }) => `${$layout?.width || BASE_DROPDOWN_WIDTH}px`};
+  z-index: 9999;
 `;
 
 const SearchWrap = styled.div`
@@ -187,6 +307,7 @@ const SearchWrap = styled.div`
   border: 1px solid rgba(24, 39, 66, 0.08);
   border-radius: 999px;
   display: flex;
+  flex: 0 0 auto;
   gap: 0.55rem;
   min-height: 40px;
   padding: 0 0.72rem;
@@ -236,14 +357,15 @@ const SearchInput = styled.input`
 
 const OptionList = styled.div`
   display: grid;
-  gap: 0.28rem;
-  max-height: 280px;
+  flex: 1 1 auto;
+  gap: 0.34rem;
+  max-height: 100%;
+  min-height: 0;
   overflow: auto;
-  padding-right: 0.1rem;
+  padding-right: 0.12rem;
 `;
 
 const OptionButton = styled.button`
-  align-items: start;
   background: ${({ $active, $selected }) =>
     $selected
       ? "rgba(0, 95, 115, 0.11)"
@@ -261,11 +383,10 @@ const OptionButton = styled.button`
   color: ${({ theme }) => theme.colors.text};
   cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
   display: grid;
-  gap: 0.18rem;
-  justify-items: start;
-  min-height: 0;
+  gap: 0.34rem;
+  min-height: 56px;
   opacity: ${({ disabled }) => (disabled ? 0.55 : 1)};
-  padding: 0.72rem 0.78rem;
+  padding: 0.72rem 0.82rem;
   text-align: left;
   transition:
     background 160ms ease,
@@ -280,41 +401,34 @@ const OptionButton = styled.button`
   }
 `;
 
-const OptionRow = styled.span`
+const OptionHeader = styled.div`
   align-items: start;
-  display: flex;
-  gap: 0.6rem;
-  justify-content: space-between;
-  width: 100%;
-`;
-
-const OptionMeta = styled.span`
-  align-items: center;
-  display: inline-flex;
-  flex: 0 0 auto;
-  gap: 0.45rem;
-`;
-
-const OptionText = styled.span`
   display: grid;
-  gap: 0.12rem;
-  min-width: 0;
+  gap: 0.6rem;
+  grid-template-columns: minmax(0, 1fr) auto;
 `;
 
-const OptionLabel = styled.span`
+const OptionLabel = styled.div`
   font-size: 0.9rem;
   font-weight: 700;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.28;
+  overflow-wrap: anywhere;
 `;
 
-const OptionDescription = styled.span`
+const OptionDescription = styled.div`
   color: ${({ theme }) => theme.colors.muted};
   font-size: 0.78rem;
   line-height: 1.45;
   overflow-wrap: anywhere;
-  white-space: normal;
+`;
+
+const OptionMeta = styled.div`
+  align-items: center;
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 0.45rem;
+  justify-self: end;
+  padding-top: 0.08rem;
 `;
 
 const OptionBadge = styled.span`
@@ -323,11 +437,11 @@ const OptionBadge = styled.span`
   border-radius: 999px;
   color: #244b73;
   display: inline-flex;
-  flex: 0 0 auto;
+  flex: 0 1 auto;
   font-size: 0.66rem;
   font-weight: 800;
   letter-spacing: 0.08em;
-  max-width: 8rem;
+  max-width: 10rem;
   overflow: hidden;
   padding: 0.22rem 0.46rem;
   text-overflow: ellipsis;
@@ -375,9 +489,11 @@ export default function SearchableSelect({
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [dropdownLayout, setDropdownLayout] = useState(null);
+  const rootRef = useRef(null);
   const triggerRef = useRef(null);
   const searchInputRef = useRef(null);
-  const containerRef = useRef(null);
+  const dropdownRef = useRef(null);
   const normalizedOptions = useMemo(
     () => options.map((option, index) => normalizeOption(option, index)),
     [options],
@@ -410,8 +526,15 @@ export default function SearchableSelect({
   }, [activeIndex, filteredOptions, resolvedValue]);
 
   useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
     function handlePointerDown(event) {
-      if (!containerRef.current?.contains(event.target)) {
+      const clickedTrigger = rootRef.current?.contains(event.target);
+      const clickedDropdown = dropdownRef.current?.contains(event.target);
+
+      if (!clickedTrigger && !clickedDropdown) {
         setIsOpen(false);
         setQuery("");
         setActiveIndex(-1);
@@ -423,7 +546,7 @@ export default function SearchableSelect({
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, []);
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -436,10 +559,68 @@ export default function SearchableSelect({
     });
   }, [isOpen]);
 
+  useLayoutEffect(() => {
+    if (!isOpen || !triggerRef.current || typeof window === "undefined") {
+      return;
+    }
+
+    function updateLayout() {
+      if (!triggerRef.current) {
+        return;
+      }
+
+      const triggerRect = triggerRef.current.getBoundingClientRect();
+      const dropdownRect = dropdownRef.current?.getBoundingClientRect() || null;
+      const nextLayout = resolveDropdownLayout(triggerRect, dropdownRect);
+
+      setDropdownLayout((currentLayout) => {
+        if (
+          currentLayout &&
+          nextLayout &&
+          currentLayout.left === nextLayout.left &&
+          currentLayout.maxHeight === nextLayout.maxHeight &&
+          currentLayout.placement === nextLayout.placement &&
+          currentLayout.top === nextLayout.top &&
+          currentLayout.width === nextLayout.width
+        ) {
+          return currentLayout;
+        }
+
+        return nextLayout;
+      });
+    }
+
+    updateLayout();
+
+    const frameId = window.requestAnimationFrame(updateLayout);
+    window.addEventListener("resize", updateLayout);
+    window.addEventListener("scroll", updateLayout, true);
+
+    let resizeObserver = null;
+
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(() => updateLayout());
+
+      resizeObserver.observe(triggerRef.current);
+
+      if (dropdownRef.current) {
+        resizeObserver.observe(dropdownRef.current);
+      }
+    }
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      window.removeEventListener("resize", updateLayout);
+      window.removeEventListener("scroll", updateLayout, true);
+      resizeObserver?.disconnect();
+    };
+  }, [filteredOptions.length, isOpen, loading, query]);
+
   function closeMenu(restoreFocus = false) {
     setIsOpen(false);
     setQuery("");
     setActiveIndex(-1);
+    setDropdownLayout(null);
 
     if (restoreFocus) {
       window.requestAnimationFrame(() => {
@@ -453,6 +634,8 @@ export default function SearchableSelect({
       return;
     }
 
+    const triggerRect = triggerRef.current?.getBoundingClientRect() || null;
+
     setIsOpen(true);
     setQuery("");
     setActiveIndex(() => {
@@ -464,6 +647,7 @@ export default function SearchableSelect({
 
       return getNextEnabledOptionIndex(normalizedOptions, -1, direction);
     });
+    setDropdownLayout(resolveDropdownLayout(triggerRect));
   }
 
   function commitSelection(option) {
@@ -543,8 +727,86 @@ export default function SearchableSelect({
     }
   }
 
+  const canPortal = typeof document !== "undefined";
+  const dropdown = isOpen && canPortal && dropdownLayout
+    ? createPortal(
+        <DropdownSurface
+          $layout={dropdownLayout}
+          data-placement={dropdownLayout.placement}
+          ref={dropdownRef}
+        >
+          <SearchWrap>
+            <SearchIcon aria-hidden="true" />
+            <SearchInput
+              aria-activedescendant={
+                resolvedActiveIndex >= 0 ? `${listboxId}-${filteredOptions[resolvedActiveIndex]?.id}` : undefined
+              }
+              aria-controls={listboxId}
+              aria-label={searchPlaceholder}
+              aria-autocomplete="list"
+              aria-expanded={isOpen}
+              onChange={(event) => {
+                setQuery(event.target.value);
+                setActiveIndex(-1);
+              }}
+              onKeyDown={handleSearchKeyDown}
+              placeholder={searchPlaceholder}
+              ref={searchInputRef}
+              role="combobox"
+              type="search"
+              value={query}
+            />
+          </SearchWrap>
+
+          {loading ? (
+            <StateMessage>{loadingMessage}</StateMessage>
+          ) : filteredOptions.length ? (
+            <OptionList id={listboxId} role="listbox">
+              {filteredOptions.map((option, index) => {
+                const isSelected = option.value === `${resolvedValue ?? ""}`;
+
+                return (
+                  <OptionButton
+                    $active={index === resolvedActiveIndex}
+                    $selected={isSelected}
+                    aria-selected={isSelected}
+                    disabled={option.disabled}
+                    id={`${listboxId}-${option.id}`}
+                    key={option.id}
+                    onClick={() => commitSelection(option)}
+                    onMouseEnter={() => {
+                      if (!option.disabled) {
+                        setActiveIndex(index);
+                      }
+                    }}
+                    role="option"
+                    tabIndex={-1}
+                    type="button"
+                  >
+                    <OptionHeader>
+                      <OptionLabel>{option.label}</OptionLabel>
+                      <OptionMeta>
+                        {option.badge ? <OptionBadge>{option.badge}</OptionBadge> : null}
+                        <OptionIndicator $selected={isSelected} aria-hidden="true" />
+                      </OptionMeta>
+                    </OptionHeader>
+                    {option.description ? (
+                      <OptionDescription>{option.description}</OptionDescription>
+                    ) : null}
+                  </OptionButton>
+                );
+              })}
+            </OptionList>
+          ) : (
+            <StateMessage>{emptyMessage}</StateMessage>
+          )}
+        </DropdownSurface>,
+        document.body,
+      )
+    : null;
+
   return (
-    <SelectRoot ref={containerRef}>
+    <SelectRoot ref={rootRef}>
       {name ? <HiddenInput name={name} type="hidden" value={resolvedValue || ""} /> : null}
       <TriggerButton
         $invalid={invalid}
@@ -571,70 +833,7 @@ export default function SearchableSelect({
           <Caret $open={isOpen} aria-hidden="true" />
         </TriggerAdornment>
       </TriggerButton>
-
-      {isOpen ? (
-        <Dropdown>
-          <SearchWrap>
-            <SearchIcon aria-hidden="true" />
-            <SearchInput
-              aria-label={searchPlaceholder}
-              onChange={(event) => {
-                setQuery(event.target.value);
-                setActiveIndex(-1);
-              }}
-              onKeyDown={handleSearchKeyDown}
-              placeholder={searchPlaceholder}
-              ref={searchInputRef}
-              type="search"
-              value={query}
-            />
-          </SearchWrap>
-
-          {loading ? (
-            <StateMessage>{loadingMessage}</StateMessage>
-          ) : filteredOptions.length ? (
-            <OptionList id={listboxId} role="listbox">
-              {filteredOptions.map((option, index) => {
-                const isSelected = option.value === `${resolvedValue ?? ""}`;
-
-                return (
-                  <OptionButton
-                    $active={index === resolvedActiveIndex}
-                    $selected={isSelected}
-                    aria-selected={isSelected}
-                    disabled={option.disabled}
-                    key={option.id}
-                    onClick={() => commitSelection(option)}
-                    onMouseEnter={() => {
-                      if (!option.disabled) {
-                        setActiveIndex(index);
-                      }
-                    }}
-                    role="option"
-                    tabIndex={-1}
-                    type="button"
-                  >
-                    <OptionRow>
-                      <OptionText>
-                        <OptionLabel>{option.label}</OptionLabel>
-                        {option.description ? (
-                          <OptionDescription>{option.description}</OptionDescription>
-                        ) : null}
-                      </OptionText>
-                      <OptionMeta>
-                        {option.badge ? <OptionBadge>{option.badge}</OptionBadge> : null}
-                        <OptionIndicator $selected={isSelected} aria-hidden="true" />
-                      </OptionMeta>
-                    </OptionRow>
-                  </OptionButton>
-                );
-              })}
-            </OptionList>
-          ) : (
-            <StateMessage>{emptyMessage}</StateMessage>
-          )}
-        </Dropdown>
-      ) : null}
+      {dropdown}
     </SelectRoot>
   );
 }
