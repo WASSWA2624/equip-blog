@@ -1,3 +1,7 @@
-export const mediaFeatureScaffold = {
-  status: "pending",
-};
+export {
+  MediaLibraryError,
+  createMediaLibraryErrorPayload,
+  getMediaLibrarySnapshot,
+  responsiveVariantDefinitions,
+  uploadMediaAsset,
+} from "./media-library";

@@ -261,6 +261,8 @@ model MaintenanceTask {
 
 model MediaAsset {
   id              String      @id @default(cuid())
+  fileName        String?     @db.VarChar(255)
+  fileSizeBytes   Int?
   storageDriver   String      @db.VarChar(32)
   storageKey      String?     @db.VarChar(255)
   publicUrl       String?     @db.VarChar(2048)
@@ -278,8 +280,29 @@ model MediaAsset {
   isAiGenerated   Boolean     @default(false)
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
+  variants        MediaVariant[]
   featuredInPosts Post[]      @relation("PostFeaturedImage")
   seoOgRecords    SEORecord[] @relation("SeoOgImage")
+}
+
+model MediaVariant {
+  id            String     @id @default(cuid())
+  mediaAssetId  String
+  variantKey    String     @db.VarChar(64)
+  format        String     @db.VarChar(32)
+  mimeType      String?    @db.VarChar(191)
+  width         Int
+  height        Int
+  fileSizeBytes Int?
+  storageKey    String?    @db.VarChar(255)
+  publicUrl     String?    @db.VarChar(2048)
+  localPath     String?    @db.VarChar(512)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  mediaAsset    MediaAsset @relation(fields: [mediaAssetId], references: [id], onDelete: Cascade)
+
+  @@index([mediaAssetId])
+  @@index([mediaAssetId, variantKey])
 }
 
 model SourceReference {

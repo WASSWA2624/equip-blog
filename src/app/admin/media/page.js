@@ -1,17 +1,13 @@
-import PlaceholderPage from "@/components/common/placeholder-page";
+import MediaLibraryScreen from "@/components/admin/media-library-screen";
+import { getMediaLibrarySnapshot } from "@/features/media";
+import { defaultLocale } from "@/features/i18n/config";
+import { getMessages } from "@/features/i18n/get-messages";
 
-export default function MediaPage() {
-  return (
-    <PlaceholderPage
-      badges={["/admin/media", "Management"]}
-      description="The media library route is in place for the local-first storage abstraction defined in the architecture."
-      eyebrow="Media library"
-      notes={[
-        "Upload and browse media assets.",
-        "Support local storage now and S3-compatible storage later.",
-        "Track media metadata for posts and SEO assets.",
-      ]}
-      title="Media library"
-    />
-  );
+export default async function MediaPage() {
+  const [messages, snapshot] = await Promise.all([
+    getMessages(defaultLocale),
+    getMediaLibrarySnapshot(),
+  ]);
+
+  return <MediaLibraryScreen copy={messages.admin.mediaLibrary} initialData={snapshot} />;
 }

@@ -1,7 +1,10 @@
+import { createRequire } from "node:module";
+
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
-import { PrismaClient } from "@prisma/client";
 
 import { env } from "@/lib/env/server";
+
+const require = createRequire(import.meta.url);
 
 function createAdapterFromDatabaseUrl(databaseUrl) {
   const parsedUrl = new URL(databaseUrl);
@@ -21,7 +24,30 @@ function createAdapterFromDatabaseUrl(databaseUrl) {
   });
 }
 
-function createPrismaClient() {
+function clearPrismaClientModuleCache() {
+  for (const moduleId of Object.keys(require.cache)) {
+    const normalizedModuleId = moduleId.replace(/\\/g, "/");
+
+    if (
+      normalizedModuleId.includes("/node_modules/@prisma/client/") ||
+      normalizedModuleId.includes("/node_modules/.prisma/client/")
+    ) {
+      delete require.cache[moduleId];
+    }
+  }
+}
+
+function loadPrismaClient(forceRefresh = false) {
+  if (forceRefresh) {
+    clearPrismaClientModuleCache();
+  }
+
+  return require("@prisma/client");
+}
+
+function createPrismaClient(forceRefresh = false) {
+  const { PrismaClient } = loadPrismaClient(forceRefresh);
+
   return new PrismaClient({
     adapter: createAdapterFromDatabaseUrl(env.database.url),
   });
@@ -29,9 +55,18 @@ function createPrismaClient() {
 
 const globalForPrisma = globalThis;
 
+function hasExpectedDelegates(prisma) {
+  return prisma && typeof prisma.mediaAsset !== "undefined" && typeof prisma.mediaVariant !== "undefined";
+}
+
 export function getPrismaClient() {
   if (!globalForPrisma.__equipBlogPrisma) {
     globalForPrisma.__equipBlogPrisma = createPrismaClient();
+  }
+
+  if (!hasExpectedDelegates(globalForPrisma.__equipBlogPrisma)) {
+    globalForPrisma.__equipBlogPrisma?.$disconnect?.().catch(() => {});
+    globalForPrisma.__equipBlogPrisma = createPrismaClient(true);
   }
 
   return globalForPrisma.__equipBlogPrisma;

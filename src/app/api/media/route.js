@@ -1,13 +1,48 @@
-import { z } from "zod";
+import { NextResponse } from "next/server";
 
+import {
+  createMediaLibraryErrorPayload,
+  getMediaLibrarySnapshot,
+  uploadMediaAsset,
+} from "@/features/media";
 import { requireAdminApiPermission } from "@/lib/auth/api";
 import { ADMIN_PERMISSIONS } from "@/lib/auth/rbac";
-import { scaffoldRouteResponse, validateJsonRequest } from "@/lib/validation/api-placeholders";
 
-const mediaUploadSchema = z.object({
-  alt: z.string().optional(),
-  fileName: z.string().optional(),
-});
+function getFormDataText(formData, key) {
+  const value = formData.get(key);
+
+  return typeof value === "string" ? value : undefined;
+}
+
+function getFormDataFile(formData, key) {
+  const value = formData.get(key);
+
+  return value && typeof value === "object" && typeof value.arrayBuffer === "function" ? value : null;
+}
+
+export async function GET(request) {
+  const auth = await requireAdminApiPermission(request, ADMIN_PERMISSIONS.UPLOAD_MEDIA);
+
+  if (auth.response) {
+    return auth.response;
+  }
+
+  try {
+    const snapshot = await getMediaLibrarySnapshot({
+      assetId: request.nextUrl.searchParams.get("assetId") || undefined,
+      query: request.nextUrl.searchParams.get("query") || undefined,
+    });
+
+    return NextResponse.json({
+      data: snapshot,
+      success: true,
+    });
+  } catch (error) {
+    const payload = createMediaLibraryErrorPayload(error);
+
+    return NextResponse.json(payload.body, { status: payload.statusCode });
+  }
+}
 
 export async function POST(request) {
   const auth = await requireAdminApiPermission(request, ADMIN_PERMISSIONS.UPLOAD_MEDIA);
@@ -16,16 +51,31 @@ export async function POST(request) {
     return auth.response;
   }
 
-  const result = await validateJsonRequest(request, mediaUploadSchema);
+  try {
+    const formData = await request.formData();
+    const file = getFormDataFile(formData, "file");
+    const uploadedAsset = await uploadMediaAsset({
+      alt: getFormDataText(formData, "alt"),
+      attributionText: getFormDataText(formData, "attributionText"),
+      caption: getFormDataText(formData, "caption"),
+      fileBuffer: file ? Buffer.from(await file.arrayBuffer()) : Buffer.alloc(0),
+      fileName: file?.name || getFormDataText(formData, "fileName") || "upload",
+      isAiGenerated: getFormDataText(formData, "isAiGenerated"),
+      licenseType: getFormDataText(formData, "licenseType"),
+      mimeType: file?.type || getFormDataText(formData, "mimeType"),
+      sourceUrl: getFormDataText(formData, "sourceUrl"),
+      usageNotes: getFormDataText(formData, "usageNotes"),
+    }, {
+      actorId: auth.user.id,
+    });
 
-  if (result.response) {
-    return result.response;
+    return NextResponse.json({
+      data: uploadedAsset,
+      success: true,
+    });
+  } catch (error) {
+    const payload = createMediaLibraryErrorPayload(error);
+
+    return NextResponse.json(payload.body, { status: payload.statusCode });
   }
-
-  return scaffoldRouteResponse({
-    access: "admin",
-    body: result.data,
-    method: "POST",
-    route: "/api/media",
-  });
 }
