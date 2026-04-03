@@ -48,13 +48,44 @@ describe("locale routing helpers", () => {
     ).toEqual({
       alternates: {
         canonical: "/en/search",
-        languages: {
-          en: "/en/search",
-        },
       },
       description: "Search published content in the active locale.",
       title: "Search",
     });
+  });
+
+  it("emits locale alternates only when additional locales are enabled", async () => {
+    vi.resetModules();
+    vi.doMock("@/features/i18n/config", () => ({
+      defaultLocale: "en",
+      isSupportedLocale: (locale) => ["en", "fr"].includes(locale),
+      supportedLocales: ["en", "fr"],
+    }));
+
+    try {
+      const { buildPublicPageMetadata, publicRouteSegments } = await import("./routing");
+
+      expect(
+        buildPublicPageMetadata({
+          description: "About the project.",
+          locale: "en",
+          segments: publicRouteSegments.about,
+          title: "About",
+        }),
+      ).toEqual({
+        alternates: {
+          canonical: "/en/about",
+          languages: {
+            en: "/en/about",
+            fr: "/fr/about",
+          },
+        },
+        description: "About the project.",
+        title: "About",
+      });
+    } finally {
+      vi.doUnmock("@/features/i18n/config");
+    }
   });
 
   it("rejects unsupported locales and exposes unsupported prefixes safely", async () => {

@@ -65,6 +65,7 @@ function createListPost(overrides = {}) {
       {
         excerpt: "Localized excerpt",
         faqJson: [],
+        locale: "en",
         structuredContentJson: {
           sections: [],
         },
@@ -108,6 +109,7 @@ describe("public site data", () => {
               {
                 excerpt: "Centrifuge excerpt",
                 faqJson: [],
+                locale: "en",
                 structuredContentJson: {
                   sections: [],
                 },
@@ -211,11 +213,16 @@ describe("public site data", () => {
               question: "What is a microscope used for?",
             },
           ],
+          locale: "en",
           seoRecord: {
+            authorsJson: ["Equip Blog Editorial"],
             canonicalUrl: "https://example.com/en/blog/microscope-basics",
+            keywordsJson: ["Microscope", "Maintenance"],
             metaDescription: "Microscope meta description",
             metaTitle: "Microscope meta title",
+            noindex: false,
             ogDescription: "Microscope meta description",
+            ogImage: null,
             ogTitle: "Microscope meta title",
             twitterDescription: "Microscope meta description",
             twitterTitle: "Microscope meta title",
@@ -281,6 +288,7 @@ describe("public site data", () => {
             translations: [
               {
                 excerpt: "Maintenance post excerpt",
+                locale: "en",
                 structuredContentJson: {
                   sections: [],
                 },
@@ -303,9 +311,17 @@ describe("public site data", () => {
       prisma,
     );
 
-    expect(pageData.article.metadata).toEqual({
+    expect(pageData.article.metadata).toMatchObject({
+      authors: ["Equip Blog Editorial"],
       description: "Microscope meta description",
+      keywords: ["Microscope", "Maintenance"],
+      noindex: false,
+      ogDescription: "Microscope meta description",
+      ogImage: null,
+      ogTitle: "Microscope meta title",
       title: "Microscope meta title",
+      twitterDescription: "Microscope meta description",
+      twitterTitle: "Microscope meta title",
     });
     expect(pageData.article.heroImages).toHaveLength(2);
     expect(pageData.article.bodySections.map((section) => section.id)).toEqual([

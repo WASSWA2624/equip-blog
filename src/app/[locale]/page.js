@@ -1,7 +1,8 @@
 import { PublicHomePage } from "@/components/public";
 import { getMessages } from "@/features/i18n/get-messages";
-import { buildPublicPageMetadata, publicRouteSegments } from "@/features/i18n/routing";
+import { publicRouteSegments } from "@/features/i18n/routing";
 import { getPublishedHomePageData } from "@/features/public-site";
+import { buildPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +11,7 @@ export async function generateMetadata({ params }) {
   const messages = await getMessages(locale);
   const pageContent = messages?.public?.home || {};
 
-  return buildPublicPageMetadata({
+  return buildPageMetadata({
     description: pageContent.metaDescription || pageContent.description || messages.site.tagline,
     locale,
     segments: publicRouteSegments.home,

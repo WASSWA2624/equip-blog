@@ -1,9 +1,17 @@
 import { notFound } from "next/navigation";
 
 import { PublicPostPage } from "@/components/public";
+import { StructuredDataBundle } from "@/components/seo";
 import { getMessages } from "@/features/i18n/get-messages";
-import { buildPublicPageMetadata, publicRouteSegments } from "@/features/i18n/routing";
+import { publicRouteSegments } from "@/features/i18n/routing";
 import { getPublishedPostPageData } from "@/features/public-site";
+import {
+  buildArticleJsonLd,
+  buildBreadcrumbJsonLd,
+  buildFaqJsonLd,
+  buildPageMetadata,
+  extractFaqItemsFromSections,
+} from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -18,34 +26,25 @@ export async function generateMetadata({ params }) {
     return {};
   }
 
-  const heroImage = pageData.article.heroImages[0]?.url;
-  const metadata = buildPublicPageMetadata({
+  return buildPageMetadata({
+    authors: pageData.article.metadata.authors,
+    canonicalUrl: pageData.article.url,
     description: pageData.article.metadata.description,
+    image: pageData.article.metadata.ogImage || pageData.article.heroImages[0] || null,
     locale,
+    locales: pageData.article.availableLocales,
+    modifiedTime: pageData.article.updatedAt,
+    noindex: pageData.article.metadata.noindex,
+    openGraphDescription: pageData.article.metadata.ogDescription,
+    openGraphTitle: pageData.article.metadata.ogTitle,
+    publishedTime: pageData.article.publishedAt,
     segments: publicRouteSegments.blogPost(slug),
     title: pageData.article.metadata.title,
+    twitterDescription: pageData.article.metadata.twitterDescription,
+    twitterTitle: pageData.article.metadata.twitterTitle,
+    type: "article",
+    keywords: pageData.article.metadata.keywords,
   });
-
-  return {
-    ...metadata,
-    alternates: {
-      ...metadata.alternates,
-      canonical: pageData.article.url,
-    },
-    openGraph: {
-      description: pageData.article.metadata.description,
-      images: heroImage ? [{ url: heroImage }] : undefined,
-      title: pageData.article.metadata.title,
-      type: "article",
-      url: pageData.article.url,
-    },
-    twitter: {
-      card: heroImage ? "summary_large_image" : "summary",
-      description: pageData.article.metadata.description,
-      images: heroImage ? [heroImage] : undefined,
-      title: pageData.article.metadata.title,
-    },
-  };
 }
 
 export default async function BlogPostPage({ params, searchParams }) {
@@ -65,5 +64,20 @@ export default async function BlogPostPage({ params, searchParams }) {
     notFound();
   }
 
-  return <PublicPostPage locale={locale} messages={messages.public} pageData={pageData} />;
+  return (
+    <>
+      <StructuredDataBundle
+        idPrefix={`post-${pageData.article.slug || slug}`}
+        items={[
+          buildBreadcrumbJsonLd(pageData.article.breadcrumb),
+          buildArticleJsonLd({
+            article: pageData.article,
+            locale,
+          }),
+          buildFaqJsonLd(extractFaqItemsFromSections(pageData.article.bodySections)),
+        ]}
+      />
+      <PublicPostPage locale={locale} messages={messages.public} pageData={pageData} />
+    </>
+  );
 }

@@ -1,13 +1,14 @@
 import { PublicStaticPage } from "@/components/public";
 import { getMessages } from "@/features/i18n/get-messages";
-import { buildPublicPageMetadata, publicRouteSegments } from "@/features/i18n/routing";
+import { publicRouteSegments } from "@/features/i18n/routing";
+import { buildPageMetadata } from "@/lib/seo";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
   const messages = await getMessages(locale);
   const pageContent = messages?.public?.pages?.disclaimer || {};
 
-  return buildPublicPageMetadata({
+  return buildPageMetadata({
     description: pageContent.metaDescription || pageContent.description || messages.site.tagline,
     locale,
     segments: publicRouteSegments.disclaimer,

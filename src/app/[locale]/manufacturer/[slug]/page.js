@@ -2,13 +2,15 @@ import { notFound } from "next/navigation";
 
 import { PublicCollectionPage } from "@/components/public";
 import { getMessages } from "@/features/i18n/get-messages";
-import { buildPublicPageMetadata, publicRouteSegments } from "@/features/i18n/routing";
+import { publicRouteSegments } from "@/features/i18n/routing";
 import { getPublishedLandingPageData } from "@/features/public-site";
+import { buildPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({ params }) {
+export async function generateMetadata({ params, searchParams }) {
   const { locale, slug } = await params;
+  const resolvedSearchParams = await searchParams;
   const messages = await getMessages(locale);
   const pageData = await getPublishedLandingPageData({
     entityKind: "manufacturer",
@@ -18,11 +20,13 @@ export async function generateMetadata({ params }) {
   const title = pageData?.entity?.name
     ? `${pageData.entity.name} manufacturer`
     : messages.public?.common?.topManufacturersTitle || "Manufacturer";
+  const page = Number.parseInt(`${resolvedSearchParams?.page ?? ""}`.trim(), 10);
 
-  return buildPublicPageMetadata({
+  return buildPageMetadata({
     description:
       pageData?.entity?.description || messages.public?.home?.discoveryDescription || messages.site.tagline,
     locale,
+    query: Number.isFinite(page) && page > 1 ? { page } : undefined,
     segments: publicRouteSegments.manufacturer(slug),
     title,
   });

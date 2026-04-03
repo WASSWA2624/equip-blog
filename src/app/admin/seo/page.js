@@ -1,17 +1,13 @@
-import PlaceholderPage from "@/components/common/placeholder-page";
+import SeoManagementScreen from "@/components/admin/seo-management-screen";
+import { defaultLocale } from "@/features/i18n/config";
+import { getMessages } from "@/features/i18n/get-messages";
+import { getSeoManagementSnapshot } from "@/features/seo";
 
-export default function SeoPage() {
-  return (
-    <PlaceholderPage
-      badges={["/admin/seo", "Management"]}
-      description="The SEO route is scaffolded for metadata, robots, sitemap, and structured data management."
-      eyebrow="SEO management"
-      notes={[
-        "Manage metadata defaults and overrides.",
-        "Review sitemap and robots policies.",
-        "Support Open Graph and Twitter assets.",
-      ]}
-      title="SEO management"
-    />
-  );
+export default async function SeoPage() {
+  const [messages, snapshot] = await Promise.all([
+    getMessages(defaultLocale),
+    getSeoManagementSnapshot(),
+  ]);
+
+  return <SeoManagementScreen copy={messages.admin.seoManagement} initialData={snapshot} />;
 }

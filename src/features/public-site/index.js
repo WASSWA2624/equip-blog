@@ -2,7 +2,7 @@ import { CommentStatus, PostStatus } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 
 import { getCommentSubmissionFormSnapshot } from "@/features/comments";
-import { defaultLocale, isSupportedLocale } from "@/features/i18n/config";
+import { defaultLocale, isSupportedLocale, supportedLocales } from "@/features/i18n/config";
 import { buildLocalizedPath, publicRouteSegments } from "@/features/i18n/routing";
 import { env } from "@/lib/env/server";
 import { generatedArticleSectionOrder } from "@/lib/content/article-structure";
@@ -58,6 +58,16 @@ function dedupeBy(values, getKey) {
   }
 
   return dedupedValues;
+}
+
+function dedupeStrings(values) {
+  return [...new Set((values || []).map((value) => `${value}`.trim()).filter(Boolean))];
+}
+
+function normalizeJsonStringList(value) {
+  return Array.isArray(value)
+    ? value.map((entry) => `${entry}`.trim()).filter(Boolean)
+    : [];
 }
 
 function toAbsolutePublicUrl(path) {
@@ -899,12 +909,26 @@ async function getPublishedPostPageDataInternal(
           disclaimer: true,
           excerpt: true,
           faqJson: true,
+          locale: true,
           seoRecord: {
             select: {
+              authorsJson: true,
               canonicalUrl: true,
+              keywordsJson: true,
               metaDescription: true,
               metaTitle: true,
+              noindex: true,
               ogDescription: true,
+              ogImage: {
+                select: {
+                  alt: true,
+                  attributionText: true,
+                  caption: true,
+                  licenseType: true,
+                  publicUrl: true,
+                  sourceUrl: true,
+                },
+              },
               ogTitle: true,
               twitterDescription: true,
               twitterTitle: true,
@@ -914,9 +938,10 @@ async function getPublishedPostPageDataInternal(
           title: true,
           updatedAt: true,
         },
-        take: 1,
         where: {
-          locale: resolvedLocale,
+          locale: {
+            in: supportedLocales,
+          },
         },
       },
       updatedAt: true,
@@ -926,11 +951,12 @@ async function getPublishedPostPageDataInternal(
     },
   });
 
-  if (!post || post.status !== PostStatus.PUBLISHED || !post.translations[0] || !post.publishedAt) {
+  const translation = post?.translations.find((entry) => entry.locale === resolvedLocale) || null;
+
+  if (!post || post.status !== PostStatus.PUBLISHED || !translation || !post.publishedAt) {
     return null;
   }
 
-  const translation = post.translations[0];
   const path = buildLocalizedPath(resolvedLocale, publicRouteSegments.blogPost(post.slug));
   const canonicalUrl = translation.seoRecord?.canonicalUrl || toAbsolutePublicUrl(path);
   const commentWhere = {
@@ -1140,9 +1166,36 @@ async function getPublishedPostPageDataInternal(
         slug: manufacturer.slug,
       })),
       metadata: {
+        authors: normalizeJsonStringList(translation.seoRecord?.authorsJson),
         description: translation.seoRecord?.metaDescription || translation.excerpt || post.excerpt || "",
+        keywords: normalizeJsonStringList(translation.seoRecord?.keywordsJson),
+        noindex: Boolean(translation.seoRecord?.noindex),
+        ogDescription:
+          translation.seoRecord?.ogDescription ||
+          translation.seoRecord?.metaDescription ||
+          translation.excerpt ||
+          post.excerpt ||
+          "",
+        ogImage: createMediaImage(
+          translation.seoRecord?.ogImage,
+          translation.seoRecord?.ogTitle || translation.title,
+        ),
+        ogTitle: translation.seoRecord?.ogTitle || translation.seoRecord?.metaTitle || translation.title,
         title: translation.seoRecord?.metaTitle || translation.title,
+        twitterDescription:
+          translation.seoRecord?.twitterDescription ||
+          translation.seoRecord?.ogDescription ||
+          translation.seoRecord?.metaDescription ||
+          translation.excerpt ||
+          post.excerpt ||
+          "",
+        twitterTitle:
+          translation.seoRecord?.twitterTitle ||
+          translation.seoRecord?.ogTitle ||
+          translation.seoRecord?.metaTitle ||
+          translation.title,
       },
+      availableLocales: dedupeStrings(post.translations.map((entry) => entry.locale)),
       path,
       publishedAt: serializeDate(post.publishedAt),
       relatedPosts,

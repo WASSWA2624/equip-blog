@@ -38,6 +38,10 @@ function normalizeLocale(locale) {
   return typeof locale === "string" ? locale.trim().toLowerCase() : "";
 }
 
+function normalizeLocaleList(locales = supportedLocales) {
+  return [...new Set((locales || []).map((locale) => normalizeLocale(locale)).filter(isSupportedLocale))];
+}
+
 function normalizePathname(pathname) {
   if (typeof pathname !== "string") {
     return "/";
@@ -92,14 +96,35 @@ export function buildCanonicalPath(locale, ...segments) {
 }
 
 export function buildAlternateLanguageLinks(...segments) {
-  const normalizedSegments = normalizeRouteSegments(segments);
+  let options = {};
+  let pathSegments = segments;
+
+  const lastArgument = segments[segments.length - 1];
+
+  if (
+    lastArgument &&
+    typeof lastArgument === "object" &&
+    !Array.isArray(lastArgument) &&
+    Object.prototype.hasOwnProperty.call(lastArgument, "locales")
+  ) {
+    options = lastArgument;
+    pathSegments = segments.slice(0, -1);
+  }
+
+  const normalizedLocales = normalizeLocaleList(options.locales || supportedLocales);
+
+  if (normalizedLocales.length < 2) {
+    return undefined;
+  }
+
+  const normalizedSegments = normalizeRouteSegments(pathSegments);
 
   return Object.fromEntries(
-    supportedLocales.map((locale) => [locale, buildLocalizedPath(locale, normalizedSegments)]),
+    normalizedLocales.map((locale) => [locale, buildLocalizedPath(locale, normalizedSegments)]),
   );
 }
 
-export function buildPublicPageMetadata({ description, locale, segments = [], title }) {
+export function buildPublicPageMetadata({ description, locale, locales, segments = [], title }) {
   const normalizedLocale = normalizeLocale(locale);
 
   if (!isSupportedLocale(normalizedLocale)) {
@@ -107,11 +132,14 @@ export function buildPublicPageMetadata({ description, locale, segments = [], ti
   }
 
   const normalizedSegments = normalizeRouteSegments([segments]);
+  const alternateLanguageLinks = buildAlternateLanguageLinks(normalizedSegments, {
+    locales,
+  });
 
   return {
     alternates: {
       canonical: buildCanonicalPath(normalizedLocale, normalizedSegments),
-      languages: buildAlternateLanguageLinks(normalizedSegments),
+      ...(alternateLanguageLinks ? { languages: alternateLanguageLinks } : {}),
     },
     description,
     title,
