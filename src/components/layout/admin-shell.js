@@ -37,15 +37,19 @@ function isNavigationActive(pathname, href) {
 
 const Shell = styled.div`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: ${({ theme }) => theme.spacing.sm};
   min-height: 100vh;
 `;
 
 const Header = styled.header`
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg} 0;
+  padding: 0.8rem 0.9rem 0;
   position: sticky;
   top: 0;
   z-index: 40;
+
+  @media (min-width: 900px) {
+    padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg} 0;
+  }
 `;
 
 const HeaderInner = styled.div`
@@ -55,38 +59,49 @@ const HeaderInner = styled.div`
     radial-gradient(circle at top right, rgba(242, 179, 90, 0.18), transparent 44%);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: ${({ theme }) => theme.radius.lg};
-  box-shadow: 0 24px 70px rgba(16, 32, 51, 0.24);
+  box-shadow: 0 18px 54px rgba(16, 32, 51, 0.22);
   display: grid;
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: 0.72rem;
   margin: 0 auto;
   max-width: 1280px;
-  padding: 0.92rem 1rem;
+  padding: 0.8rem 0.88rem;
+
+  @media (min-width: 900px) {
+    padding: 0.92rem 1rem;
+  }
 `;
 
 const TopRow = styled.div`
   align-items: start;
-  display: flex;
-  flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.sm};
-  justify-content: space-between;
+  display: grid;
+  gap: 0.72rem;
+
+  @media (min-width: 980px) {
+    align-items: center;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
 `;
 
 const BrandLink = styled(Link)`
-  align-items: center;
+  align-items: flex-start;
   color: white;
   display: inline-flex;
-  gap: 0.82rem;
+  gap: 0.72rem;
   min-width: 0;
+
+  @media (min-width: 540px) {
+    align-items: center;
+  }
 `;
 
 const BrandCopy = styled.span`
   display: grid;
-  gap: 0.18rem;
+  gap: 0.12rem;
   min-width: 0;
 `;
 
 const Title = styled.span`
-  font-size: 1.02rem;
+  font-size: 0.98rem;
   font-weight: 800;
   letter-spacing: 0.01em;
   line-height: 1;
@@ -94,28 +109,43 @@ const Title = styled.span`
 
 const Description = styled.p`
   color: rgba(255, 255, 255, 0.72);
-  font-size: 0.86rem;
-  line-height: 1.45;
+  display: -webkit-box;
+  font-size: 0.82rem;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.38;
   margin: 0;
+  overflow: hidden;
 `;
 
 const HeaderActions = styled.div`
   align-items: center;
   display: flex;
   flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.sm};
-  justify-content: flex-end;
+  gap: 0.55rem;
+  justify-content: flex-start;
+
+  @media (min-width: 980px) {
+    justify-content: flex-end;
+  }
 `;
 
 const UserBadge = styled.div`
   align-items: center;
   background: rgba(255, 255, 255, 0.09);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: ${({ theme }) => theme.radius.md};
-  display: inline-flex;
-  gap: ${({ theme }) => theme.spacing.sm};
+  border-radius: 18px;
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  justify-self: start;
   max-width: 100%;
-  padding: 0.48rem 0.72rem;
+  padding: 0.42rem 0.58rem;
+  width: fit-content;
+
+  @media (min-width: 980px) {
+    justify-self: end;
+  }
 `;
 
 const UserCopy = styled.div`
@@ -126,13 +156,13 @@ const UserCopy = styled.div`
 
 const UserName = styled.strong`
   color: white;
-  font-size: 0.94rem;
+  font-size: 0.88rem;
   line-height: 1.1;
 `;
 
 const UserMeta = styled.span`
   color: rgba(255, 255, 255, 0.72);
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   line-height: 1.35;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -146,10 +176,10 @@ const RolePill = styled.span`
   border-radius: 999px;
   color: #ffe3b7;
   display: inline-flex;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.08em;
-  padding: 0.34rem 0.6rem;
+  padding: 0.3rem 0.56rem;
   text-transform: uppercase;
   white-space: nowrap;
 `;
@@ -157,6 +187,7 @@ const RolePill = styled.span`
 const NavScroller = styled.div`
   overflow-x: auto;
   padding-bottom: 0.12rem;
+  scroll-snap-type: x proximity;
   scrollbar-width: none;
 
   &::-webkit-scrollbar {
@@ -166,7 +197,7 @@ const NavScroller = styled.div`
 
 const Nav = styled.nav`
   display: inline-flex;
-  gap: 0.5rem;
+  gap: 0.42rem;
   min-width: max-content;
 `;
 
@@ -175,9 +206,10 @@ const NavLink = styled(Link)`
   border: 1px solid ${({ $active }) => ($active ? "rgba(255, 255, 255, 0.28)" : "rgba(255, 255, 255, 0.12)")};
   border-radius: 999px;
   color: ${({ $active }) => ($active ? "#fff5df" : "white")};
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   font-weight: 700;
-  padding: 0.48rem 0.78rem;
+  padding: 0.42rem 0.68rem;
+  scroll-snap-align: start;
   transition:
     transform 160ms ease,
     background 160ms ease,
@@ -316,7 +348,7 @@ export default function AdminShell({ children, messages, user }) {
         <HeaderInner>
           <TopRow>
             <BrandLink href="/admin">
-              <EquipLogo size={42} />
+              <EquipLogo size={38} />
               <BrandCopy>
                 <Title>{messages.admin.title}</Title>
                 <Description>{messages.admin.description}</Description>

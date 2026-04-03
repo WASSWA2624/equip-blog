@@ -38,15 +38,19 @@ function isNavigationActive(pathname, href) {
 
 const Shell = styled.div`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: ${({ theme }) => theme.spacing.sm};
   min-height: 100vh;
 `;
 
 const Header = styled.header`
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md} 0;
+  padding: 0.7rem 0.8rem 0;
   position: sticky;
   top: 0;
   z-index: 30;
+
+  @media (min-width: 760px) {
+    padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md} 0;
+  }
 `;
 
 const HeaderInner = styled.div`
@@ -56,42 +60,49 @@ const HeaderInner = styled.div`
     radial-gradient(circle at top right, rgba(0, 95, 115, 0.14), transparent 42%);
   border: 1px solid rgba(16, 32, 51, 0.08);
   border-radius: ${({ theme }) => theme.radius.lg};
-  box-shadow: 0 20px 60px rgba(16, 32, 51, 0.08);
+  box-shadow: 0 16px 42px rgba(16, 32, 51, 0.08);
   display: grid;
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: 0.72rem;
   margin: 0 auto;
   max-width: 1180px;
-  padding: 0.9rem 1rem;
+  padding: 0.82rem 0.88rem;
 
-  @media (min-width: 900px) {
-    padding: 1rem 1.2rem;
+  @media (min-width: 760px) {
+    padding: 0.92rem 1.05rem;
   }
 `;
 
 const TopRow = styled.div`
   align-items: start;
-  display: flex;
-  flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.sm};
-  justify-content: space-between;
+  display: grid;
+  gap: 0.65rem;
+
+  @media (min-width: 540px) {
+    align-items: center;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
 `;
 
 const BrandLink = styled(Link)`
-  align-items: center;
+  align-items: flex-start;
   color: ${({ theme }) => theme.colors.text};
   display: inline-flex;
-  gap: 0.82rem;
+  gap: 0.72rem;
   min-width: 0;
+
+  @media (min-width: 540px) {
+    align-items: center;
+  }
 `;
 
 const BrandCopy = styled.span`
   display: grid;
-  gap: 0.18rem;
+  gap: 0.12rem;
   min-width: 0;
 `;
 
 const BrandTitle = styled.span`
-  font-size: 1.02rem;
+  font-size: 0.98rem;
   font-weight: 800;
   letter-spacing: 0.01em;
   line-height: 1;
@@ -99,10 +110,14 @@ const BrandTitle = styled.span`
 
 const Tagline = styled.p`
   color: ${({ theme }) => theme.colors.muted};
-  font-size: 0.86rem;
-  line-height: 1.45;
+  display: -webkit-box;
+  font-size: 0.82rem;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.38;
   margin: 0;
-  max-width: 50ch;
+  max-width: 46ch;
+  overflow: hidden;
 `;
 
 const MetaPill = styled.span`
@@ -112,17 +127,19 @@ const MetaPill = styled.span`
   border-radius: 999px;
   color: ${({ theme }) => theme.colors.primary};
   display: inline-flex;
-  font-size: 0.76rem;
+  font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.08em;
-  padding: 0.44rem 0.72rem;
+  justify-self: start;
+  padding: 0.38rem 0.64rem;
   text-transform: uppercase;
   white-space: nowrap;
 `;
 
 const NavScroller = styled.div`
   overflow-x: auto;
-  padding-bottom: 0.15rem;
+  padding: 0.05rem 0 0.1rem;
+  scroll-snap-type: x proximity;
   scrollbar-width: none;
 
   &::-webkit-scrollbar {
@@ -132,7 +149,7 @@ const NavScroller = styled.div`
 
 const Nav = styled.nav`
   display: inline-flex;
-  gap: 0.5rem;
+  gap: 0.42rem;
   min-width: max-content;
 `;
 
@@ -141,9 +158,10 @@ const NavLink = styled(Link)`
   border: 1px solid ${({ $active }) => ($active ? "rgba(0, 95, 115, 0.24)" : "rgba(16, 32, 51, 0.08)")};
   border-radius: 999px;
   color: ${({ $active, theme }) => ($active ? theme.colors.primary : theme.colors.text)};
-  font-size: 0.9rem;
+  font-size: 0.84rem;
   font-weight: 700;
-  padding: 0.5rem 0.84rem;
+  padding: 0.44rem 0.78rem;
+  scroll-snap-align: start;
   transition:
     transform 160ms ease,
     border-color 160ms ease,
@@ -310,7 +328,7 @@ export default function SiteShell({ children, locale, messages }) {
         <HeaderInner>
           <TopRow>
             <BrandLink href={buildLocalizedPath(locale, publicRouteSegments.home)}>
-              <EquipLogo size={42} />
+              <EquipLogo size={38} />
               <BrandCopy>
                 <BrandTitle>{messages.site.title}</BrandTitle>
                 <Tagline>{messages.site.tagline}</Tagline>

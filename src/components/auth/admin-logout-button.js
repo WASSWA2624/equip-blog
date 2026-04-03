@@ -10,9 +10,10 @@ const Button = styled.button`
   border-radius: 999px;
   color: white;
   cursor: pointer;
+  font-size: 0.84rem;
   font-weight: 700;
-  min-height: 38px;
-  padding: 0.55rem 0.9rem;
+  min-height: 34px;
+  padding: 0.46rem 0.78rem;
   transition:
     transform 160ms ease,
     background 160ms ease,
