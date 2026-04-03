@@ -76,49 +76,43 @@ const mediaUploadMetadataSchema = z
     }
   });
 
-const mediaVariantSelect = Object.freeze({
-  createdAt: true,
-  fileSizeBytes: true,
-  format: true,
-  height: true,
-  id: true,
-  localPath: true,
-  mimeType: true,
-  publicUrl: true,
-  storageKey: true,
-  updatedAt: true,
-  variantKey: true,
-  width: true,
-});
+const mediaVariantScalarFields = Object.freeze([
+  "createdAt",
+  "fileSizeBytes",
+  "format",
+  "height",
+  "id",
+  "localPath",
+  "mimeType",
+  "publicUrl",
+  "storageKey",
+  "updatedAt",
+  "variantKey",
+  "width",
+]);
 
-const mediaAssetSelect = Object.freeze({
-  alt: true,
-  attributionText: true,
-  caption: true,
-  createdAt: true,
-  fileName: true,
-  fileSizeBytes: true,
-  height: true,
-  id: true,
-  isAiGenerated: true,
-  licenseType: true,
-  localPath: true,
-  mimeType: true,
-  publicUrl: true,
-  sourceDomain: true,
-  sourceUrl: true,
-  storageDriver: true,
-  storageKey: true,
-  updatedAt: true,
-  usageNotes: true,
-  variants: {
-    orderBy: {
-      width: "asc",
-    },
-    select: mediaVariantSelect,
-  },
-  width: true,
-});
+const mediaAssetScalarFields = Object.freeze([
+  "alt",
+  "attributionText",
+  "caption",
+  "createdAt",
+  "fileName",
+  "fileSizeBytes",
+  "height",
+  "id",
+  "isAiGenerated",
+  "licenseType",
+  "localPath",
+  "mimeType",
+  "publicUrl",
+  "sourceDomain",
+  "sourceUrl",
+  "storageDriver",
+  "storageKey",
+  "updatedAt",
+  "usageNotes",
+  "width",
+]);
 
 export class MediaLibraryError extends Error {
   constructor(message, { status = "invalid_media_asset", statusCode = 400 } = {}) {
@@ -147,6 +141,56 @@ function normalizeOptionalText(value) {
   const normalized = normalizeDisplayText(value);
 
   return normalized || null;
+}
+
+function getRuntimeModelFieldNames(db, modelName) {
+  return db?._runtimeDataModel?.models?.[modelName]?.fields?.map((field) => field.name) || null;
+}
+
+function createRuntimeFieldPredicate(db, modelName) {
+  const fieldNames = getRuntimeModelFieldNames(db, modelName);
+
+  if (!fieldNames) {
+    return () => true;
+  }
+
+  const fieldSet = new Set(fieldNames);
+
+  return (fieldName) => fieldSet.has(fieldName);
+}
+
+function createMediaVariantSelect(db) {
+  const hasField = createRuntimeFieldPredicate(db, "MediaVariant");
+
+  return mediaVariantScalarFields.reduce((select, fieldName) => {
+    if (hasField(fieldName)) {
+      select[fieldName] = true;
+    }
+
+    return select;
+  }, {});
+}
+
+function createMediaAssetSelect(db) {
+  const hasField = createRuntimeFieldPredicate(db, "MediaAsset");
+  const select = mediaAssetScalarFields.reduce((result, fieldName) => {
+    if (hasField(fieldName)) {
+      result[fieldName] = true;
+    }
+
+    return result;
+  }, {});
+
+  if (hasField("variants")) {
+    select.variants = {
+      orderBy: {
+        width: "asc",
+      },
+      select: createMediaVariantSelect(db),
+    };
+  }
+
+  return select;
 }
 
 function normalizeBoolean(value) {
@@ -337,7 +381,7 @@ function createStoragePrefix(fileName, now = new Date()) {
 }
 
 function createPreviewUrl(asset) {
-  return asset.publicUrl || asset.variants[0]?.publicUrl || asset.sourceUrl || null;
+  return asset.publicUrl || asset.variants?.[0]?.publicUrl || asset.sourceUrl || null;
 }
 
 function serializeMediaVariant(variant) {
@@ -358,6 +402,8 @@ function serializeMediaVariant(variant) {
 }
 
 function serializeMediaAsset(asset) {
+  const variants = Array.isArray(asset.variants) ? asset.variants : [];
+
   return {
     alt: asset.alt || null,
     attributionText: asset.attributionText || null,
@@ -379,51 +425,64 @@ function serializeMediaAsset(asset) {
     storageKey: asset.storageKey || null,
     updatedAt: serializeDate(asset.updatedAt),
     usageNotes: asset.usageNotes || null,
-    variants: asset.variants.map(serializeMediaVariant),
-    variantCount: asset.variants.length,
+    variants: variants.map(serializeMediaVariant),
+    variantCount: variants.length,
     width: asset.width,
   };
 }
 
-function buildMediaLibraryWhere(query) {
+function buildMediaLibraryWhere(db, query) {
   if (!query) {
     return undefined;
   }
 
-  return {
-    OR: [
-      {
-        alt: {
-          contains: query,
-        },
-      },
-      {
-        attributionText: {
-          contains: query,
-        },
-      },
-      {
-        caption: {
-          contains: query,
-        },
-      },
-      {
-        fileName: {
-          contains: query,
-        },
-      },
-      {
-        sourceDomain: {
-          contains: query,
-        },
-      },
-      {
-        storageKey: {
-          contains: query,
-        },
-      },
-    ],
-  };
+  const hasField = createRuntimeFieldPredicate(db, "MediaAsset");
+  const or = [
+    hasField("alt")
+      ? {
+          alt: {
+            contains: query,
+          },
+        }
+      : null,
+    hasField("attributionText")
+      ? {
+          attributionText: {
+            contains: query,
+          },
+        }
+      : null,
+    hasField("caption")
+      ? {
+          caption: {
+            contains: query,
+          },
+        }
+      : null,
+    hasField("fileName")
+      ? {
+          fileName: {
+            contains: query,
+          },
+        }
+      : null,
+    hasField("sourceDomain")
+      ? {
+          sourceDomain: {
+            contains: query,
+          },
+        }
+      : null,
+    hasField("storageKey")
+      ? {
+          storageKey: {
+            contains: query,
+          },
+        }
+      : null,
+  ].filter(Boolean);
+
+  return or.length ? { OR: or } : undefined;
 }
 
 function normalizeMediaUploadInput(input) {
@@ -443,7 +502,8 @@ function normalizeMediaUploadInput(input) {
 export async function getMediaLibrarySnapshot({ assetId, query } = {}, prisma) {
   const db = await resolvePrismaClient(prisma);
   const normalizedQuery = normalizeDisplayText(query) || "";
-  const where = buildMediaLibraryWhere(normalizedQuery);
+  const where = buildMediaLibraryWhere(db, normalizedQuery);
+  const mediaAssetSelect = createMediaAssetSelect(db);
   const [totalAssetCount, aiGeneratedCount, matchedCount, assets] = await Promise.all([
     db.mediaAsset.count(),
     db.mediaAsset.count({
@@ -571,6 +631,7 @@ export async function uploadMediaAsset(input, options = {}, prisma) {
 
     const db = await resolvePrismaClient(prisma);
     const createdAsset = await db.$transaction(async (tx) => {
+      const mediaAssetSelect = createMediaAssetSelect(tx);
       const asset = await tx.mediaAsset.create({
         data: {
           alt: altText,

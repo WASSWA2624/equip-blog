@@ -164,6 +164,73 @@ function createSnapshotOnlyPrisma() {
   };
 }
 
+function createLegacySnapshotPrisma() {
+  const createdAt = new Date("2026-04-03T10:00:00.000Z");
+
+  return {
+    _runtimeDataModel: {
+      models: {
+        MediaAsset: {
+          fields: [
+            { name: "id" },
+            { name: "alt" },
+            { name: "caption" },
+            { name: "createdAt" },
+            { name: "updatedAt" },
+            { name: "storageDriver" },
+            { name: "storageKey" },
+            { name: "publicUrl" },
+            { name: "sourceDomain" },
+            { name: "sourceUrl" },
+            { name: "mimeType" },
+            { name: "width" },
+            { name: "height" },
+            { name: "attributionText" },
+            { name: "licenseType" },
+            { name: "usageNotes" },
+            { name: "isAiGenerated" },
+            { name: "localPath" },
+          ],
+        },
+      },
+    },
+    mediaAsset: {
+      count: vi.fn(async () => 1),
+      findMany: vi.fn(async (args) => {
+        expect(args.select.fileName).toBeUndefined();
+        expect(args.select.variants).toBeUndefined();
+        expect(args.where?.OR?.some((entry) => Object.prototype.hasOwnProperty.call(entry, "fileName"))).toBe(
+          false,
+        );
+
+        return [
+          {
+            alt: "Legacy microscope image",
+            attributionText: "Legacy attribution",
+            caption: "Legacy caption",
+            createdAt,
+            height: 480,
+            id: "asset_legacy",
+            isAiGenerated: false,
+            licenseType: "legacy",
+            localPath: "public/uploads/legacy.png",
+            mimeType: "image/png",
+            publicUrl: "/uploads/legacy.png",
+            sourceDomain: "legacy.example.com",
+            sourceUrl: "https://legacy.example.com/image.png",
+            storageDriver: "local",
+            storageKey: "legacy.png",
+            updatedAt: createdAt,
+            usageNotes: "Legacy asset",
+            width: 640,
+          },
+        ];
+      }),
+      findUnique: vi.fn(async () => null),
+    },
+  };
+}
+
 const originalEnv = process.env;
 
 describe("media library pipeline", () => {
@@ -310,6 +377,28 @@ describe("media library pipeline", () => {
     expect(snapshot.assets[0]).toMatchObject({
       fileName: "microscope.png",
       variantCount: 1,
+    });
+  });
+
+  it("adapts snapshot selects and search filters to a legacy prisma media model shape", async () => {
+    const prisma = createLegacySnapshotPrisma();
+    const { getMediaLibrarySnapshot } = await import("./index");
+
+    const snapshot = await getMediaLibrarySnapshot(
+      {
+        query: "legacy",
+      },
+      prisma,
+    );
+
+    expect(snapshot.summary).toMatchObject({
+      matchedCount: 1,
+      totalAssetCount: 1,
+      totalVariantCount: 0,
+    });
+    expect(snapshot.assets[0]).toMatchObject({
+      fileName: null,
+      variantCount: 0,
     });
   });
 });

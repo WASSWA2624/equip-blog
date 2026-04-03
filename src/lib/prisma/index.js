@@ -55,8 +55,34 @@ function createPrismaClient(forceRefresh = false) {
 
 const globalForPrisma = globalThis;
 
+function getModelFieldNames(prisma, modelName) {
+  return prisma?._runtimeDataModel?.models?.[modelName]?.fields?.map((field) => field.name) || [];
+}
+
 function hasExpectedDelegates(prisma) {
-  return prisma && typeof prisma.mediaAsset !== "undefined" && typeof prisma.mediaVariant !== "undefined";
+  if (!prisma || typeof prisma.mediaAsset === "undefined" || typeof prisma.mediaVariant === "undefined") {
+    return false;
+  }
+
+  const mediaAssetFields = new Set(getModelFieldNames(prisma, "MediaAsset"));
+  const mediaVariantFields = new Set(getModelFieldNames(prisma, "MediaVariant"));
+
+  return (
+    mediaAssetFields.has("fileName") &&
+    mediaAssetFields.has("fileSizeBytes") &&
+    mediaAssetFields.has("variants") &&
+    mediaVariantFields.has("variantKey")
+  );
+}
+
+function refreshPrismaClient() {
+  const refreshedPrismaClient = createPrismaClient(true);
+
+  // Do not disconnect the retired client here. In dev, hot-refresh can leave
+  // in-flight requests still using the old adapter pool for a moment.
+  globalForPrisma.__equipBlogPrisma = refreshedPrismaClient;
+
+  return refreshedPrismaClient;
 }
 
 export function getPrismaClient() {
@@ -65,8 +91,7 @@ export function getPrismaClient() {
   }
 
   if (!hasExpectedDelegates(globalForPrisma.__equipBlogPrisma)) {
-    globalForPrisma.__equipBlogPrisma?.$disconnect?.().catch(() => {});
-    globalForPrisma.__equipBlogPrisma = createPrismaClient(true);
+    return refreshPrismaClient();
   }
 
   return globalForPrisma.__equipBlogPrisma;
