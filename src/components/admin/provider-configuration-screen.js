@@ -494,6 +494,36 @@ function getProviderOption(providerCatalog, providerValue) {
   return providerCatalog.providers.find((provider) => provider.value === providerValue) || null;
 }
 
+function buildModelOptions(config, catalogItems) {
+  const normalizedCurrentModel = `${config.model || ""}`.trim();
+  const options = catalogItems.map((item) => ({
+    description: item.label && item.label !== item.id ? item.label : "",
+    keywords: [item.label, item.provider],
+    label: item.id,
+    value: item.id,
+  }));
+
+  if (!normalizedCurrentModel) {
+    return options;
+  }
+
+  const hasCurrentModel = options.some((option) => option.value === normalizedCurrentModel);
+
+  if (hasCurrentModel) {
+    return options;
+  }
+
+  return [
+    {
+      badge: "Current",
+      description: "Currently configured model id.",
+      label: normalizedCurrentModel,
+      value: normalizedCurrentModel,
+    },
+    ...options,
+  ];
+}
+
 export default function ProviderConfigurationScreen({ copy, initialData }) {
   const suggestionTimersRef = useRef(new Map());
   const [data, setData] = useState(initialData);
@@ -780,20 +810,12 @@ export default function ProviderConfigurationScreen({ copy, initialData }) {
                 const providerOption = getProviderOption(data.providerCatalog, config.provider);
                 const catalogState = modelCatalogState[config.id] || null;
                 const catalogItems = catalogState?.items || [];
+                const modelOptions = buildModelOptions(config, catalogItems);
                 const resolvedProviderLabel =
                   providerOption?.label || config.providerLabel || config.provider || copy.newConfigLabel;
-                const modelDatalistId = `provider-config-model-options-${config.id}`;
 
                 return (
                   <ConfigCard $enabled={config.isEnabled} key={config.id}>
-                    <datalist id={modelDatalistId}>
-                      {catalogItems.map((item) => (
-                        <option key={item.id} value={item.id}>
-                          {item.label}
-                        </option>
-                      ))}
-                    </datalist>
-
                     <ConfigHeader>
                       <ConfigMeta>
                         <ConfigTitle>
@@ -865,6 +887,10 @@ export default function ProviderConfigurationScreen({ copy, initialData }) {
                               ...currentState,
                               [config.id]: undefined,
                             }));
+
+                            if (nextProviderOption) {
+                              queueModelSuggestions(config.id, nextProviderValue, "");
+                            }
                           }}
                           placeholder={copy.providerPlaceholder}
                           options={providerOptions}
@@ -885,20 +911,34 @@ export default function ProviderConfigurationScreen({ copy, initialData }) {
                         ) : null}
                       </Field>
 
-                      <Field>
+                      <Field as="div">
                         <FieldLabel>{copy.modelLabel}</FieldLabel>
-                        <Input
-                          list={modelDatalistId}
-                          onChange={(event) => {
-                            const nextModelValue = event.target.value;
-
+                        <SearchableSelect
+                          ariaLabel={copy.modelLabel}
+                          disabled={!providerOption}
+                          emptyMessage={
+                            catalogState?.message || providerOption?.searchHint || copy.modelSearchHint
+                          }
+                          loading={Boolean(catalogState?.loading && !modelOptions.length)}
+                          loadingMessage={copy.catalogLoading}
+                          onChange={(nextValue) =>
                             updateDraftConfig(config.id, {
-                              model: nextModelValue,
-                            });
-                            queueModelSuggestions(config.id, config.provider, nextModelValue);
+                              model: nextValue,
+                            })
+                          }
+                          onOpen={() => {
+                            if (providerOption) {
+                              queueModelSuggestions(config.id, config.provider, config.model || "");
+                            }
                           }}
-                          onFocus={() => queueModelSuggestions(config.id, config.provider, config.model)}
+                          onSearchChange={(nextQuery) => {
+                            if (providerOption) {
+                              queueModelSuggestions(config.id, config.provider, nextQuery);
+                            }
+                          }}
+                          options={modelOptions}
                           placeholder={copy.modelPlaceholder}
+                          searchPlaceholder="Search provider models"
                           value={config.model}
                         />
                         <SmallText>{copy.modelSearchHint}</SmallText>

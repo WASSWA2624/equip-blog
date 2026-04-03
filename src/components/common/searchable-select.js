@@ -476,6 +476,8 @@ export default function SearchableSelect({
   loading = false,
   loadingMessage = "Loading options...",
   name,
+  onOpen,
+  onSearchChange,
   onChange,
   options = [],
   placeholder = "Select an option",
@@ -648,6 +650,7 @@ export default function SearchableSelect({
       return getNextEnabledOptionIndex(normalizedOptions, -1, direction);
     });
     setDropdownLayout(resolveDropdownLayout(triggerRect));
+    onOpen?.();
   }
 
   function commitSelection(option) {
@@ -746,8 +749,11 @@ export default function SearchableSelect({
               aria-autocomplete="list"
               aria-expanded={isOpen}
               onChange={(event) => {
-                setQuery(event.target.value);
+                const nextQuery = event.target.value;
+
+                setQuery(nextQuery);
                 setActiveIndex(-1);
+                onSearchChange?.(nextQuery);
               }}
               onKeyDown={handleSearchKeyDown}
               placeholder={searchPlaceholder}
