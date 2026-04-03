@@ -583,10 +583,6 @@ export default function ProviderConfigurationScreen({ copy, initialData }) {
     };
   }, []);
 
-  useEffect(() => {
-    void requestProviderSuggestions("");
-  }, [requestProviderSuggestions]);
-
   function updateDraftConfig(configId, updates) {
     setDraftConfigs((currentConfigs) => {
       let nextConfigs = currentConfigs.map((config) =>
@@ -677,6 +673,10 @@ export default function ProviderConfigurationScreen({ copy, initialData }) {
       requestProviderSuggestions(query);
       providerSuggestionTimerRef.current = null;
     }, 180);
+  }, [requestProviderSuggestions]);
+
+  useEffect(() => {
+    void requestProviderSuggestions("");
   }, [requestProviderSuggestions]);
 
   async function requestModelSuggestions(configId, providerValue, query = "", forceRefresh = false) {
