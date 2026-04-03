@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { supportedAiProviderValues } from "@/lib/ai/provider-registry";
+
 const localeCodePattern = /^[a-z]{2}(?:-[a-z]{2})?$/;
 const mimeTypePattern = /^[a-z0-9.+-]+\/[a-z0-9.+-]+$/i;
 
@@ -165,7 +167,7 @@ const serverEnvSchema = sharedEnvSchema
     CRON_SECRET: requiredString("CRON_SECRET"),
   })
   .superRefine((env, context) => {
-    const supportedProviders = ["openai"];
+    const supportedProviders = [...supportedAiProviderValues];
     const supportedMediaDrivers = ["local", "s3"];
 
     if ((env.AI_PROVIDER_DEFAULT && !env.AI_MODEL_DEFAULT) || (!env.AI_PROVIDER_DEFAULT && env.AI_MODEL_DEFAULT)) {

@@ -10,7 +10,7 @@ Prove that the finished build satisfies all mandatory Release 1 requirements and
 
 ## Implement
 
-1. Run a security review across auth, route protection, validation, sanitization, rate limiting, upload restrictions, and secret handling.
+1. Run a security review across auth, route protection, validation, sanitization, rate limiting, upload restrictions, secret handling, encrypted provider credentials, and trusted provider catalog sync behavior.
 2. Run a copyright and attribution review across source references, manual links, media assets, and generated summaries.
 3. Validate content quality against section 36.
 4. Produce a traceability matrix that maps every mandatory requirement in sections `1-39` and `42-46` to implementation evidence.

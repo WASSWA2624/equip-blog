@@ -2,13 +2,18 @@ import crypto from "node:crypto";
 
 import { z } from "zod";
 
+import {
+  getAiProviderByValue,
+  getAiProviderLabel,
+  getProviderApiKeyEnvName,
+  supportedAiProviderValues,
+} from "@/lib/ai/provider-registry";
 import { env } from "@/lib/env/server";
 
 const PROVIDER_SECRET_ALGORITHM = "aes-256-gcm";
 const PROVIDER_SECRET_IV_BYTES = 12;
 const PROVIDER_SECRET_VERSION = "enc.v1";
 
-export const supportedAiProviderValues = Object.freeze(["openai"]);
 export const providerConfigPurposeValues = Object.freeze([
   "draft_generation",
   "draft_generation_fallback",
@@ -79,21 +84,13 @@ function getApiKeyLast4(apiKey) {
 }
 
 function getProviderEnvApiKey(provider) {
-  if (provider === "openai") {
-    return env.ai.openaiApiKey || null;
+  const envName = getProviderApiKeyEnvName(provider);
+
+  if (!envName) {
+    return null;
   }
 
-  return null;
-}
-
-export function getProviderApiKeyEnvName(provider) {
-  if (provider === "openai") {
-    return "OPENAI_API_KEY";
-  }
-
-  return `${`${provider || "provider"}`
-    .toUpperCase()
-    .replace(/[^A-Z0-9]+/g, "_")}_API_KEY`;
+  return collapseWhitespace(process.env[envName]) || null;
 }
 
 export function encryptProviderApiKey(apiKey, secret = env.ai.providerConfigSecret) {
@@ -204,15 +201,17 @@ export function formatProviderConfigLabel(providerConfig) {
     return "";
   }
 
-  return `${providerConfig.provider} / ${providerConfig.model}`;
+  return `${getAiProviderLabel(providerConfig.provider)} / ${providerConfig.model}`;
 }
 
 export function createProviderConfigSummary(config) {
   const credentialSnapshot = buildCredentialSnapshot(config);
+  const providerMetadata = getAiProviderByValue(config.provider);
 
   return {
     apiKeyLast4: config.apiKeyLast4 || null,
     apiKeyUpdatedAt: serializeDate(config.apiKeyUpdatedAt),
+    catalogSourceLabel: providerMetadata?.catalogSourceLabel || null,
     credentialLabel: credentialSnapshot.credentialLabel,
     credentialSourceEnvName: credentialSnapshot.credentialSourceEnvName,
     credentialState: credentialSnapshot.credentialState,
@@ -223,6 +222,8 @@ export function createProviderConfigSummary(config) {
     isEnabled: Boolean(config.isEnabled),
     model: config.model,
     provider: config.provider,
+    providerDocsUrl: providerMetadata?.docsUrl || null,
+    providerLabel: providerMetadata?.label || getAiProviderLabel(config.provider),
     purpose: config.purpose,
     updatedAt: serializeDate(config.updatedAt),
   };

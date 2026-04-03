@@ -15,8 +15,9 @@ Implement the complete Prisma schema that matches the Release 1 source-of-truth 
 3. Model both `status` and `editorialStage` exactly as defined in section 35.
 4. Ensure locale-aware content is stored through `PostTranslation` with one active record per post and locale, while Release 1 only uses `en`.
 5. Ensure media, source attribution, audit events, prompts, providers, and source configuration all have persistence models.
-6. Include the content storage fields required by section 28: Markdown, HTML, and structured JSON.
-7. Create an initial migration from an empty database.
+6. Ensure `ModelProviderConfig` stores selected provider ids, selected model ids, purpose, encrypted API key material, and env fallback metadata, while trusted provider model catalogs remain source-driven rather than hard-coded schema tables.
+7. Include the content storage fields required by section 28: Markdown, HTML, and structured JSON.
+8. Create an initial migration from an empty database.
 
 ## Required Outputs
 

@@ -10,18 +10,20 @@ Turn verified structured research into complete drafts that match the required a
 
 ## Implement
 
-1. Build the provider/model abstraction using `providerConfigId`.
-2. Implement prompt-template loading from `PromptTemplate`.
-3. Implement the required prompt layers from section 18.4.
-4. Generate structured article JSON first, then Markdown, then HTML, then SEO payloads.
-5. Persist structured JSON blocks for faults, maintenance, models, and FAQs.
-6. Ensure generated drafts follow the required order in section 9.
-7. Build the admin Prompt Configuration page.
-8. Use `microscope` from section 38 as the baseline acceptance fixture.
+1. Build the provider/model abstraction using `providerConfigId`, and make sure any supported provider can flow through the composition pipeline without hard-coded provider gating.
+2. Build the trusted provider catalog sync/search layer that can load model suggestions from official provider APIs, docs, or provider-owned catalog feeds.
+3. Implement prompt-template loading from `PromptTemplate`.
+4. Implement the required prompt layers from section 18.4.
+5. Generate structured article JSON first, then Markdown, then HTML, then SEO payloads.
+6. Persist structured JSON blocks for faults, maintenance, models, and FAQs.
+7. Ensure generated drafts follow the required order in section 9.
+8. Build the admin Prompt Configuration page.
+9. Use `microscope` from section 38 as the baseline acceptance fixture.
 
 ## Required Outputs
 
 - draft-generation engine
+- trusted provider catalog service
 - prompt configuration admin surface
 - acceptance fixture tests
 
@@ -29,6 +31,7 @@ Turn verified structured research into complete drafts that match the required a
 
 - generated drafts contain the required sections
 - disclaimers and references are never omitted
+- provider catalogs refresh from trusted sources without shipping hard-coded model enums
 - `microscope` generates a compliant acceptance draft
 
 ## Exit Criteria

@@ -2,6 +2,7 @@ import { PostStatus } from "@prisma/client";
 import { z } from "zod";
 
 import { getMessages } from "@/features/i18n/get-messages";
+import { getAiProviderByValue } from "@/lib/ai/provider-registry";
 import { recordObservabilityEvent } from "@/lib/analytics";
 import { generatedArticleSectionOrder } from "@/lib/content/article-structure";
 import { detectDuplicateEquipmentPost } from "@/lib/generation/duplicates";
@@ -765,7 +766,7 @@ function validateStructuredArticle(article) {
 }
 
 function createProvider(providerConfig, options = {}) {
-  if (providerConfig.provider !== "openai") {
+  if (!getAiProviderByValue(providerConfig.provider)) {
     throw new AiCompositionError(
       `Provider "${providerConfig.provider}" is not supported by the composition pipeline.`,
       {

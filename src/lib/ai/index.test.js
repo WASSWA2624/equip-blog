@@ -13,6 +13,7 @@ function createBaseEnv() {
     AI_PROVIDER_FALLBACK: "openai",
     AI_MODEL_FALLBACK: "gpt-5.4-mini",
     OPENAI_API_KEY: "test-openai-key",
+    ANTHROPIC_API_KEY: "test-anthropic-key",
     MEDIA_DRIVER: "local",
     LOCAL_MEDIA_BASE_PATH: "public/uploads",
     LOCAL_MEDIA_BASE_URL: "/uploads",
@@ -211,6 +212,35 @@ describe("AI composition pipeline", () => {
     expect(draft.article.contentMd).toContain("# Microscope");
     expect(draft.article.contentHtml).toContain("<article>");
     expect(draft.seoPayload.canonicalUrl).toContain("/en/blog/microscope");
+  });
+
+  it("allows non-OpenAI provider configs to use the deterministic composition path", async () => {
+    const prisma = {
+      sourceConfig: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
+    };
+    const { composeDraftPackage } = await import("./index");
+
+    const draft = await composeDraftPackage(
+      createGenerationRequest(),
+      {
+        disclaimer: "English disclaimer",
+        promptLayers: createPromptLayers(),
+        providerConfig: {
+          id: "provider_cfg_default_generation",
+          model: "claude-sonnet-4-5-20250929",
+          provider: "anthropic",
+        },
+      },
+      prisma,
+    );
+
+    expect(draft.providerConfig).toMatchObject({
+      model: "claude-sonnet-4-5-20250929",
+      provider: "anthropic",
+    });
+    expect(draft.providerExecutionMode).toBe("deterministic_fixture");
   });
 
   it("retries with the configured fallback provider when the selected config fails", async () => {

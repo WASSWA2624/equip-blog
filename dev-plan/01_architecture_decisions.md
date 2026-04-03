@@ -18,6 +18,7 @@ Lock the non-negotiable architecture decisions before scaffolding begins.
 6. Record the storage rule: content is stored as Markdown, HTML, and structured JSON; media uses a driver abstraction.
 7. Record the auth rule: Release 1 requires admin email/password auth and guest public comments.
 8. Record the locale extensibility rule: adding a new locale should require a new locale file and registration in the existing locale configuration, not schema or route redesign.
+9. Record the AI provider rule: supported providers include OpenAI, Anthropic, Google, Mistral AI, Cohere, xAI, Meta Platforms, Microsoft, Amazon, Groq, Together AI, Replicate, Hugging Face, DeepSeek, Stability AI, IBM, NVIDIA, Fireworks AI, Perplexity AI, and AI21 Labs, with searchable model catalogs loaded from trusted official sources instead of hard-coded model enums.
 
 ## Required Outputs
 

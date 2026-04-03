@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { requireAdminApiPermission } from "@/lib/auth/api";
 import { ADMIN_PERMISSIONS } from "@/lib/auth/rbac";
+import { getAiProviderCatalogSummary } from "@/lib/ai/provider-catalog";
 import { validateJsonRequest } from "@/lib/validation/api-placeholders";
 import {
   createProviderConfigurationErrorPayload,
@@ -18,10 +19,16 @@ export async function GET(request) {
   }
 
   try {
-    const snapshot = await getProviderConfigurationSnapshot();
+    const [snapshot, providerCatalog] = await Promise.all([
+      getProviderConfigurationSnapshot(),
+      getAiProviderCatalogSummary(),
+    ]);
 
     return NextResponse.json({
-      data: snapshot,
+      data: {
+        ...snapshot,
+        providerCatalog,
+      },
       success: true,
     });
   } catch (error) {
@@ -48,9 +55,16 @@ export async function PUT(request) {
     const savedProviderConfigurations = await saveProviderConfigurations(result.data, {
       actorId: auth.user.id,
     });
+    const providerCatalog = await getAiProviderCatalogSummary();
 
     return NextResponse.json({
-      data: savedProviderConfigurations,
+      data: {
+        ...savedProviderConfigurations,
+        snapshot: {
+          ...savedProviderConfigurations.snapshot,
+          providerCatalog,
+        },
+      },
       success: true,
     });
   } catch (error) {

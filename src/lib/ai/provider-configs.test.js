@@ -73,6 +73,23 @@ describe("provider configuration helpers", () => {
     });
   });
 
+  it("resolves generic provider env fallbacks without hard-coded runtime wiring", async () => {
+    process.env.ANTHROPIC_API_KEY = "env-claude-key";
+
+    const { resolveProviderApiKey } = await import("./provider-configs");
+    const resolvedCredential = resolveProviderApiKey({
+      apiKeyEncrypted: null,
+      apiKeyEnvName: "ANTHROPIC_API_KEY",
+      provider: "anthropic",
+    });
+
+    expect(resolvedCredential).toMatchObject({
+      apiKey: "env-claude-key",
+      envName: "ANTHROPIC_API_KEY",
+      source: "environment",
+    });
+  });
+
   it("requires one default primary config and one enabled fallback config", async () => {
     const { saveProviderConfigurationsSchema } = await import("./provider-configs");
 

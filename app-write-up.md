@@ -800,9 +800,20 @@ Release 1 supports one reply level only. Deeper nesting is out of scope.
 - `model`
 - `purpose`
 - `apiKeyEnvName`
+- `apiKeyEncrypted` nullable
+- `apiKeyLast4` nullable
+- `apiKeyUpdatedAt` nullable
 - `isDefault`
 - `isEnabled`
 - unique constraint on `provider + model + purpose`
+
+Trusted provider catalog rules:
+
+- Release 1 provider support includes `OpenAI`, `Anthropic`, `Google`, `Mistral AI`, `Cohere`, `xAI`, `Meta Platforms`, `Microsoft`, `Amazon`, `Groq`, `Together AI`, `Replicate`, `Hugging Face`, `DeepSeek`, `Stability AI`, `IBM`, `NVIDIA`, `Fireworks AI`, `Perplexity AI`, and `AI21 Labs`
+- provider catalogs are not hard-coded model enums
+- provider and model suggestions are loaded from trusted official APIs, provider-owned docs, or official provider-owned catalog feeds
+- if a provider exposes an authenticated models API, the admin-stored encrypted API key or server-only env fallback may be used to load the live model list
+- provider catalog search results may be cached server-side for performance, but the authoritative source remains the trusted upstream provider catalog
 
 `SEORecord`
 
@@ -1150,6 +1161,7 @@ The AI layer must:
 - generate related-keyword suggestions
 - rewrite for supported audiences and active locales from configuration
 - use configured provider and model settings without code changes
+- load provider and model suggestions from trusted provider catalogs without redeploying the app
 
 The AI layer must not be treated as the factual source of truth.
 
@@ -1173,6 +1185,7 @@ The AI layer must not be treated as the factual source of truth.
 - SEO generator
 - persistence service
 - provider and model switch layer controlled from admin UI
+- trusted provider catalog sync and search layer for searchable provider/model selection
 
 ### 18.4 Required Prompt Layers
 
@@ -1367,8 +1380,32 @@ The Generate Post page must include:
 - optional schedule publish date-time picker
 - replace existing post checkbox shown only after duplicate detection
 - AI provider and model selector backed by `providerConfigId`
+- searchable provider and model dropdowns backed by trusted provider catalogs, with free-text model id override when an exact upstream model id is known but not yet returned by the latest sync
 
 If a schedule is entered during generation, it acts as a pre-filled scheduling intent only. The post must remain a draft until an admin explicitly confirms the schedule action after review.
+
+The provider catalog available to the Generate Post and Providers admin pages must support:
+
+- `OpenAI`
+- `Anthropic`
+- `Google`
+- `Mistral AI`
+- `Cohere`
+- `xAI`
+- `Meta Platforms`
+- `Microsoft`
+- `Amazon`
+- `Groq`
+- `Together AI`
+- `Replicate`
+- `Hugging Face`
+- `DeepSeek`
+- `Stability AI`
+- `IBM`
+- `NVIDIA`
+- `Fireworks AI`
+- `Perplexity AI`
+- `AI21 Labs`
 
 ### 23.2 UI Flow
 
@@ -1649,12 +1686,19 @@ SUPPORTED_LOCALES="en"
 
 SESSION_SECRET="change-me"
 SESSION_MAX_AGE_SECONDS="28800"
+AI_PROVIDER_CONFIG_SECRET="change-me"
 
 AI_PROVIDER_DEFAULT="openai"
 AI_MODEL_DEFAULT="gpt-5.4"
 AI_PROVIDER_FALLBACK="openai"
 AI_MODEL_FALLBACK="gpt-5.4-mini"
 OPENAI_API_KEY="your-openai-key"
+# Optional server-side fallback credentials for other providers follow the normalized
+# <PROVIDER>_API_KEY pattern, for example ANTHROPIC_API_KEY, GOOGLE_API_KEY,
+# MISTRAL_API_KEY, COHERE_API_KEY, XAI_API_KEY, META_API_KEY, MICROSOFT_API_KEY,
+# AMAZON_API_KEY, GROQ_API_KEY, TOGETHER_API_KEY, REPLICATE_API_KEY,
+# HUGGINGFACE_API_KEY, DEEPSEEK_API_KEY, STABILITY_API_KEY, IBM_API_KEY,
+# NVIDIA_API_KEY, FIREWORKS_API_KEY, PERPLEXITY_API_KEY, and AI21_API_KEY.
 
 MEDIA_DRIVER="local"
 LOCAL_MEDIA_BASE_PATH="public/uploads"
@@ -1677,6 +1721,8 @@ UPLOAD_ALLOWED_MIME_TYPES="image/jpeg,image/png,image/webp"
 REVALIDATE_SECRET="change-me"
 CRON_SECRET="change-me"
 ```
+
+Encrypted admin-stored provider keys are the primary credential mechanism. Environment variables remain optional server-side fallbacks and must never be exposed to the browser.
 
 ## 35. Publishing States and Editorial Workflow
 
@@ -1817,7 +1863,7 @@ These are future enhancements and are not required for Release 1:
 - model comparison tables
 - equipment troubleshooting decision trees
 - biomedical engineer review workflow
-- region-specific model catalogs
+- geo-aware provider routing policies
 - downloadable maintenance checklists
 - semantic search
 - AI-assisted comment moderation
@@ -1939,7 +1985,7 @@ Implementation is incomplete unless all of the following are true:
 - scheduling works during or after generation with a date-time picker and background worker
 - inline images, media attribution, and copyright constraints are enforced
 - manufacturer, model, and fault deduplication and reliability rules are enforced
-- admin can switch AI provider and model without code changes
+- admin can switch AI provider and model, refresh trusted model catalogs, and store provider credentials without code changes
 - website, page, and post view analytics are tracked and visible to admin
 - public sharing through social actions, email, and copy link works
 - mobile-first responsive behavior is implemented across required public pages

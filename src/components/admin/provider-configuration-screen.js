@@ -1,14 +1,7 @@
 "use client";
 
-import { startTransition, useEffect, useMemo, useState } from "react";
+import { startTransition, useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
-
-const providerOptions = Object.freeze([
-  {
-    label: "OpenAI",
-    value: "openai",
-  },
-]);
 
 const purposeOrder = Object.freeze({
   draft_generation: 1,
@@ -19,24 +12,24 @@ const Page = styled.main`
   display: grid;
   gap: ${({ theme }) => theme.spacing.lg};
   margin: 0 auto;
-  max-width: 1280px;
-  padding: ${({ theme }) => theme.spacing.xl};
+  max-width: 1320px;
+  padding: ${({ theme }) => theme.spacing.lg};
 `;
 
 const Hero = styled.section`
   background:
-    radial-gradient(circle at top right, rgba(201, 123, 42, 0.2), transparent 38%),
+    radial-gradient(circle at top right, rgba(201, 123, 42, 0.18), transparent 38%),
     linear-gradient(135deg, rgba(0, 95, 115, 0.12), rgba(16, 32, 51, 0.03));
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radius.lg};
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
-  padding: ${({ theme }) => theme.spacing.xl};
+  gap: ${({ theme }) => theme.spacing.sm};
+  padding: ${({ theme }) => theme.spacing.lg};
 `;
 
 const Eyebrow = styled.p`
   color: ${({ theme }) => theme.colors.primary};
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.16em;
   margin: 0;
@@ -44,24 +37,24 @@ const Eyebrow = styled.p`
 `;
 
 const Title = styled.h1`
-  font-size: clamp(2rem, 5vw, 3.2rem);
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
   line-height: 1.05;
   margin: 0;
 `;
 
 const Description = styled.p`
   color: ${({ theme }) => theme.colors.muted};
-  line-height: 1.7;
+  line-height: 1.65;
   margin: 0;
-  max-width: 860px;
+  max-width: 920px;
 `;
 
 const Layout = styled.section`
   display: grid;
   gap: ${({ theme }) => theme.spacing.lg};
 
-  @media (min-width: 980px) {
-    grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
+  @media (min-width: 1040px) {
+    grid-template-columns: minmax(0, 330px) minmax(0, 1fr);
   }
 `;
 
@@ -71,7 +64,7 @@ const Stack = styled.div`
 `;
 
 const Card = styled.section`
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.94);
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radius.md};
   box-shadow: 0 20px 60px rgba(16, 32, 51, 0.08);
@@ -81,29 +74,56 @@ const Card = styled.section`
 `;
 
 const CardTitle = styled.h2`
-  font-size: 1.05rem;
+  font-size: 1.02rem;
+  margin: 0;
+`;
+
+const SectionTitle = styled.h3`
+  font-size: 0.98rem;
   margin: 0;
 `;
 
 const SmallText = styled.p`
   color: ${({ theme }) => theme.colors.muted};
-  line-height: 1.6;
+  line-height: 1.58;
   margin: 0;
 `;
 
 const SummaryGrid = styled.div`
   display: grid;
   gap: ${({ theme }) => theme.spacing.sm};
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 `;
 
 const SummaryStat = styled.div`
+  background: rgba(247, 249, 252, 0.94);
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radius.sm};
   display: grid;
   gap: ${({ theme }) => theme.spacing.xs};
+  padding: ${({ theme }) => theme.spacing.sm};
 `;
 
 const StatValue = styled.strong`
-  font-size: 1.95rem;
+  font-size: 1.45rem;
   line-height: 1;
+`;
+
+const ProviderChipGrid = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing.xs};
+`;
+
+const ProviderChip = styled.span`
+  background: rgba(0, 95, 115, 0.08);
+  border: 1px solid rgba(0, 95, 115, 0.12);
+  border-radius: 999px;
+  color: ${({ theme }) => theme.colors.text};
+  display: inline-flex;
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 0.28rem 0.62rem;
 `;
 
 const StatusBanner = styled.div`
@@ -129,27 +149,17 @@ const ButtonRow = styled.div`
   gap: ${({ theme }) => theme.spacing.sm};
 `;
 
-const SecondaryButton = styled.button`
-  background: rgba(247, 249, 252, 0.96);
-  border: 1px solid ${({ theme }) => theme.colors.border};
+const Button = styled.button`
+  background: ${({ $tone, theme }) =>
+    $tone === "secondary" ? "rgba(247, 249, 252, 0.96)" : theme.colors.primary};
+  border: 1px solid ${({ $tone, theme }) => ($tone === "secondary" ? theme.colors.border : "transparent")};
   border-radius: 999px;
-  color: ${({ theme }) => theme.colors.text};
-  cursor: pointer;
-  font: inherit;
-  font-weight: 700;
-  padding: 0.8rem 1.15rem;
-`;
-
-const SaveButton = styled.button`
-  background: ${({ theme }) => theme.colors.primary};
-  border: none;
-  border-radius: 999px;
-  color: white;
+  color: ${({ $tone }) => ($tone === "secondary" ? "inherit" : "white")};
   cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
   font: inherit;
   font-weight: 700;
-  opacity: ${({ disabled }) => (disabled ? 0.7 : 1)};
-  padding: 0.8rem 1.25rem;
+  opacity: ${({ disabled }) => (disabled ? 0.68 : 1)};
+  padding: 0.72rem 1.05rem;
 `;
 
 const Form = styled.form`
@@ -157,49 +167,9 @@ const Form = styled.form`
   gap: ${({ theme }) => theme.spacing.md};
 `;
 
-const ConfigPicker = styled.div`
-  display: grid;
-  gap: ${({ theme }) => theme.spacing.sm};
-`;
-
-const ConfigPickerGrid = styled.div`
-  display: grid;
-  gap: ${({ theme }) => theme.spacing.sm};
-
-  @media (min-width: 860px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-`;
-
-const ConfigPickerButton = styled.button`
-  background: ${({ $active }) =>
-    $active
-      ? "linear-gradient(180deg, rgba(0, 95, 115, 0.12), rgba(0, 95, 115, 0.07))"
-      : "rgba(247, 249, 252, 0.96)"};
-  border: 1px solid
-    ${({ $active, theme }) => ($active ? theme.colors.primary : theme.colors.border)};
-  border-radius: ${({ theme }) => theme.radius.md};
-  color: ${({ theme }) => theme.colors.text};
-  cursor: pointer;
-  display: grid;
-  gap: ${({ theme }) => theme.spacing.xs};
-  padding: ${({ theme }) => theme.spacing.md};
-  text-align: left;
-`;
-
-const ConfigPickerTitle = styled.span`
-  font-size: 0.98rem;
-  font-weight: 700;
-`;
-
-const ConfigPickerMeta = styled.span`
-  color: ${({ theme }) => theme.colors.muted};
-  font-size: 0.9rem;
-`;
-
 const ConfigCard = styled.article`
   background: ${({ $enabled }) =>
-    $enabled ? "rgba(255, 255, 255, 0.98)" : "rgba(247, 249, 252, 0.96)"};
+    $enabled ? "rgba(255, 255, 255, 0.98)" : "rgba(247, 249, 252, 0.95)"};
   border: 1px solid
     ${({ $enabled, theme }) => ($enabled ? theme.colors.border : "rgba(88, 97, 116, 0.28)")};
   border-radius: ${({ theme }) => theme.radius.md};
@@ -239,13 +209,15 @@ const Pill = styled.span`
         ? "rgba(201, 123, 42, 0.18)"
         : $tone === "danger"
           ? "rgba(180, 35, 24, 0.12)"
-          : "rgba(88, 97, 116, 0.12)"};
+          : $tone === "success"
+            ? "rgba(21, 115, 71, 0.12)"
+            : "rgba(88, 97, 116, 0.12)"};
   border-radius: 999px;
   color: ${({ theme }) => theme.colors.text};
   display: inline-flex;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 700;
-  padding: 0.3rem 0.7rem;
+  padding: 0.26rem 0.68rem;
 `;
 
 const ToggleGroup = styled.div`
@@ -264,21 +236,21 @@ const Toggle = styled.label`
 
 const Checkbox = styled.input`
   accent-color: ${({ theme }) => theme.colors.primary};
-  height: 1.05rem;
-  width: 1.05rem;
+  height: 1rem;
+  width: 1rem;
 `;
 
 const Radio = styled.input`
   accent-color: ${({ theme }) => theme.colors.primary};
-  height: 1.05rem;
-  width: 1.05rem;
+  height: 1rem;
+  width: 1rem;
 `;
 
 const FieldGrid = styled.div`
   display: grid;
   gap: ${({ theme }) => theme.spacing.md};
 
-  @media (min-width: 860px) {
+  @media (min-width: 900px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 `;
@@ -294,11 +266,11 @@ const FieldLabel = styled.span`
 
 const Input = styled.input`
   background: white;
-  border: 1px solid ${({ theme }) => theme.colors.border};
+  border: 1px solid ${({ $invalid, theme }) => ($invalid ? theme.colors.danger : theme.colors.border)};
   border-radius: ${({ theme }) => theme.radius.sm};
   color: ${({ theme }) => theme.colors.text};
   font: inherit;
-  padding: 0.8rem 0.9rem;
+  padding: 0.78rem 0.88rem;
 `;
 
 const Select = styled.select`
@@ -308,16 +280,52 @@ const Select = styled.select`
   border-radius: ${({ theme }) => theme.radius.sm};
   color: ${({ theme }) => theme.colors.text};
   font: inherit;
-  padding: 0.8rem 0.9rem;
+  padding: 0.78rem 0.88rem;
 `;
 
 const CredentialCard = styled.div`
-  background: rgba(247, 249, 252, 0.95);
+  background: rgba(247, 249, 252, 0.96);
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radius.md};
   display: grid;
-  gap: ${({ theme }) => theme.spacing.xs};
+  gap: ${({ theme }) => theme.spacing.sm};
   padding: ${({ theme }) => theme.spacing.md};
+`;
+
+const CatalogCard = styled(CredentialCard)`
+  gap: ${({ theme }) => theme.spacing.xs};
+`;
+
+const MetaList = styled.dl`
+  display: grid;
+  gap: ${({ theme }) => theme.spacing.xs};
+  margin: 0;
+`;
+
+const MetaRow = styled.div`
+  align-items: start;
+  display: grid;
+  gap: ${({ theme }) => theme.spacing.xs};
+  grid-template-columns: minmax(0, 110px) minmax(0, 1fr);
+`;
+
+const MetaLabel = styled.dt`
+  color: ${({ theme }) => theme.colors.muted};
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin: 0;
+  text-transform: uppercase;
+`;
+
+const MetaValue = styled.dd`
+  margin: 0;
+`;
+
+const ExternalLink = styled.a`
+  color: ${({ theme }) => theme.colors.primary};
+  font-size: 0.9rem;
+  font-weight: 700;
 `;
 
 function createDraftConfig(config) {
@@ -332,12 +340,13 @@ function createDraftConfig(config) {
     isEnabled: config.isEnabled,
     model: config.model,
     provider: config.provider,
+    providerLabel: config.providerLabel,
     purpose: config.purpose,
     updatedAt: config.updatedAt,
   };
 }
 
-function createNewConfig(index, hasFallbackConfig) {
+function createNewConfig(index, hasFallbackConfig, defaultProviderValue = "openai") {
   return {
     apiKey: "",
     clearApiKey: false,
@@ -348,7 +357,8 @@ function createNewConfig(index, hasFallbackConfig) {
     isDefault: false,
     isEnabled: true,
     model: "",
-    provider: "openai",
+    provider: defaultProviderValue,
+    providerLabel: defaultProviderValue,
     purpose: hasFallbackConfig ? "draft_generation" : "draft_generation_fallback",
     updatedAt: null,
   };
@@ -356,14 +366,6 @@ function createNewConfig(index, hasFallbackConfig) {
 
 function formatPurposeLabel(copy, purpose) {
   return purpose === "draft_generation_fallback" ? copy.purposeFallback : copy.purposePrimary;
-}
-
-function formatConfigName(copy, config) {
-  if (!config?.model) {
-    return copy.newConfigLabel;
-  }
-
-  return `${config.provider} / ${config.model}`;
 }
 
 function formatCredentialBadge(copy, state) {
@@ -376,6 +378,22 @@ function formatCredentialBadge(copy, state) {
   }
 
   return copy.credentialMissingBadge;
+}
+
+function formatCatalogBadge(copy, state) {
+  if (state === "ready") {
+    return copy.catalogReadyBadge;
+  }
+
+  if (state === "credential_required") {
+    return copy.catalogCredentialBadge;
+  }
+
+  if (state === "error") {
+    return copy.catalogErrorBadge;
+  }
+
+  return copy.catalogIdleBadge;
 }
 
 function formatCredentialDescription(copy, state) {
@@ -443,7 +461,9 @@ function sortConfigs(leftConfig, rightConfig) {
   return (
     (purposeOrder[leftConfig.purpose] || 9) - (purposeOrder[rightConfig.purpose] || 9) ||
     Number(rightConfig.isDefault) - Number(leftConfig.isDefault) ||
-    leftConfig.provider.localeCompare(rightConfig.provider) ||
+    `${leftConfig.providerLabel || leftConfig.provider}`.localeCompare(
+      `${rightConfig.providerLabel || rightConfig.provider}`,
+    ) ||
     leftConfig.model.localeCompare(rightConfig.model)
   );
 }
@@ -474,35 +494,36 @@ function ensureValidDefault(configs) {
   }));
 }
 
+function normalizeProviderInput(value) {
+  return `${value || ""}`.trim().toLowerCase();
+}
+
+function getProviderOption(providerCatalog, providerValue) {
+  return providerCatalog.providers.find((provider) => provider.value === providerValue) || null;
+}
+
 export default function ProviderConfigurationScreen({ copy, initialData }) {
+  const suggestionTimersRef = useRef(new Map());
   const [data, setData] = useState(initialData);
   const [draftConfigs, setDraftConfigs] = useState(() =>
     initialData.configs.map(createDraftConfig),
   );
+  const [modelCatalogState, setModelCatalogState] = useState({});
   const [notice, setNotice] = useState(null);
   const [isBusy, setIsBusy] = useState(false);
-  const [selectedConfigId, setSelectedConfigId] = useState(initialData.configs[0]?.id || null);
 
   const dirtyCount = useMemo(() => getDirtyCount(data, draftConfigs), [data, draftConfigs]);
-  const orderedDraftConfigs = useMemo(
-    () => [...draftConfigs].sort(sortConfigs),
-    [draftConfigs],
-  );
-  const selectedConfig = useMemo(
-    () =>
-      orderedDraftConfigs.find((config) => config.id === selectedConfigId) || orderedDraftConfigs[0] || null,
-    [orderedDraftConfigs, selectedConfigId],
-  );
+  const orderedDraftConfigs = useMemo(() => [...draftConfigs].sort(sortConfigs), [draftConfigs]);
 
   useEffect(() => {
-    setSelectedConfigId((currentConfigId) => {
-      if (currentConfigId && orderedDraftConfigs.some((config) => config.id === currentConfigId)) {
-        return currentConfigId;
-      }
+    const suggestionTimers = suggestionTimersRef.current;
 
-      return orderedDraftConfigs[0]?.id || null;
-    });
-  }, [orderedDraftConfigs]);
+    return () => {
+      for (const timerId of suggestionTimers.values()) {
+        window.clearTimeout(timerId);
+      }
+    };
+  }, []);
 
   function updateDraftConfig(configId, updates) {
     setDraftConfigs((currentConfigs) => {
@@ -530,13 +551,91 @@ export default function ProviderConfigurationScreen({ copy, initialData }) {
   }
 
   function handleAddConfig() {
-    const newConfig = createNewConfig(
-      draftConfigs.length,
-      draftConfigs.some((config) => config.purpose === "draft_generation_fallback"),
-    );
+    setDraftConfigs((currentConfigs) => [
+      ...currentConfigs,
+      createNewConfig(
+        currentConfigs.length,
+        currentConfigs.some((config) => config.purpose === "draft_generation_fallback"),
+      ),
+    ]);
+  }
 
-    setDraftConfigs((currentConfigs) => [...currentConfigs, newConfig]);
-    setSelectedConfigId(newConfig.id);
+  async function requestModelSuggestions(configId, providerValue, query = "", forceRefresh = false) {
+    const normalizedProvider = normalizeProviderInput(providerValue);
+    const providerOption = getProviderOption(data.providerCatalog, normalizedProvider);
+
+    if (!providerOption) {
+      setModelCatalogState((currentState) => ({
+        ...currentState,
+        [configId]: {
+          items: [],
+          message: copy.providerUnknownHint,
+          syncStatus: "error",
+          syncedAt: null,
+        },
+      }));
+      return;
+    }
+
+    setModelCatalogState((currentState) => ({
+      ...currentState,
+      [configId]: {
+        ...(currentState[configId] || {}),
+        loading: true,
+      },
+    }));
+
+    try {
+      const response = await fetch(
+        `/api/providers/catalog?provider=${encodeURIComponent(normalizedProvider)}&q=${encodeURIComponent(
+          query,
+        )}${forceRefresh ? "&force=1" : ""}`,
+      );
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(payload?.message || copy.catalogLoadErrorPrefix);
+      }
+
+      setModelCatalogState((currentState) => ({
+        ...currentState,
+        [configId]: {
+          items: payload.data.models || [],
+          loading: false,
+          message: payload.data.models?.length
+            ? `${payload.data.modelCount} ${copy.catalogResultCountLabel}`
+            : payload.data.provider.searchHint,
+          syncStatus: payload.data.provider.syncStatus,
+          syncedAt: payload.data.provider.syncedAt,
+        },
+      }));
+    } catch (error) {
+      setModelCatalogState((currentState) => ({
+        ...currentState,
+        [configId]: {
+          items: [],
+          loading: false,
+          message: `${copy.catalogLoadErrorPrefix}: ${error.message}`,
+          syncStatus: "error",
+          syncedAt: null,
+        },
+      }));
+    }
+  }
+
+  function queueModelSuggestions(configId, providerValue, query = "", forceRefresh = false) {
+    const existingTimer = suggestionTimersRef.current.get(configId);
+
+    if (existingTimer) {
+      window.clearTimeout(existingTimer);
+    }
+
+    const timerId = window.setTimeout(() => {
+      requestModelSuggestions(configId, providerValue, query, forceRefresh);
+      suggestionTimersRef.current.delete(configId);
+    }, forceRefresh ? 0 : 180);
+
+    suggestionTimersRef.current.set(configId, timerId);
   }
 
   async function handleSave(event) {
@@ -589,17 +688,30 @@ export default function ProviderConfigurationScreen({ copy, initialData }) {
 
   return (
     <Page>
+      <datalist id="provider-config-provider-options">
+        {data.providerCatalog.providers.map((provider) => (
+          <option key={provider.value} value={provider.value}>
+            {provider.label}
+          </option>
+        ))}
+      </datalist>
+
       <Hero>
         <Eyebrow>{copy.eyebrow}</Eyebrow>
         <Title>{copy.title}</Title>
         <Description>{copy.description}</Description>
       </Hero>
+
       <Layout>
         <Stack>
           <Card>
             <CardTitle>{copy.summaryTitle}</CardTitle>
             <SmallText>{copy.summaryDescription}</SmallText>
             <SummaryGrid>
+              <SummaryStat>
+                <SmallText>{copy.supportedProviderCountLabel}</SmallText>
+                <StatValue>{data.providerCatalog.supportedProviderCount}</StatValue>
+              </SummaryStat>
               <SummaryStat>
                 <SmallText>{copy.configCountLabel}</SmallText>
                 <StatValue>{data.summary.configCount}</StatValue>
@@ -612,12 +724,19 @@ export default function ProviderConfigurationScreen({ copy, initialData }) {
                 <SmallText>{copy.storedCredentialCountLabel}</SmallText>
                 <StatValue>{data.summary.storedCredentialCount}</StatValue>
               </SummaryStat>
-              <SummaryStat>
-                <SmallText>{copy.fallbackReadyLabel}</SmallText>
-                <StatValue>{data.summary.fallbackReady ? "Ready" : "Needs work"}</StatValue>
-              </SummaryStat>
             </SummaryGrid>
           </Card>
+
+          <Card>
+            <CardTitle>{copy.catalogSectionTitle}</CardTitle>
+            <SmallText>{copy.catalogDescription}</SmallText>
+            <ProviderChipGrid>
+              {data.providerCatalog.providers.map((provider) => (
+                <ProviderChip key={provider.value}>{provider.label}</ProviderChip>
+              ))}
+            </ProviderChipGrid>
+          </Card>
+
           <Card>
             <CardTitle>{copy.credentialSectionTitle}</CardTitle>
             <SmallText>{copy.securityDescription}</SmallText>
@@ -628,212 +747,285 @@ export default function ProviderConfigurationScreen({ copy, initialData }) {
             </BadgeRow>
           </Card>
         </Stack>
+
         <Stack>
           <Card>
             <ActionRow>
               <div>
-                <CardTitle>{copy.editorTitle}</CardTitle>
-                <SmallText>{copy.editorDescription}</SmallText>
+                <CardTitle>{copy.title}</CardTitle>
+                <SmallText>
+                  {dirtyCount ? `${dirtyCount} ${copy.dirtyLabel}` : copy.noPendingChanges}
+                </SmallText>
               </div>
               <ButtonRow>
-                <SecondaryButton onClick={handleAddConfig} type="button">
+                <Button $tone="secondary" onClick={handleAddConfig} type="button">
                   {copy.addAction}
-                </SecondaryButton>
+                </Button>
               </ButtonRow>
             </ActionRow>
+
             {notice ? <StatusBanner $tone={notice.kind}>{notice.message}</StatusBanner> : null}
+
             <Form onSubmit={handleSave}>
-              {orderedDraftConfigs.length > 1 ? (
-                <ConfigPicker>
-                  <div>
-                    <FieldLabel>{copy.configListTitle}</FieldLabel>
-                    <SmallText>{copy.configListDescription}</SmallText>
-                  </div>
-                  <ConfigPickerGrid>
-                    {orderedDraftConfigs.map((config) => (
-                      <ConfigPickerButton
-                        $active={config.id === selectedConfig?.id}
-                        key={config.id}
-                        onClick={() => setSelectedConfigId(config.id)}
-                        type="button"
-                      >
-                        <ConfigPickerTitle>{formatConfigName(copy, config)}</ConfigPickerTitle>
-                        <ConfigPickerMeta>{formatPurposeLabel(copy, config.purpose)}</ConfigPickerMeta>
+              {orderedDraftConfigs.map((config) => {
+                const providerOption = getProviderOption(data.providerCatalog, config.provider);
+                const catalogState = modelCatalogState[config.id] || null;
+                const catalogItems = catalogState?.items || [];
+                const resolvedProviderLabel =
+                  providerOption?.label || config.providerLabel || config.provider || copy.newConfigLabel;
+                const modelDatalistId = `provider-config-model-options-${config.id}`;
+
+                return (
+                  <ConfigCard $enabled={config.isEnabled} key={config.id}>
+                    <datalist id={modelDatalistId}>
+                      {catalogItems.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.label}
+                        </option>
+                      ))}
+                    </datalist>
+
+                    <ConfigHeader>
+                      <ConfigMeta>
+                        <ConfigTitle>
+                          {config.model ? `${resolvedProviderLabel} / ${config.model}` : copy.newConfigLabel}
+                        </ConfigTitle>
                         <BadgeRow>
                           {config.isDefault ? <Pill $tone="primary">{copy.defaultBadge}</Pill> : null}
                           {config.purpose === "draft_generation_fallback" ? (
                             <Pill $tone="accent">{copy.fallbackBadge}</Pill>
                           ) : null}
-                          <Pill>{config.isEnabled ? copy.enabledBadge : "Disabled"}</Pill>
+                          <Pill>{config.isEnabled ? copy.enabledBadge : copy.disabledBadge}</Pill>
+                          <Pill
+                            $tone={
+                              config.credentialState === "stored"
+                                ? "primary"
+                                : config.credentialState === "environment"
+                                  ? undefined
+                                  : "danger"
+                            }
+                          >
+                            {formatCredentialBadge(copy, config.credentialState)}
+                          </Pill>
                         </BadgeRow>
-                      </ConfigPickerButton>
-                    ))}
-                  </ConfigPickerGrid>
-                </ConfigPicker>
-              ) : null}
+                      </ConfigMeta>
 
-              {selectedConfig ? (
-                <ConfigCard $enabled={selectedConfig.isEnabled} key={selectedConfig.id}>
-                  <ConfigHeader>
-                    <ConfigMeta>
-                      <ConfigTitle>{formatConfigName(copy, selectedConfig)}</ConfigTitle>
-                      <BadgeRow>
-                        {selectedConfig.isDefault ? <Pill $tone="primary">{copy.defaultBadge}</Pill> : null}
-                        {selectedConfig.purpose === "draft_generation_fallback" ? (
-                          <Pill $tone="accent">{copy.fallbackBadge}</Pill>
-                        ) : null}
-                        <Pill>{selectedConfig.isEnabled ? copy.enabledBadge : "Disabled"}</Pill>
-                        <Pill
-                          $tone={
-                            selectedConfig.credentialState === "stored"
-                              ? "primary"
-                              : selectedConfig.credentialState === "environment"
-                                ? undefined
-                                : "danger"
-                          }
-                        >
-                          {formatCredentialBadge(copy, selectedConfig.credentialState)}
-                        </Pill>
-                      </BadgeRow>
-                    </ConfigMeta>
-                    <ToggleGroup>
-                      <Toggle>
-                        <Radio
-                          checked={selectedConfig.isDefault}
-                          name="default-provider-config"
-                          onChange={() => updateDraftConfig(selectedConfig.id, { isDefault: true })}
-                          type="radio"
+                      <ToggleGroup>
+                        <Toggle>
+                          <Radio
+                            checked={config.isDefault}
+                            name="default-provider-config"
+                            onChange={() => updateDraftConfig(config.id, { isDefault: true })}
+                            type="radio"
+                          />
+                          {copy.defaultLabel}
+                        </Toggle>
+                        <Toggle>
+                          <Checkbox
+                            checked={config.isEnabled}
+                            onChange={(event) =>
+                              updateDraftConfig(config.id, {
+                                isEnabled: event.target.checked,
+                              })
+                            }
+                            type="checkbox"
+                          />
+                          {copy.enabledLabel}
+                        </Toggle>
+                      </ToggleGroup>
+                    </ConfigHeader>
+
+                    <FieldGrid>
+                      <Field>
+                        <FieldLabel>{copy.providerLabel}</FieldLabel>
+                        <Input
+                          list="provider-config-provider-options"
+                          onChange={(event) => {
+                            const nextProviderValue = normalizeProviderInput(event.target.value);
+                            const nextProviderOption = getProviderOption(
+                              data.providerCatalog,
+                              nextProviderValue,
+                            );
+
+                            updateDraftConfig(config.id, {
+                              model: nextProviderValue === config.provider ? config.model : "",
+                              provider: nextProviderValue,
+                              providerLabel: nextProviderOption?.label || nextProviderValue,
+                            });
+                            setModelCatalogState((currentState) => ({
+                              ...currentState,
+                              [config.id]: undefined,
+                            }));
+                          }}
+                          placeholder={copy.providerPlaceholder}
+                          value={config.provider}
                         />
-                        {copy.defaultLabel}
-                      </Toggle>
-                      <Toggle>
-                        <Checkbox
-                          checked={selectedConfig.isEnabled}
+                        {providerOption ? (
+                          <SmallText>
+                            {providerOption.label} • {providerOption.catalogSourceLabel}
+                          </SmallText>
+                        ) : (
+                          <SmallText>{copy.providerUnknownHint}</SmallText>
+                        )}
+                        {providerOption?.docsUrl ? (
+                          <ExternalLink href={providerOption.docsUrl} rel="noreferrer" target="_blank">
+                            {copy.openCatalogSourceAction}
+                          </ExternalLink>
+                        ) : null}
+                      </Field>
+
+                      <Field>
+                        <FieldLabel>{copy.modelLabel}</FieldLabel>
+                        <Input
+                          list={modelDatalistId}
+                          onChange={(event) => {
+                            const nextModelValue = event.target.value;
+
+                            updateDraftConfig(config.id, {
+                              model: nextModelValue,
+                            });
+                            queueModelSuggestions(config.id, config.provider, nextModelValue);
+                          }}
+                          onFocus={() => queueModelSuggestions(config.id, config.provider, config.model)}
+                          placeholder={copy.modelPlaceholder}
+                          value={config.model}
+                        />
+                        <SmallText>{copy.modelSearchHint}</SmallText>
+                      </Field>
+                    </FieldGrid>
+
+                    <FieldGrid>
+                      <Field>
+                        <FieldLabel>{copy.purposeLabel}</FieldLabel>
+                        <Select
                           onChange={(event) =>
-                            updateDraftConfig(selectedConfig.id, {
-                              isEnabled: event.target.checked,
+                            updateDraftConfig(config.id, {
+                              purpose: event.target.value,
                             })
                           }
-                          type="checkbox"
-                        />
-                        {copy.enabledLabel}
-                      </Toggle>
-                    </ToggleGroup>
-                  </ConfigHeader>
-
-                  <FieldGrid>
-                    <Field>
-                      <FieldLabel>{copy.providerLabel}</FieldLabel>
-                      <Select
-                        onChange={(event) =>
-                          updateDraftConfig(selectedConfig.id, {
-                            provider: event.target.value,
-                          })
-                        }
-                        value={selectedConfig.provider}
-                      >
-                        {providerOptions.map((providerOption) => (
-                          <option key={providerOption.value} value={providerOption.value}>
-                            {providerOption.label}
-                          </option>
-                        ))}
-                      </Select>
-                    </Field>
-                    <Field>
-                      <FieldLabel>{copy.modelLabel}</FieldLabel>
-                      <Input
-                        onChange={(event) =>
-                          updateDraftConfig(selectedConfig.id, {
-                            model: event.target.value,
-                          })
-                        }
-                        value={selectedConfig.model}
-                      />
-                    </Field>
-                  </FieldGrid>
-
-                  <FieldGrid>
-                    <Field>
-                      <FieldLabel>{copy.purposeLabel}</FieldLabel>
-                      <Select
-                        onChange={(event) =>
-                          updateDraftConfig(selectedConfig.id, {
-                            purpose: event.target.value,
-                          })
-                        }
-                        value={selectedConfig.purpose}
-                      >
-                        <option value="draft_generation">{copy.purposePrimary}</option>
-                        <option value="draft_generation_fallback">{copy.purposeFallback}</option>
-                      </Select>
-                      <SmallText>{copy.purposeHint}</SmallText>
-                    </Field>
-                    <CredentialCard>
-                      <FieldLabel>{copy.credentialTitle}</FieldLabel>
-                      <BadgeRow>
-                        <Pill
-                          $tone={
-                            selectedConfig.credentialState === "stored"
-                              ? "primary"
-                              : selectedConfig.credentialState === "environment"
-                                ? undefined
-                                : "danger"
-                          }
+                          value={config.purpose}
                         >
-                          {formatCredentialBadge(copy, selectedConfig.credentialState)}
-                        </Pill>
-                        <Pill>{formatPurposeLabel(copy, selectedConfig.purpose)}</Pill>
-                      </BadgeRow>
-                      <SmallText>{selectedConfig.credentialLabel}</SmallText>
-                      <SmallText>{formatCredentialDescription(copy, selectedConfig.credentialState)}</SmallText>
-                      <SmallText>
-                        {copy.updatedAtLabel}: {formatTimestamp(selectedConfig.updatedAt)}
-                      </SmallText>
-                    </CredentialCard>
-                  </FieldGrid>
+                          <option value="draft_generation">{copy.purposePrimary}</option>
+                          <option value="draft_generation_fallback">{copy.purposeFallback}</option>
+                        </Select>
+                        <SmallText>{copy.purposeHint}</SmallText>
+                      </Field>
 
-                  <Field>
-                    <FieldLabel>{copy.apiKeyLabel}</FieldLabel>
-                    <Input
-                      autoComplete="new-password"
-                      onChange={(event) =>
-                        updateDraftConfig(selectedConfig.id, {
-                          apiKey: event.target.value,
-                          clearApiKey: event.target.value ? false : selectedConfig.clearApiKey,
-                        })
-                      }
-                      placeholder={copy.apiKeyPlaceholder}
-                      type="password"
-                      value={selectedConfig.apiKey}
-                    />
-                    <SmallText>{copy.apiKeyHint}</SmallText>
-                  </Field>
+                      <CatalogCard>
+                        <ActionRow>
+                          <SectionTitle>{copy.catalogStatusTitle}</SectionTitle>
+                          <Button
+                            $tone="secondary"
+                            disabled={!providerOption || catalogState?.loading}
+                            onClick={() =>
+                              queueModelSuggestions(config.id, config.provider, config.model, true)
+                            }
+                            type="button"
+                          >
+                            {catalogState?.loading ? copy.catalogRefreshWorking : copy.catalogRefreshAction}
+                          </Button>
+                        </ActionRow>
+                        <BadgeRow>
+                          <Pill
+                            $tone={
+                              catalogState?.syncStatus === "ready"
+                                ? "success"
+                                : catalogState?.syncStatus === "error"
+                                  ? "danger"
+                                  : catalogState?.syncStatus === "credential_required"
+                                    ? "accent"
+                                    : undefined
+                            }
+                          >
+                            {formatCatalogBadge(copy, catalogState?.syncStatus || providerOption?.syncStatus)}
+                          </Pill>
+                          {providerOption ? <Pill>{providerOption.catalogSourceLabel}</Pill> : null}
+                        </BadgeRow>
+                        <MetaList>
+                          <MetaRow>
+                            <MetaLabel>{copy.catalogResultsLabel}</MetaLabel>
+                            <MetaValue>{catalogItems.length || 0}</MetaValue>
+                          </MetaRow>
+                          <MetaRow>
+                            <MetaLabel>{copy.updatedAtLabel}</MetaLabel>
+                            <MetaValue>{formatTimestamp(catalogState?.syncedAt || providerOption?.syncedAt)}</MetaValue>
+                          </MetaRow>
+                        </MetaList>
+                        <SmallText>
+                          {catalogState?.loading
+                            ? copy.catalogLoading
+                            : catalogState?.message || providerOption?.searchHint || copy.modelSearchHint}
+                        </SmallText>
+                      </CatalogCard>
+                    </FieldGrid>
 
-                  {selectedConfig.hasStoredApiKey ? (
-                    <Toggle>
-                      <Checkbox
-                        checked={selectedConfig.clearApiKey}
-                        disabled={Boolean(selectedConfig.apiKey)}
-                        onChange={(event) =>
-                          updateDraftConfig(selectedConfig.id, {
-                            clearApiKey: event.target.checked,
-                          })
-                        }
-                        type="checkbox"
-                      />
-                      Remove stored key
-                    </Toggle>
-                  ) : null}
-                </ConfigCard>
-              ) : null}
+                    <FieldGrid>
+                      <CredentialCard>
+                        <FieldLabel>{copy.credentialTitle}</FieldLabel>
+                        <BadgeRow>
+                          <Pill
+                            $tone={
+                              config.credentialState === "stored"
+                                ? "primary"
+                                : config.credentialState === "environment"
+                                  ? undefined
+                                  : "danger"
+                            }
+                          >
+                            {formatCredentialBadge(copy, config.credentialState)}
+                          </Pill>
+                          <Pill>{formatPurposeLabel(copy, config.purpose)}</Pill>
+                        </BadgeRow>
+                        <SmallText>{config.credentialLabel}</SmallText>
+                        <SmallText>{formatCredentialDescription(copy, config.credentialState)}</SmallText>
+                        <SmallText>
+                          {copy.updatedAtLabel}: {formatTimestamp(config.updatedAt)}
+                        </SmallText>
+                      </CredentialCard>
+
+                      <Field>
+                        <FieldLabel>{copy.apiKeyLabel}</FieldLabel>
+                        <Input
+                          autoComplete="new-password"
+                          onChange={(event) =>
+                            updateDraftConfig(config.id, {
+                              apiKey: event.target.value,
+                              clearApiKey: event.target.value ? false : config.clearApiKey,
+                            })
+                          }
+                          placeholder={copy.apiKeyPlaceholder}
+                          type="password"
+                          value={config.apiKey}
+                        />
+                        <SmallText>{copy.apiKeyHint}</SmallText>
+                        {config.hasStoredApiKey ? (
+                          <Toggle>
+                            <Checkbox
+                              checked={config.clearApiKey}
+                              disabled={Boolean(config.apiKey)}
+                              onChange={(event) =>
+                                updateDraftConfig(config.id, {
+                                  clearApiKey: event.target.checked,
+                                })
+                              }
+                              type="checkbox"
+                            />
+                            {copy.clearKeyAction}
+                          </Toggle>
+                        ) : null}
+                      </Field>
+                    </FieldGrid>
+                  </ConfigCard>
+                );
+              })}
 
               <ActionRow>
                 <SmallText>
                   {dirtyCount ? `${dirtyCount} ${copy.dirtyLabel}` : copy.noPendingChanges}
                 </SmallText>
-                <SaveButton disabled={isBusy} type="submit">
+                <Button disabled={isBusy} type="submit">
                   {isBusy ? copy.saveWorking : copy.saveAction}
-                </SaveButton>
+                </Button>
               </ActionRow>
             </Form>
           </Card>

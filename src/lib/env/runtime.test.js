@@ -80,6 +80,26 @@ describe("environment runtime schema", () => {
     expect(parsedEnv.ai.providerConfigSecret).toBe("change-me");
   });
 
+  it("accepts any supported provider when bootstrapping default and fallback configs", () => {
+    const env = createBaseEnv();
+
+    env.AI_PROVIDER_DEFAULT = "anthropic";
+    env.AI_MODEL_DEFAULT = "claude-sonnet-4-5-20250929";
+    env.AI_PROVIDER_FALLBACK = "google";
+    env.AI_MODEL_FALLBACK = "gemini-2.5-pro";
+
+    const parsedEnv = parseServerEnv(env);
+
+    expect(parsedEnv.ai.default).toEqual({
+      model: "claude-sonnet-4-5-20250929",
+      provider: "anthropic",
+    });
+    expect(parsedEnv.ai.fallback).toEqual({
+      model: "gemini-2.5-pro",
+      provider: "google",
+    });
+  });
+
   it("fails when a required variable is missing", () => {
     const env = createBaseEnv();
 

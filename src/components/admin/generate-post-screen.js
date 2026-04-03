@@ -49,7 +49,7 @@ function formatProviderLabel(providerConfig) {
     return "";
   }
 
-  return `${providerConfig.provider} / ${providerConfig.model}`;
+  return `${providerConfig.providerLabel || providerConfig.provider} / ${providerConfig.model}`;
 }
 
 function toLocalDateTimeInputValue(value) {
