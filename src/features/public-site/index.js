@@ -6,7 +6,7 @@ import { defaultLocale, isSupportedLocale, supportedLocales } from "@/features/i
 import { buildLocalizedPath, publicRouteSegments } from "@/features/i18n/routing";
 import { env } from "@/lib/env/server";
 import { generatedArticleSectionOrder } from "@/lib/content/article-structure";
-import { normalizeDisplayText } from "@/lib/normalization";
+import { normalizeDisplayText, normalizeEquipmentName } from "@/lib/normalization";
 
 export const publicDataRevalidateSeconds = 300;
 export const publicListingPageSize = 12;
@@ -42,6 +42,20 @@ function normalizePositiveInteger(value, fallback = 1) {
   return parsedValue;
 }
 
+function getDateSortValue(value) {
+  if (!value) {
+    return 0;
+  }
+
+  const timestamp = value instanceof Date ? value.getTime() : Date.parse(value);
+
+  return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
+function compareDatesDescending(left, right) {
+  return getDateSortValue(right) - getDateSortValue(left);
+}
+
 function dedupeBy(values, getKey) {
   const seenKeys = new Set();
   const dedupedValues = [];
@@ -62,6 +76,174 @@ function dedupeBy(values, getKey) {
 
 function dedupeStrings(values) {
   return [...new Set((values || []).map((value) => `${value}`.trim()).filter(Boolean))];
+}
+
+function normalizeSearchValue(value) {
+  return normalizeEquipmentName(normalizeDisplayText(value) || "");
+}
+
+function stripHtml(value) {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  return value.replace(/<[^>]+>/g, " ");
+}
+
+function collectJsonText(value, collected = []) {
+  if (typeof value === "string") {
+    const normalizedValue = normalizeDisplayText(value);
+
+    if (normalizedValue) {
+      collected.push(normalizedValue);
+    }
+
+    return collected;
+  }
+
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      collectJsonText(entry, collected);
+    }
+
+    return collected;
+  }
+
+  if (value && typeof value === "object") {
+    for (const entry of Object.values(value)) {
+      collectJsonText(entry, collected);
+    }
+  }
+
+  return collected;
+}
+
+function createBodySearchText(translation) {
+  return normalizeDisplayText(
+    [
+      translation?.contentMd,
+      stripHtml(translation?.contentHtml),
+      collectJsonText(translation?.structuredContentJson).join(" "),
+    ]
+      .filter(Boolean)
+      .join(" "),
+  );
+}
+
+function selectPostTranslation(post, locale) {
+  return post.translations?.find((entry) => entry.locale === locale) || post.translations?.[0] || null;
+}
+
+function scoreSearchField(value, normalizedSearch, searchTokens, weights) {
+  const normalizedValue = normalizeSearchValue(value);
+
+  if (!normalizedValue || !normalizedSearch) {
+    return 0;
+  }
+
+  let score = 0;
+
+  if (normalizedValue === normalizedSearch) {
+    score += weights.exact || 0;
+  } else if (
+    normalizedValue.startsWith(normalizedSearch) &&
+    (normalizedValue.length === normalizedSearch.length ||
+      normalizedValue.charAt(normalizedSearch.length) === " ")
+  ) {
+    score += weights.prefix || 0;
+  } else if (normalizedValue.includes(normalizedSearch)) {
+    score += weights.contains || 0;
+  }
+
+  if (weights.token) {
+    score += searchTokens.reduce(
+      (total, token) => total + (token && normalizedValue.includes(token) ? weights.token : 0),
+      0,
+    );
+  }
+
+  return score;
+}
+
+function sumSearchFieldScores(values, normalizedSearch, searchTokens, weights) {
+  return (values || []).reduce(
+    (total, value) => total + scoreSearchField(value, normalizedSearch, searchTokens, weights),
+    0,
+  );
+}
+
+function getSearchResultTier(post, locale, normalizedSearch) {
+  const translation = selectPostTranslation(post, locale);
+  const normalizedTitle = normalizeSearchValue(translation?.title);
+
+  if (!normalizedTitle || !normalizedSearch) {
+    return 1;
+  }
+
+  if (normalizedTitle === normalizedSearch) {
+    return 3;
+  }
+
+  if (
+    normalizedTitle.startsWith(normalizedSearch) &&
+    (normalizedTitle.length === normalizedSearch.length ||
+      normalizedTitle.charAt(normalizedSearch.length) === " ")
+  ) {
+    return 2;
+  }
+
+  return 1;
+}
+
+function buildWeightedSearchScore(post, locale, normalizedSearch, searchTokens) {
+  const translation = selectPostTranslation(post, locale);
+
+  return (
+    sumSearchFieldScores([translation?.title], normalizedSearch, searchTokens, {
+      contains: 6,
+      token: 1,
+    }) +
+    sumSearchFieldScores([translation?.excerpt || post.excerpt], normalizedSearch, searchTokens, {
+      contains: 5,
+      exact: 6,
+      prefix: 5,
+      token: 1,
+    }) +
+    sumSearchFieldScores([createBodySearchText(translation)], normalizedSearch, searchTokens, {
+      contains: 3,
+      exact: 4,
+      prefix: 4,
+      token: 1,
+    }) +
+    sumSearchFieldScores([post.equipment?.name], normalizedSearch, searchTokens, {
+      contains: 6,
+      exact: 8,
+      prefix: 7,
+      token: 1,
+    }) +
+    sumSearchFieldScores(
+      post.manufacturers.map(({ manufacturer }) => manufacturer.name),
+      normalizedSearch,
+      searchTokens,
+      {
+        contains: 5,
+        exact: 7,
+        prefix: 6,
+        token: 1,
+      },
+    ) +
+    sumSearchFieldScores(
+      post.tags.flatMap(({ tag }) => [tag.name, tag.slug]),
+      normalizedSearch,
+      searchTokens,
+      {
+        contains: 5,
+        exact: 7,
+        prefix: 6,
+        token: 1,
+      },
+    )
+  );
 }
 
 function normalizeJsonStringList(value) {
@@ -238,27 +420,29 @@ function buildPostBodySections(translation, sourceReferences) {
 }
 
 function createPublishedPostCard(post, locale) {
-  const translation = post.translations?.[0] || null;
-  const path = buildLocalizedPath(locale, publicRouteSegments.blogPost(post.slug));
+  const translation = selectPostTranslation(post, locale);
+  const cardLocale = translation?.locale || locale;
+  const path = buildLocalizedPath(cardLocale, publicRouteSegments.blogPost(post.slug));
 
   return {
     categories: post.categories.map(({ category }) => ({
       name: category.name,
-      path: buildLocalizedPath(locale, publicRouteSegments.category(category.slug)),
+      path: buildLocalizedPath(cardLocale, publicRouteSegments.category(category.slug)),
       slug: category.slug,
     })),
     equipment: {
       name: post.equipment.name,
-      path: buildLocalizedPath(locale, publicRouteSegments.equipment(post.equipment.slug)),
+      path: buildLocalizedPath(cardLocale, publicRouteSegments.equipment(post.equipment.slug)),
       slug: post.equipment.slug,
     },
     excerpt: translation?.excerpt || post.excerpt || "",
     heroImage: buildHeroImages(post, translation)[0] || null,
     manufacturers: post.manufacturers.map(({ manufacturer }) => ({
       name: manufacturer.name,
-      path: buildLocalizedPath(locale, publicRouteSegments.manufacturer(manufacturer.slug)),
+      path: buildLocalizedPath(cardLocale, publicRouteSegments.manufacturer(manufacturer.slug)),
       slug: manufacturer.slug,
     })),
+    locale: cardLocale,
     path,
     publishedAt: serializeDate(post.publishedAt),
     slug: post.slug,
@@ -297,85 +481,93 @@ function createPagination(totalItems, currentPage, pageSize) {
   };
 }
 
-function buildPublishedPostsWhere({ locale, search }) {
-  const normalizedSearch = normalizeDisplayText(search);
-  const localeCondition = {
+function buildPublishedPostsWhere({ locale }) {
+  return {
+    status: PostStatus.PUBLISHED,
     translations: {
       some: {
         locale,
       },
     },
   };
+}
 
-  if (!normalizedSearch) {
-    return {
-      status: PostStatus.PUBLISHED,
-      ...localeCondition,
-    };
-  }
-
+function buildPublishedSearchWhere({ locale, search }) {
+  const normalizedSearch = normalizeDisplayText(search);
   return {
-    AND: [
-      {
-        status: PostStatus.PUBLISHED,
+    status: PostStatus.PUBLISHED,
+    translations: {
+      some: {
+        locale,
       },
-      localeCondition,
+    },
+    OR: [
       {
-        OR: [
-          {
-            equipment: {
+        equipment: {
+          name: {
+            contains: normalizedSearch,
+          },
+        },
+      },
+      {
+        manufacturers: {
+          some: {
+            manufacturer: {
               name: {
                 contains: normalizedSearch,
               },
             },
           },
-          {
-            slug: {
-              contains: normalizedSearch,
-            },
-          },
-          {
-            translations: {
-              some: {
-                locale,
-                OR: [
-                  {
-                    excerpt: {
-                      contains: normalizedSearch,
-                    },
-                  },
-                  {
-                    title: {
-                      contains: normalizedSearch,
-                    },
-                  },
-                ],
-              },
-            },
-          },
-          {
-            categories: {
-              some: {
-                category: {
+        },
+      },
+      {
+        tags: {
+          some: {
+            tag: {
+              OR: [
+                {
                   name: {
                     contains: normalizedSearch,
                   },
                 },
-              },
-            },
-          },
-          {
-            manufacturers: {
-              some: {
-                manufacturer: {
-                  name: {
+                {
+                  slug: {
                     contains: normalizedSearch,
                   },
                 },
-              },
+              ],
             },
           },
-        ],
+        },
+      },
+      {
+        translations: {
+          some: {
+            locale,
+            OR: [
+              {
+                title: {
+                  contains: normalizedSearch,
+                },
+              },
+              {
+                excerpt: {
+                  contains: normalizedSearch,
+                },
+              },
+              {
+                contentMd: {
+                  contains: normalizedSearch,
+                },
+              },
+              {
+                contentHtml: {
+                  contains: normalizedSearch,
+                },
+              },
+            ],
+          },
+        },
       },
     ],
   };
@@ -435,14 +627,167 @@ function buildPublishedPostCardSelect(locale) {
     slug: true,
     translations: {
       select: {
+        contentHtml: true,
+        contentMd: true,
         excerpt: true,
         faqJson: true,
+        locale: true,
         structuredContentJson: true,
         title: true,
       },
       take: 1,
       where: {
         locale,
+      },
+    },
+    updatedAt: true,
+  };
+}
+
+function buildSearchPostSelect(locale) {
+  const baseSelect = buildPublishedPostCardSelect(locale);
+
+  return {
+    ...baseSelect,
+    tags: {
+      orderBy: {
+        tag: {
+          name: "asc",
+        },
+      },
+      select: {
+        tag: {
+          select: {
+            name: true,
+            slug: true,
+          },
+        },
+      },
+    },
+  };
+}
+
+function buildDiscoveryPostSelect() {
+  return {
+    categories: {
+      select: {
+        category: {
+          select: {
+            description: true,
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+      },
+    },
+    equipment: {
+      select: {
+        description: true,
+        id: true,
+        name: true,
+        slug: true,
+      },
+    },
+    manufacturers: {
+      select: {
+        manufacturer: {
+          select: {
+            branchCountriesJson: true,
+            headquartersCountry: true,
+            id: true,
+            name: true,
+            primaryDomain: true,
+            slug: true,
+          },
+        },
+      },
+    },
+  };
+}
+
+function buildRelatedPostSelect(locales = supportedLocales) {
+  return {
+    categories: {
+      orderBy: {
+        category: {
+          name: "asc",
+        },
+      },
+      select: {
+        category: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+      },
+    },
+    equipment: {
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+      },
+    },
+    excerpt: true,
+    featuredImage: {
+      select: {
+        alt: true,
+        attributionText: true,
+        caption: true,
+        licenseType: true,
+        publicUrl: true,
+        sourceUrl: true,
+      },
+    },
+    id: true,
+    manufacturers: {
+      orderBy: {
+        manufacturer: {
+          name: "asc",
+        },
+      },
+      select: {
+        manufacturer: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+      },
+    },
+    publishedAt: true,
+    slug: true,
+    tags: {
+      orderBy: {
+        tag: {
+          name: "asc",
+        },
+      },
+      select: {
+        tag: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+      },
+    },
+    translations: {
+      select: {
+        excerpt: true,
+        locale: true,
+        structuredContentJson: true,
+        title: true,
+      },
+      where: {
+        locale: {
+          in: locales,
+        },
       },
     },
     updatedAt: true,
@@ -596,18 +941,26 @@ function tallyDiscoveryEntries(posts, entityKind, locale) {
   });
 }
 
+function createLandingDiscoverySections(posts, entityKind, locale) {
+  return publicEntityKinds
+    .filter((kind) => kind !== entityKind)
+    .map((kind) => ({
+      items: tallyDiscoveryEntries(posts, kind, locale).slice(0, 4),
+      kind,
+    }))
+    .filter((section) => section.items.length);
+}
+
 async function listPublishedPostsInternal(
-  { locale = defaultLocale, page = 1, pageSize = publicListingPageSize, search } = {},
+  { locale = defaultLocale, page = 1, pageSize = publicListingPageSize } = {},
   prisma,
 ) {
   const resolvedLocale = normalizePublicLocale(locale);
-  const normalizedSearch = normalizeDisplayText(search) || "";
   const requestedPage = normalizePositiveInteger(page);
   const resolvedPageSize = normalizePositiveInteger(pageSize, publicListingPageSize);
   const db = await resolvePrismaClient(prisma);
   const where = buildPublishedPostsWhere({
     locale: resolvedLocale,
-    search: normalizedSearch,
   });
   const totalItems = await db.post.count({
     where,
@@ -625,6 +978,87 @@ async function listPublishedPostsInternal(
     locale: resolvedLocale,
     pagination,
     posts: posts.map((post) => createPublishedPostCard(post, resolvedLocale)),
+    search: "",
+  };
+}
+
+async function searchPublishedPostsInternal(
+  { locale = defaultLocale, page = 1, pageSize = publicListingPageSize, search } = {},
+  prisma,
+) {
+  const resolvedLocale = normalizePublicLocale(locale);
+  const normalizedSearch = normalizeDisplayText(search) || "";
+
+  if (!normalizedSearch) {
+    return listPublishedPostsInternal(
+      {
+        locale: resolvedLocale,
+        page,
+        pageSize,
+      },
+      prisma,
+    );
+  }
+
+  const requestedPage = normalizePositiveInteger(page);
+  const resolvedPageSize = normalizePositiveInteger(pageSize, publicListingPageSize);
+  const db = await resolvePrismaClient(prisma);
+  const where = buildPublishedSearchWhere({
+    locale: resolvedLocale,
+    search: normalizedSearch,
+  });
+  const normalizedSearchValue = normalizeSearchValue(normalizedSearch);
+  const searchTokens = dedupeStrings(normalizedSearchValue.split(" "));
+  const matchingPosts = await db.post.findMany({
+    orderBy: [{ publishedAt: "desc" }, { updatedAt: "desc" }, { slug: "asc" }],
+    select: buildSearchPostSelect(resolvedLocale),
+    where,
+  });
+  const rankedPosts = matchingPosts
+    .map((post) => ({
+      post,
+      searchScore: buildWeightedSearchScore(post, resolvedLocale, normalizedSearchValue, searchTokens),
+      tier: getSearchResultTier(post, resolvedLocale, normalizedSearchValue),
+    }))
+    .sort((left, right) => {
+      if (left.tier !== right.tier) {
+        return right.tier - left.tier;
+      }
+
+      if (left.tier === 1 && left.searchScore !== right.searchScore) {
+        return right.searchScore - left.searchScore;
+      }
+
+      const publishedComparison = compareDatesDescending(left.post.publishedAt, right.post.publishedAt);
+
+      if (publishedComparison !== 0) {
+        return publishedComparison;
+      }
+
+      const updatedComparison = compareDatesDescending(left.post.updatedAt, right.post.updatedAt);
+
+      if (updatedComparison !== 0) {
+        return updatedComparison;
+      }
+
+      return createPublishedPostCard(left.post, resolvedLocale).title.localeCompare(
+        createPublishedPostCard(right.post, resolvedLocale).title,
+        undefined,
+        {
+          sensitivity: "base",
+        },
+      );
+    })
+    .map((entry) => createPublishedPostCard(entry.post, resolvedLocale));
+  const pagination = createPagination(rankedPosts.length, requestedPage, resolvedPageSize);
+
+  return {
+    locale: resolvedLocale,
+    pagination,
+    posts: rankedPosts.slice(
+      pagination.totalItems ? (pagination.currentPage - 1) * pagination.pageSize : 0,
+      pagination.totalItems ? pagination.currentPage * pagination.pageSize : pagination.pageSize,
+    ),
     search: normalizedSearch,
   };
 }
@@ -647,42 +1081,7 @@ async function getPublishedHomePageDataInternal({ locale = defaultLocale } = {},
   });
   const taxonomyPosts = await db.post.findMany({
     orderBy: [{ publishedAt: "desc" }, { updatedAt: "desc" }],
-    select: {
-      categories: {
-        select: {
-          category: {
-            select: {
-              description: true,
-              id: true,
-              name: true,
-              slug: true,
-            },
-          },
-        },
-      },
-      equipment: {
-        select: {
-          description: true,
-          id: true,
-          name: true,
-          slug: true,
-        },
-      },
-      manufacturers: {
-        select: {
-          manufacturer: {
-            select: {
-              branchCountriesJson: true,
-              headquartersCountry: true,
-              id: true,
-              name: true,
-              primaryDomain: true,
-              slug: true,
-            },
-          },
-        },
-      },
-    },
+    select: buildDiscoveryPostSelect(),
     where: {
       status: PostStatus.PUBLISHED,
       translations: {
@@ -788,8 +1187,16 @@ async function getPublishedLandingPageDataInternal(
     take: pagination.pageSize,
     where,
   });
+  const discoveryPosts = totalItems
+    ? await db.post.findMany({
+        orderBy: [{ publishedAt: "desc" }, { updatedAt: "desc" }],
+        select: buildDiscoveryPostSelect(),
+        where,
+      })
+    : [];
 
   return {
+    discoverySections: createLandingDiscoverySections(discoveryPosts, entityKind, resolvedLocale),
     entity: createEntitySummary(entity, entityKind, resolvedLocale),
     entityKind,
     locale: resolvedLocale,
@@ -813,14 +1220,122 @@ function buildCommentTree(comments) {
   }));
 }
 
-function buildRelatedPostScore(post, { categoryIds, equipmentId, manufacturerIds }) {
+function buildRelatedPostOverlapCount(post, { categoryIds, equipmentId, manufacturerIds, tagIds }) {
   const sharedCategoryCount = post.categories.filter(({ category }) => categoryIds.has(category.id)).length;
   const sharedManufacturerCount = post.manufacturers.filter(({ manufacturer }) =>
     manufacturerIds.has(manufacturer.id),
   ).length;
+  const sharedTagCount = post.tags.filter(({ tag }) => tagIds.has(tag.id)).length;
   const sameEquipment = post.equipment.id === equipmentId ? 1 : 0;
 
-  return sameEquipment * 3 + sharedCategoryCount * 2 + sharedManufacturerCount;
+  return sameEquipment + sharedCategoryCount + sharedManufacturerCount + sharedTagCount;
+}
+
+async function listRelatedPublishedPostsInternal(
+  { limit = 3, locale = defaultLocale, post } = {},
+  prisma,
+) {
+  const resolvedLocale = normalizePublicLocale(locale);
+  const resolvedLimit = normalizePositiveInteger(limit, 3);
+
+  if (!post?.id || !post?.equipment?.id) {
+    return [];
+  }
+
+  const categoryIds = new Set(post.categories.map(({ category }) => category.id));
+  const manufacturerIds = new Set(post.manufacturers.map(({ manufacturer }) => manufacturer.id));
+  const tagIds = new Set(post.tags.map(({ tag }) => tag.id));
+  const db = await resolvePrismaClient(prisma);
+  const relatedCandidates = await db.post.findMany({
+    orderBy: [{ publishedAt: "desc" }, { updatedAt: "desc" }],
+    select: buildRelatedPostSelect(supportedLocales),
+    take: Math.max(resolvedLimit * 6, 12),
+    where: {
+      id: {
+        not: post.id,
+      },
+      OR: [
+        {
+          equipmentId: post.equipment.id,
+        },
+        categoryIds.size
+          ? {
+              categories: {
+                some: {
+                  categoryId: {
+                    in: [...categoryIds],
+                  },
+                },
+              },
+            }
+          : null,
+        manufacturerIds.size
+          ? {
+              manufacturers: {
+                some: {
+                  manufacturerId: {
+                    in: [...manufacturerIds],
+                  },
+                },
+              },
+            }
+          : null,
+        tagIds.size
+          ? {
+              tags: {
+                some: {
+                  tagId: {
+                    in: [...tagIds],
+                  },
+                },
+              },
+            }
+          : null,
+      ].filter(Boolean),
+      publishedAt: {
+        not: null,
+      },
+      status: PostStatus.PUBLISHED,
+      translations: {
+        some: {
+          locale: {
+            in: supportedLocales,
+          },
+        },
+      },
+    },
+  });
+
+  return relatedCandidates
+    .map((candidate) => ({
+      localeMatch: candidate.translations.some((entry) => entry.locale === resolvedLocale) ? 1 : 0,
+      overlapCount: buildRelatedPostOverlapCount(candidate, {
+        categoryIds,
+        equipmentId: post.equipment.id,
+        manufacturerIds,
+        tagIds,
+      }),
+      post: createPublishedPostCard(candidate, resolvedLocale),
+    }))
+    .sort((left, right) => {
+      if (left.localeMatch !== right.localeMatch) {
+        return right.localeMatch - left.localeMatch;
+      }
+
+      if (left.overlapCount !== right.overlapCount) {
+        return right.overlapCount - left.overlapCount;
+      }
+
+      const publishedComparison = compareDatesDescending(left.post.publishedAt, right.post.publishedAt);
+
+      if (publishedComparison !== 0) {
+        return publishedComparison;
+      }
+
+      return compareDatesDescending(left.post.updatedAt, right.post.updatedAt);
+    })
+    .slice(0, resolvedLimit)
+    .map((entry) => entry.post);
 }
 
 async function getPublishedPostPageDataInternal(
@@ -881,6 +1396,22 @@ async function getPublishedPostPageDataInternal(
         },
         select: {
           manufacturer: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
+        },
+      },
+      tags: {
+        orderBy: {
+          tag: {
+            name: "asc",
+          },
+        },
+        select: {
+          tag: {
             select: {
               id: true,
               name: true,
@@ -1000,126 +1531,14 @@ async function getPublishedPostPageDataInternal(
     take: commentsPagination.pageSize,
     where: commentWhere,
   });
-  const categoryIds = new Set(post.categories.map(({ category }) => category.id));
-  const manufacturerIds = new Set(post.manufacturers.map(({ manufacturer }) => manufacturer.id));
-  const relatedCandidates = await db.post.findMany({
-    orderBy: [{ publishedAt: "desc" }, { updatedAt: "desc" }],
-    select: {
-      categories: {
-        select: {
-          category: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-            },
-          },
-        },
-      },
-      equipment: {
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-        },
-      },
-      excerpt: true,
-      featuredImage: {
-        select: {
-          alt: true,
-          caption: true,
-          publicUrl: true,
-          sourceUrl: true,
-        },
-      },
-      id: true,
-      manufacturers: {
-        select: {
-          manufacturer: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-            },
-          },
-        },
-      },
-      publishedAt: true,
-      slug: true,
-      translations: {
-        select: {
-          excerpt: true,
-          structuredContentJson: true,
-          title: true,
-        },
-        take: 1,
-        where: {
-          locale: resolvedLocale,
-        },
-      },
-      updatedAt: true,
+  const relatedPosts = await listRelatedPublishedPostsInternal(
+    {
+      limit: 3,
+      locale: resolvedLocale,
+      post,
     },
-    take: 8,
-    where: {
-      id: {
-        not: post.id,
-      },
-      OR: [
-        {
-          equipmentId: post.equipment.id,
-        },
-        categoryIds.size
-          ? {
-              categories: {
-                some: {
-                  categoryId: {
-                    in: [...categoryIds],
-                  },
-                },
-              },
-            }
-          : null,
-        manufacturerIds.size
-          ? {
-              manufacturers: {
-                some: {
-                  manufacturerId: {
-                    in: [...manufacturerIds],
-                  },
-                },
-              },
-            }
-          : null,
-      ].filter(Boolean),
-      publishedAt: {
-        not: null,
-      },
-      status: PostStatus.PUBLISHED,
-      translations: {
-        some: {
-          locale: resolvedLocale,
-        },
-      },
-    },
-  });
-  const relatedPosts = relatedCandidates
-    .map((candidate) => ({
-      post: createPublishedPostCard(candidate, resolvedLocale),
-      score: buildRelatedPostScore(candidate, {
-        categoryIds,
-        equipmentId: post.equipment.id,
-        manufacturerIds,
-      }),
-    }))
-    .sort((left, right) => {
-      if (left.score !== right.score) {
-        return right.score - left.score;
-      }
-
-      return (right.post.publishedAt || "").localeCompare(left.post.publishedAt || "");
-    })
-    .slice(0, 3)
-    .map((entry) => entry.post);
+    db,
+  );
 
   return {
     article: {
@@ -1242,12 +1661,38 @@ const getCachedPublishedPostsList = unstable_cache(
   },
 );
 
+const getCachedPublishedSearchResults = unstable_cache(
+  async (locale, page, pageSize, search) =>
+    searchPublishedPostsInternal({ locale, page, pageSize, search }),
+  ["public-search-data"],
+  {
+    revalidate: publicDataRevalidateSeconds,
+  },
+);
+
 export async function listPublishedPosts(options = {}, prisma) {
+  if (normalizeDisplayText(options.search)) {
+    return searchPublishedPosts(options, prisma);
+  }
+
   if (prisma) {
     return listPublishedPostsInternal(options, prisma);
   }
 
   return getCachedPublishedPostsList(
+    normalizePublicLocale(options.locale),
+    normalizePositiveInteger(options.page),
+    normalizePositiveInteger(options.pageSize, publicListingPageSize),
+    normalizeDisplayText(options.search) || "",
+  );
+}
+
+export async function searchPublishedPosts(options = {}, prisma) {
+  if (prisma) {
+    return searchPublishedPostsInternal(options, prisma);
+  }
+
+  return getCachedPublishedSearchResults(
     normalizePublicLocale(options.locale),
     normalizePositiveInteger(options.page),
     normalizePositiveInteger(options.pageSize, publicListingPageSize),
@@ -1287,4 +1732,8 @@ export async function getPublishedPostPageData(options = {}, prisma) {
     normalizePublicLocale(options.locale),
     options.slug,
   );
+}
+
+export async function listRelatedPublishedPosts(options = {}, prisma) {
+  return listRelatedPublishedPostsInternal(options, prisma);
 }

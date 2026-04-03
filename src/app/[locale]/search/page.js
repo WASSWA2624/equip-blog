@@ -1,7 +1,7 @@
 import { PublicCollectionPage } from "@/components/public";
 import { getMessages } from "@/features/i18n/get-messages";
 import { buildLocalizedPath, publicRouteSegments } from "@/features/i18n/routing";
-import { listPublishedPosts } from "@/features/public-site";
+import { searchPublishedPosts } from "@/features/public-site";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -34,7 +34,7 @@ export default async function SearchPage({ params, searchParams }) {
   const query = resolvedSearchParams?.q;
   const [messages, pageData] = await Promise.all([
     getMessages(locale),
-    listPublishedPosts({ locale, page, search: query }),
+    searchPublishedPosts({ locale, page, search: query }),
   ]);
 
   return (

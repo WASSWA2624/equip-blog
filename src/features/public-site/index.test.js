@@ -32,12 +32,14 @@ function createListPost(overrides = {}) {
     categories: [
       {
         category: {
+          id: "category_1",
           name: "Maintenance",
           slug: "maintenance",
         },
       },
     ],
     equipment: {
+      id: "equipment_1",
       name: "Microscope",
       slug: "microscope",
     },
@@ -54,6 +56,7 @@ function createListPost(overrides = {}) {
     manufacturers: [
       {
         manufacturer: {
+          id: "manufacturer_1",
           name: "Olympus",
           slug: "olympus",
         },
@@ -61,8 +64,19 @@ function createListPost(overrides = {}) {
     ],
     publishedAt: new Date("2026-04-03T08:00:00.000Z"),
     slug: "microscope-basics",
+    tags: [
+      {
+        tag: {
+          id: "tag_1",
+          name: "Optics",
+          slug: "optics",
+        },
+      },
+    ],
     translations: [
       {
+        contentHtml: "<p>Localized microscope body text.</p>",
+        contentMd: "Localized microscope body text.",
         excerpt: "Localized excerpt",
         faqJson: [],
         locale: "en",
@@ -126,14 +140,13 @@ describe("public site data", () => {
       {
         locale: "en",
         page: "1",
-        search: " microscope ",
       },
       prisma,
     );
 
     expect(prisma.post.count).toHaveBeenCalledTimes(1);
     expect(prisma.post.findMany).toHaveBeenCalledTimes(1);
-    expect(snapshot.search).toBe("microscope");
+    expect(snapshot.search).toBe("");
     expect(snapshot.pagination).toMatchObject({
       currentPage: 1,
       totalItems: 2,
@@ -150,6 +163,132 @@ describe("public site data", () => {
       path: "/en/category/maintenance",
       slug: "maintenance",
     });
+  });
+
+  it("searches published posts with title-first ranking across title, body text, tags, equipment, and manufacturers", async () => {
+    const prisma = {
+      post: {
+        findMany: vi.fn().mockResolvedValue([
+          createListPost({
+            id: "post_exact",
+            publishedAt: new Date("2026-04-01T08:00:00.000Z"),
+            slug: "microscope",
+            translations: [
+              {
+                contentHtml: "<p>Exact title match body.</p>",
+                contentMd: "Exact title match body.",
+                excerpt: "Exact title excerpt",
+                faqJson: [],
+                locale: "en",
+                structuredContentJson: {
+                  sections: [],
+                },
+                title: "Microscope",
+              },
+            ],
+          }),
+          createListPost({
+            id: "post_prefix",
+            publishedAt: new Date("2026-04-02T08:00:00.000Z"),
+            slug: "microscope-maintenance",
+            translations: [
+              {
+                contentHtml: "<p>Prefix title match body.</p>",
+                contentMd: "Prefix title match body.",
+                excerpt: "Prefix title excerpt",
+                faqJson: [],
+                locale: "en",
+                structuredContentJson: {
+                  sections: [],
+                },
+                title: "Microscope maintenance checklist",
+              },
+            ],
+          }),
+          createListPost({
+            categories: [
+              {
+                category: {
+                  id: "category_2",
+                  name: "Calibration",
+                  slug: "calibration",
+                },
+              },
+            ],
+            equipment: {
+              id: "equipment_2",
+              name: "Inspection rig",
+              slug: "inspection-rig",
+            },
+            id: "post_weighted",
+            manufacturers: [
+              {
+                manufacturer: {
+                  id: "manufacturer_2",
+                  name: "Acme Instruments",
+                  slug: "acme-instruments",
+                },
+              },
+            ],
+            publishedAt: new Date("2026-04-03T08:00:00.000Z"),
+            slug: "optics-workflow",
+            tags: [
+              {
+                tag: {
+                  id: "tag_2",
+                  name: "Stage care",
+                  slug: "microscope-stage",
+                },
+              },
+            ],
+            translations: [
+              {
+                contentHtml: "<p>Microscope stage calibration keeps image alignment reliable.</p>",
+                contentMd: "Microscope stage calibration keeps image alignment reliable.",
+                excerpt: "Optics workflow excerpt",
+                faqJson: [],
+                locale: "en",
+                structuredContentJson: {
+                  sections: [],
+                },
+                title: "Optics workflow",
+              },
+            ],
+          }),
+        ]),
+      },
+    };
+    const { searchPublishedPosts } = await import("./index");
+
+    const snapshot = await searchPublishedPosts(
+      {
+        locale: "en",
+        page: "1",
+        search: " microscope ",
+      },
+      prisma,
+    );
+
+    expect(prisma.post.findMany).toHaveBeenCalledTimes(1);
+    expect(snapshot.search).toBe("microscope");
+    expect(snapshot.posts.map((post) => post.slug)).toEqual([
+      "microscope",
+      "microscope-maintenance",
+      "optics-workflow",
+    ]);
+
+    const where = prisma.post.findMany.mock.calls[0][0].where;
+    const translationSearch = where.OR.find((entry) => entry.translations?.some);
+
+    expect(where.OR.some((entry) => entry.equipment?.name)).toBe(true);
+    expect(where.OR.some((entry) => entry.manufacturers?.some)).toBe(true);
+    expect(where.OR.some((entry) => entry.tags?.some)).toBe(true);
+    expect(where.OR.some((entry) => entry.categories)).toBe(false);
+    expect(where.OR.some((entry) => entry.slug)).toBe(false);
+    expect(translationSearch.translations.some.OR.some((entry) => entry.title)).toBe(true);
+    expect(translationSearch.translations.some.OR.some((entry) => entry.excerpt)).toBe(true);
+    expect(translationSearch.translations.some.OR.some((entry) => entry.contentMd)).toBe(true);
+    expect(translationSearch.translations.some.OR.some((entry) => entry.contentHtml)).toBe(true);
   });
 
   it("builds a public post page with ordered sections, fallback content, related posts, and approved comments", async () => {
@@ -188,6 +327,15 @@ describe("public site data", () => {
             id: "manufacturer_1",
             name: "Olympus",
             slug: "olympus",
+          },
+        },
+      ],
+      tags: [
+        {
+          tag: {
+            id: "tag_1",
+            name: "Optics",
+            slug: "optics",
           },
         },
       ],
@@ -285,8 +433,11 @@ describe("public site data", () => {
             manufacturers: postRecord.manufacturers,
             publishedAt: new Date("2026-04-02T08:00:00.000Z"),
             slug: "microscope-maintenance",
+            tags: postRecord.tags,
             translations: [
               {
+                contentHtml: "<p>Maintenance body text.</p>",
+                contentMd: "Maintenance body text.",
                 excerpt: "Maintenance post excerpt",
                 locale: "en",
                 structuredContentJson: {
@@ -346,6 +497,143 @@ describe("public site data", () => {
     });
   });
 
+  it("orders related posts by overlap count after respecting the active locale", async () => {
+    const currentPost = createListPost({
+      id: "post_current",
+    });
+    const prisma = {
+      post: {
+        findMany: vi.fn().mockResolvedValue([
+          createListPost({
+            id: "post_high_overlap",
+            publishedAt: new Date("2026-04-01T08:00:00.000Z"),
+            slug: "microscope-optics-deep-dive",
+            tags: [
+              {
+                tag: {
+                  id: "tag_1",
+                  name: "Optics",
+                  slug: "optics",
+                },
+              },
+            ],
+            translations: [
+              {
+                contentHtml: "<p>High overlap body.</p>",
+                contentMd: "High overlap body.",
+                excerpt: "High overlap excerpt",
+                faqJson: [],
+                locale: "en",
+                structuredContentJson: {
+                  sections: [],
+                },
+                title: "Microscope optics deep dive",
+              },
+            ],
+          }),
+          createListPost({
+            categories: [
+              {
+                category: {
+                  id: "category_2",
+                  name: "Calibration",
+                  slug: "calibration",
+                },
+              },
+            ],
+            id: "post_low_overlap",
+            manufacturers: [
+              {
+                manufacturer: {
+                  id: "manufacturer_2",
+                  name: "Acme Instruments",
+                  slug: "acme-instruments",
+                },
+              },
+            ],
+            publishedAt: new Date("2026-04-03T08:00:00.000Z"),
+            slug: "microscope-cleaning-notes",
+            tags: [
+              {
+                tag: {
+                  id: "tag_2",
+                  name: "Cleaning",
+                  slug: "cleaning",
+                },
+              },
+            ],
+            translations: [
+              {
+                contentHtml: "<p>Low overlap body.</p>",
+                contentMd: "Low overlap body.",
+                excerpt: "Low overlap excerpt",
+                faqJson: [],
+                locale: "en",
+                structuredContentJson: {
+                  sections: [],
+                },
+                title: "Microscope cleaning notes",
+              },
+            ],
+          }),
+          createListPost({
+            id: "post_mid_overlap",
+            manufacturers: [
+              {
+                manufacturer: {
+                  id: "manufacturer_1",
+                  name: "Olympus",
+                  slug: "olympus",
+                },
+              },
+            ],
+            publishedAt: new Date("2026-04-02T08:00:00.000Z"),
+            slug: "microscope-olympus-workflow",
+            tags: [
+              {
+                tag: {
+                  id: "tag_2",
+                  name: "Calibration",
+                  slug: "calibration",
+                },
+              },
+            ],
+            translations: [
+              {
+                contentHtml: "<p>Mid overlap body.</p>",
+                contentMd: "Mid overlap body.",
+                excerpt: "Mid overlap excerpt",
+                faqJson: [],
+                locale: "en",
+                structuredContentJson: {
+                  sections: [],
+                },
+                title: "Microscope Olympus workflow",
+              },
+            ],
+          }),
+        ]),
+      },
+    };
+    const { listRelatedPublishedPosts } = await import("./index");
+
+    const relatedPosts = await listRelatedPublishedPosts(
+      {
+        limit: 3,
+        locale: "en",
+        post: currentPost,
+      },
+      prisma,
+    );
+
+    expect(prisma.post.findMany).toHaveBeenCalledTimes(1);
+    expect(relatedPosts.map((post) => post.slug)).toEqual([
+      "microscope-optics-deep-dive",
+      "microscope-olympus-workflow",
+      "microscope-cleaning-notes",
+    ]);
+  });
+
   it("builds manufacturer landing pages from published post relationships", async () => {
     const prisma = {
       manufacturer: {
@@ -385,6 +673,10 @@ describe("public site data", () => {
       summary: "olympus.example",
       type: "manufacturer",
     });
+    expect(pageData.discoverySections.map((section) => section.kind)).toEqual([
+      "category",
+      "equipment",
+    ]);
     expect(pageData.posts[0].path).toBe("/en/blog/microscope-basics");
   });
 });

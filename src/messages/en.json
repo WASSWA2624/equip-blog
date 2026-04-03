@@ -64,7 +64,7 @@
       "relatedPostsTitle": "Related posts",
       "resultsLabel": "Published posts",
       "searchAction": "Search",
-      "searchPlaceholder": "Search published posts, equipment, or categories",
+      "searchPlaceholder": "Search published posts, equipment, manufacturers, or tags",
       "shareDescription": "Send this article to a teammate or save it for later reference.",
       "shareTitle": "Share this post",
       "topCategoriesTitle": "Top categories",
@@ -96,9 +96,9 @@
     "search": {
       "eyebrow": "Search",
       "title": "Search published content",
-      "description": "Search the live English content library by equipment, article title, excerpt, manufacturer, or category.",
+      "description": "Search the live English content library by equipment, article title, excerpt, body text, tag, or manufacturer.",
       "searchTitle": "Search the published library",
-      "searchDescription": "Results stay limited to published content in the active locale route.",
+      "searchDescription": "Results stay limited to published content in the active locale route and rank exact title matches ahead of weaker matches.",
       "resultsTitle": "Search results",
       "metaTitle": "Search published content",
       "metaDescription": "Search the published Equip Blog library for English medical equipment guides."

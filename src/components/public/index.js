@@ -498,7 +498,9 @@ function SpotlightGrid({ actionLabel, items }) {
           <div>
             <SpotlightTitle>{item.name}</SpotlightTitle>
           </div>
-          {item.summary ? <SpotlightMeta>{item.summary}</SpotlightMeta> : null}
+          {item.summary || item.description ? (
+            <SpotlightMeta>{item.summary || item.description}</SpotlightMeta>
+          ) : null}
           <MetaRow>
             <span>{item.postCount} posts</span>
             {item.primaryDomain ? <span>{item.primaryDomain}</span> : null}
@@ -508,6 +510,30 @@ function SpotlightGrid({ actionLabel, items }) {
       ))}
     </Grid>
   );
+}
+
+function getDiscoverySectionTitle(copy, kind) {
+  if (kind === "category") {
+    return copy.topCategoriesTitle;
+  }
+
+  if (kind === "manufacturer") {
+    return copy.topManufacturersTitle;
+  }
+
+  return copy.topEquipmentTitle;
+}
+
+function getDiscoverySectionActionLabel(copy, kind) {
+  if (kind === "category") {
+    return copy.browseCategory;
+  }
+
+  if (kind === "manufacturer") {
+    return copy.browseManufacturer;
+  }
+
+  return copy.browseEquipment;
 }
 
 export function PublicHomePage({ locale, messages, pageContent, pageData }) {
@@ -699,6 +725,29 @@ export function PublicCollectionPage({
         )}
         <Pagination copy={copy} pagination={pageData.pagination} pathname={pathname} query={query} />
       </Panel>
+
+      {pageData.discoverySections?.length ? (
+        <Panel>
+          <SectionHeader>
+            <SectionTitle>{pageContent.discoveryTitle || "Keep exploring"}</SectionTitle>
+            <SectionDescription>
+              {pageContent.discoveryDescription ||
+                "Use connected category, manufacturer, and equipment routes to keep branching through published guides."}
+            </SectionDescription>
+          </SectionHeader>
+          {pageData.discoverySections.map((section) => (
+            <div key={section.kind}>
+              <SectionHeader>
+                <SectionTitle>{getDiscoverySectionTitle(copy, section.kind)}</SectionTitle>
+              </SectionHeader>
+              <SpotlightGrid
+                actionLabel={getDiscoverySectionActionLabel(copy, section.kind)}
+                items={section.items}
+              />
+            </div>
+          ))}
+        </Panel>
+      ) : null}
     </PageMain>
   );
 }
