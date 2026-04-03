@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import styled from "styled-components";
 
 import EquipLogo from "@/components/common/equip-logo";
@@ -83,6 +84,18 @@ const TopRow = styled.div`
   }
 `;
 
+const TopControls = styled.div`
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  justify-content: flex-start;
+
+  @media (min-width: 540px) {
+    justify-content: flex-end;
+  }
+`;
+
 const BrandLink = styled(Link)`
   align-items: flex-start;
   color: ${({ theme }) => theme.colors.text};
@@ -136,6 +149,77 @@ const MetaPill = styled.span`
   white-space: nowrap;
 `;
 
+const MenuButton = styled.button`
+  align-items: center;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(16, 32, 51, 0.08);
+  border-radius: 999px;
+  color: ${({ theme }) => theme.colors.text};
+  cursor: pointer;
+  display: inline-flex;
+  gap: 0.5rem;
+  padding: 0.38rem 0.68rem;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease;
+
+  &:hover {
+    border-color: rgba(0, 95, 115, 0.2);
+    transform: translateY(-1px);
+  }
+
+  @media (min-width: 760px) {
+    display: none;
+  }
+`;
+
+const MenuButtonText = styled.span`
+  font-size: 0.78rem;
+  font-weight: 700;
+`;
+
+const MenuIcon = styled.span`
+  display: inline-grid;
+  height: 0.82rem;
+  place-items: center;
+  position: relative;
+  width: 0.95rem;
+
+  &::before,
+  &::after {
+    background: currentColor;
+    border-radius: 999px;
+    content: "";
+    height: 2px;
+    left: 0;
+    position: absolute;
+    transition:
+      top 160ms ease,
+      transform 160ms ease;
+    width: 100%;
+  }
+
+  &::before {
+    top: ${({ $open }) => ($open ? "0.35rem" : "0.08rem")};
+    transform: ${({ $open }) => ($open ? "rotate(45deg)" : "none")};
+  }
+
+  &::after {
+    top: ${({ $open }) => ($open ? "0.35rem" : "0.62rem")};
+    transform: ${({ $open }) => ($open ? "rotate(-45deg)" : "none")};
+  }
+`;
+
+const MenuIconBar = styled.span`
+  background: currentColor;
+  border-radius: 999px;
+  height: 2px;
+  opacity: ${({ $open }) => ($open ? 0 : 1)};
+  transition: opacity 120ms ease;
+  width: 100%;
+`;
+
 const NavScroller = styled.div`
   overflow-x: auto;
   padding: 0.05rem 0 0.1rem;
@@ -147,32 +231,92 @@ const NavScroller = styled.div`
   }
 `;
 
+const DesktopNavScroller = styled(NavScroller)`
+  display: none;
+
+  @media (min-width: 760px) {
+    display: block;
+  }
+`;
+
 const Nav = styled.nav`
+  align-items: center;
   display: inline-flex;
-  gap: 0.42rem;
+  gap: 0.95rem;
   min-width: max-content;
 `;
 
 const NavLink = styled(Link)`
-  background: ${({ $active }) => ($active ? "rgba(0, 95, 115, 0.14)" : "rgba(255, 255, 255, 0.7)")};
-  border: 1px solid ${({ $active }) => ($active ? "rgba(0, 95, 115, 0.24)" : "rgba(16, 32, 51, 0.08)")};
-  border-radius: 999px;
   color: ${({ $active, theme }) => ($active ? theme.colors.primary : theme.colors.text)};
-  font-size: 0.84rem;
+  font-size: 0.88rem;
   font-weight: 700;
-  padding: 0.44rem 0.78rem;
-  scroll-snap-align: start;
+  padding: 0.18rem 0;
+  position: relative;
   transition:
     transform 160ms ease,
-    border-color 160ms ease,
-    background 160ms ease,
     color 160ms ease;
   white-space: nowrap;
 
+  &::after {
+    background: ${({ theme }) => theme.colors.primary};
+    border-radius: 999px;
+    bottom: -0.22rem;
+    content: "";
+    height: 2px;
+    left: 0;
+    opacity: ${({ $active }) => ($active ? 1 : 0)};
+    position: absolute;
+    transform: scaleX(${({ $active }) => ($active ? 1 : 0.45)});
+    transform-origin: left;
+    transition:
+      transform 160ms ease,
+      opacity 160ms ease;
+    width: 100%;
+  }
+
   &:hover {
-    border-color: rgba(0, 95, 115, 0.2);
     color: ${({ theme }) => theme.colors.primary};
     transform: translateY(-1px);
+  }
+
+  &:hover::after {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+`;
+
+const MobileMenu = styled.div`
+  border-top: 1px solid rgba(16, 32, 51, 0.08);
+  display: ${({ $open }) => ($open ? "grid" : "none")};
+  gap: 0.58rem;
+  padding-top: 0.78rem;
+
+  @media (min-width: 760px) {
+    display: none;
+  }
+`;
+
+const MobileNav = styled.nav`
+  display: grid;
+  column-gap: 0.85rem;
+  gap: 0.15rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+`;
+
+const MobileNavLink = styled(Link)`
+  align-items: center;
+  border-bottom: 1px solid ${({ $active }) => ($active ? "rgba(0, 95, 115, 0.2)" : "rgba(16, 32, 51, 0.08)")};
+  color: ${({ $active, theme }) => ($active ? theme.colors.primary : theme.colors.text)};
+  display: inline-flex;
+  font-size: 0.84rem;
+  font-weight: 700;
+  min-height: 40px;
+  padding: 0.4rem 0.08rem 0.52rem;
+  transition: color 160ms ease, border-color 160ms ease;
+
+  &:hover {
+    border-bottom-color: rgba(0, 95, 115, 0.2);
+    color: ${({ theme }) => theme.colors.primary};
   }
 `;
 
@@ -297,7 +441,13 @@ const FooterMetaPill = styled.span`
 
 export default function SiteShell({ children, locale, messages }) {
   const pathname = usePathname();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const legalNavigation = messages.site.legalNavigation || {};
+  const navigationItems = publicNavigationRoutes.map((item) => ({
+    ...item,
+    href: buildLocalizedPath(locale, item.segments),
+    label: messages.site.navigation[item.key],
+  }));
   const exploreLinks = [
     { href: buildLocalizedPath(locale, publicRouteSegments.home), label: messages.site.navigation.home },
     { href: buildLocalizedPath(locale, publicRouteSegments.blog), label: messages.site.navigation.blog },
@@ -334,28 +484,61 @@ export default function SiteShell({ children, locale, messages }) {
                 <Tagline>{messages.site.tagline}</Tagline>
               </BrandCopy>
             </BrandLink>
-            <MetaPill>Locale {locale.toUpperCase()}</MetaPill>
+            <TopControls>
+              <MetaPill>Locale {locale.toUpperCase()}</MetaPill>
+              <MenuButton
+                aria-controls="mobile-public-navigation"
+                aria-expanded={isMenuOpen}
+                aria-label={isMenuOpen ? "Close public navigation" : "Open public navigation"}
+                onClick={() => setIsMenuOpen((currentValue) => !currentValue)}
+                type="button"
+              >
+                <MenuButtonText>{isMenuOpen ? "Close" : "Menu"}</MenuButtonText>
+                <MenuIcon $open={isMenuOpen}>
+                  <MenuIconBar $open={isMenuOpen} />
+                </MenuIcon>
+              </MenuButton>
+            </TopControls>
           </TopRow>
 
-          <NavScroller>
+          <DesktopNavScroller>
             <Nav aria-label="Public navigation">
-              {publicNavigationRoutes.map((item) => {
-                const href = buildLocalizedPath(locale, item.segments);
-                const isActive = isNavigationActive(pathname, href);
+              {navigationItems.map((item) => {
+                const isActive = isNavigationActive(pathname, item.href);
 
                 return (
                   <NavLink
                     aria-current={isActive ? "page" : undefined}
-                    href={href}
+                    href={item.href}
                     key={item.key}
                     $active={isActive}
                   >
-                    {messages.site.navigation[item.key]}
+                    {item.label}
                   </NavLink>
                 );
               })}
             </Nav>
-          </NavScroller>
+          </DesktopNavScroller>
+
+          <MobileMenu $open={isMenuOpen} id="mobile-public-navigation">
+            <MobileNav aria-label="Mobile public navigation">
+              {navigationItems.map((item) => {
+                const isActive = isNavigationActive(pathname, item.href);
+
+                return (
+                  <MobileNavLink
+                    aria-current={isActive ? "page" : undefined}
+                    href={item.href}
+                    key={item.key}
+                    onClick={() => setIsMenuOpen(false)}
+                    $active={isActive}
+                  >
+                    {item.label}
+                  </MobileNavLink>
+                );
+              })}
+            </MobileNav>
+          </MobileMenu>
         </HeaderInner>
       </Header>
 

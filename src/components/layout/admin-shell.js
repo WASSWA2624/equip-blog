@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import styled from "styled-components";
 
 import AdminLogoutButton from "@/components/auth/admin-logout-button";
@@ -75,10 +76,10 @@ const TopRow = styled.div`
   align-items: start;
   display: grid;
   gap: 0.72rem;
+  grid-template-columns: minmax(0, 1fr) auto;
 
   @media (min-width: 980px) {
     align-items: center;
-    grid-template-columns: minmax(0, 1fr) auto;
   }
 `;
 
@@ -92,6 +93,13 @@ const BrandLink = styled(Link)`
   @media (min-width: 540px) {
     align-items: center;
   }
+`;
+
+const TopControls = styled.div`
+  align-items: center;
+  display: flex;
+  gap: 0.6rem;
+  justify-content: flex-end;
 `;
 
 const BrandCopy = styled.span`
@@ -120,14 +128,86 @@ const Description = styled.p`
 
 const HeaderActions = styled.div`
   align-items: center;
-  display: flex;
+  display: none;
   flex-wrap: wrap;
   gap: 0.55rem;
-  justify-content: flex-start;
+  justify-content: flex-end;
 
   @media (min-width: 980px) {
-    justify-content: flex-end;
+    display: flex;
   }
+`;
+
+const MenuButton = styled.button`
+  align-items: center;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  color: white;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 0.5rem;
+  padding: 0.42rem 0.72rem;
+  transition:
+    transform 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.22);
+    transform: translateY(-1px);
+  }
+
+  @media (min-width: 980px) {
+    display: none;
+  }
+`;
+
+const MenuButtonText = styled.span`
+  font-size: 0.78rem;
+  font-weight: 700;
+`;
+
+const MenuIcon = styled.span`
+  display: inline-grid;
+  height: 0.82rem;
+  place-items: center;
+  position: relative;
+  width: 0.95rem;
+
+  &::before,
+  &::after {
+    background: currentColor;
+    border-radius: 999px;
+    content: "";
+    height: 2px;
+    left: 0;
+    position: absolute;
+    transition:
+      top 160ms ease,
+      transform 160ms ease;
+    width: 100%;
+  }
+
+  &::before {
+    top: ${({ $open }) => ($open ? "0.35rem" : "0.08rem")};
+    transform: ${({ $open }) => ($open ? "rotate(45deg)" : "none")};
+  }
+
+  &::after {
+    top: ${({ $open }) => ($open ? "0.35rem" : "0.62rem")};
+    transform: ${({ $open }) => ($open ? "rotate(-45deg)" : "none")};
+  }
+`;
+
+const MenuIconBar = styled.span`
+  background: currentColor;
+  border-radius: 999px;
+  height: 2px;
+  opacity: ${({ $open }) => ($open ? 0 : 1)};
+  transition: opacity 120ms ease;
+  width: 100%;
 `;
 
 const UserBadge = styled.div`
@@ -195,31 +275,121 @@ const NavScroller = styled.div`
   }
 `;
 
+const DesktopNavScroller = styled(NavScroller)`
+  display: none;
+
+  @media (min-width: 980px) {
+    display: block;
+  }
+`;
+
 const Nav = styled.nav`
+  align-items: center;
   display: inline-flex;
-  gap: 0.42rem;
+  gap: 1rem;
   min-width: max-content;
 `;
 
 const NavLink = styled(Link)`
-  background: ${({ $active }) => ($active ? "rgba(255, 255, 255, 0.18)" : "rgba(255, 255, 255, 0.08)")};
-  border: 1px solid ${({ $active }) => ($active ? "rgba(255, 255, 255, 0.28)" : "rgba(255, 255, 255, 0.12)")};
-  border-radius: 999px;
-  color: ${({ $active }) => ($active ? "#fff5df" : "white")};
+  color: ${({ $active }) => ($active ? "#fff5df" : "rgba(255, 255, 255, 0.86)")};
   font-size: 0.82rem;
   font-weight: 700;
-  padding: 0.42rem 0.68rem;
-  scroll-snap-align: start;
+  padding: 0.18rem 0;
+  position: relative;
   transition:
     transform 160ms ease,
-    background 160ms ease,
-    border-color 160ms ease;
+    color 160ms ease;
   white-space: nowrap;
 
+  &::after {
+    background: #ffe3b7;
+    border-radius: 999px;
+    bottom: -0.22rem;
+    content: "";
+    height: 2px;
+    left: 0;
+    opacity: ${({ $active }) => ($active ? 1 : 0)};
+    position: absolute;
+    transform: scaleX(${({ $active }) => ($active ? 1 : 0.45)});
+    transform-origin: left;
+    transition:
+      transform 160ms ease,
+      opacity 160ms ease;
+    width: 100%;
+  }
+
   &:hover {
-    background: rgba(255, 255, 255, 0.16);
-    border-color: rgba(255, 255, 255, 0.22);
+    color: white;
     transform: translateY(-1px);
+  }
+
+  &:hover::after {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+`;
+
+const MobileMenu = styled.div`
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  display: ${({ $open }) => ($open ? "grid" : "none")};
+  gap: 0.72rem;
+  padding-top: 0.84rem;
+
+  @media (min-width: 980px) {
+    display: none;
+  }
+`;
+
+const MobileUtilityRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+`;
+
+const MobileUtilityLink = styled(Link)`
+  align-items: center;
+  color: #fff5df;
+  display: inline-flex;
+  font-size: 0.82rem;
+  font-weight: 700;
+  min-height: 34px;
+  padding: 0.2rem 0;
+  position: relative;
+
+  &::after {
+    background: currentColor;
+    border-radius: 999px;
+    bottom: 0;
+    content: "";
+    height: 2px;
+    left: 0;
+    opacity: 0.9;
+    position: absolute;
+    width: 100%;
+  }
+`;
+
+const MobileNav = styled.nav`
+  display: grid;
+  column-gap: 0.9rem;
+  gap: 0.18rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+`;
+
+const MobileNavLink = styled(Link)`
+  align-items: center;
+  border-bottom: 1px solid ${({ $active }) => ($active ? "rgba(255, 227, 183, 0.28)" : "rgba(255, 255, 255, 0.12)")};
+  color: ${({ $active }) => ($active ? "#fff5df" : "rgba(255, 255, 255, 0.88)")};
+  display: inline-flex;
+  font-size: 0.82rem;
+  font-weight: 700;
+  min-height: 42px;
+  padding: 0.38rem 0 0.56rem;
+  transition: color 160ms ease, border-color 160ms ease;
+
+  &:hover {
+    border-bottom-color: rgba(255, 227, 183, 0.24);
+    color: white;
   }
 `;
 
@@ -294,18 +464,38 @@ const FooterSectionTitle = styled.strong`
 const FooterNav = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 0.55rem;
+  gap: 0.75rem 1rem;
 `;
 
 const FooterLink = styled(Link)`
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 999px;
   color: white;
   display: inline-flex;
   font-size: 0.88rem;
   font-weight: 700;
-  padding: 0.42rem 0.74rem;
+  padding: 0.18rem 0;
+  position: relative;
+
+  &::after {
+    background: rgba(255, 227, 183, 0.92);
+    border-radius: 999px;
+    bottom: -0.16rem;
+    content: "";
+    height: 2px;
+    left: 0;
+    opacity: 0;
+    position: absolute;
+    transform: scaleX(0.45);
+    transform-origin: left;
+    transition:
+      transform 160ms ease,
+      opacity 160ms ease;
+    width: 100%;
+  }
+
+  &:hover::after {
+    opacity: 1;
+    transform: scaleX(1);
+  }
 `;
 
 const FooterBottom = styled.div`
@@ -339,8 +529,13 @@ const FooterMetaPill = styled.span`
 
 export default function AdminShell({ children, messages, user }) {
   const pathname = usePathname();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const adminNav = getAdminNavigation(user);
   const publicSiteHref = buildLocaleRootPath(defaultLocale);
+  const navigationItems = adminNav.map((item) => ({
+    ...item,
+    label: messages.admin.navigation[item.key] || item.key,
+  }));
 
   return (
     <Shell>
@@ -355,21 +550,35 @@ export default function AdminShell({ children, messages, user }) {
               </BrandCopy>
             </BrandLink>
 
-            <HeaderActions>
-              <UserBadge aria-label="Authenticated admin">
-                <UserCopy>
-                  <UserName>{user.name}</UserName>
-                  <UserMeta>{user.email}</UserMeta>
-                </UserCopy>
-                <RolePill>{user.role.replace(/_/g, " ")}</RolePill>
-              </UserBadge>
-              <AdminLogoutButton />
-            </HeaderActions>
+            <TopControls>
+              <HeaderActions>
+                <UserBadge aria-label="Authenticated admin">
+                  <UserCopy>
+                    <UserName>{user.name}</UserName>
+                    <UserMeta>{user.email}</UserMeta>
+                  </UserCopy>
+                  <RolePill>{user.role.replace(/_/g, " ")}</RolePill>
+                </UserBadge>
+                <AdminLogoutButton />
+              </HeaderActions>
+              <MenuButton
+                aria-controls="mobile-admin-navigation"
+                aria-expanded={isMenuOpen}
+                aria-label={isMenuOpen ? "Close admin navigation" : "Open admin navigation"}
+                onClick={() => setIsMenuOpen((currentValue) => !currentValue)}
+                type="button"
+              >
+                <MenuButtonText>{isMenuOpen ? "Close" : "Menu"}</MenuButtonText>
+                <MenuIcon $open={isMenuOpen}>
+                  <MenuIconBar $open={isMenuOpen} />
+                </MenuIcon>
+              </MenuButton>
+            </TopControls>
           </TopRow>
 
-          <NavScroller>
+          <DesktopNavScroller>
             <Nav aria-label="Admin navigation">
-              {adminNav.map((item) => {
+              {navigationItems.map((item) => {
                 const isActive = isNavigationActive(pathname, item.href);
 
                 return (
@@ -379,12 +588,47 @@ export default function AdminShell({ children, messages, user }) {
                     key={item.key}
                     $active={isActive}
                   >
-                    {messages.admin.navigation[item.key] || item.key}
+                    {item.label}
                   </NavLink>
                 );
               })}
             </Nav>
-          </NavScroller>
+          </DesktopNavScroller>
+
+          <MobileMenu $open={isMenuOpen} id="mobile-admin-navigation">
+            <UserBadge aria-label="Authenticated admin">
+              <UserCopy>
+                <UserName>{user.name}</UserName>
+                <UserMeta>{user.email}</UserMeta>
+              </UserCopy>
+              <RolePill>{user.role.replace(/_/g, " ")}</RolePill>
+            </UserBadge>
+
+            <MobileUtilityRow>
+              <MobileUtilityLink href={publicSiteHref} onClick={() => setIsMenuOpen(false)}>
+                Open public site
+              </MobileUtilityLink>
+              <AdminLogoutButton />
+            </MobileUtilityRow>
+
+            <MobileNav aria-label="Mobile admin navigation">
+              {navigationItems.map((item) => {
+                const isActive = isNavigationActive(pathname, item.href);
+
+                return (
+                  <MobileNavLink
+                    aria-current={isActive ? "page" : undefined}
+                    href={item.href}
+                    key={item.key}
+                    onClick={() => setIsMenuOpen(false)}
+                    $active={isActive}
+                  >
+                    {item.label}
+                  </MobileNavLink>
+                );
+              })}
+            </MobileNav>
+          </MobileMenu>
         </HeaderInner>
       </Header>
 
