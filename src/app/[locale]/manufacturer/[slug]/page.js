@@ -6,7 +6,7 @@ import { publicRouteSegments } from "@/features/i18n/routing";
 import { getPublishedLandingPageData } from "@/features/public-site";
 import { buildPageMetadata } from "@/lib/seo";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export async function generateMetadata({ params, searchParams }) {
   const { locale, slug } = await params;

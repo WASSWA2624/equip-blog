@@ -147,6 +147,65 @@ function decoratePost(post) {
   };
 }
 
+function getPostOrderValue(post, fieldName) {
+  if (fieldName === "status") {
+    return {
+      ARCHIVED: 4,
+      PUBLISHED: 3,
+      SCHEDULED: 2,
+      DRAFT: 1,
+    }[post.status] || 0;
+  }
+
+  const value = post[fieldName];
+
+  if (value instanceof Date) {
+    return value.getTime();
+  }
+
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  return value;
+}
+
+function sortPosts(records, orderBy = []) {
+  if (!Array.isArray(orderBy) || !orderBy.length) {
+    return records;
+  }
+
+  return [...records].sort((left, right) => {
+    for (const entry of orderBy) {
+      const [fieldName, direction] = Object.entries(entry)[0];
+      const leftValue = getPostOrderValue(left, fieldName);
+      const rightValue = getPostOrderValue(right, fieldName);
+
+      if (leftValue === rightValue) {
+        continue;
+      }
+
+      if (leftValue === null) {
+        return direction === "asc" ? -1 : 1;
+      }
+
+      if (rightValue === null) {
+        return direction === "asc" ? 1 : -1;
+      }
+
+      if (leftValue > rightValue) {
+        return direction === "asc" ? 1 : -1;
+      }
+
+      if (leftValue < rightValue) {
+        return direction === "asc" ? -1 : 1;
+      }
+    }
+
+    return 0;
+  });
+}
+
 function createMockPrisma({ categories = [], posts = [] } = {}) {
   const state = {
     audits: [],
@@ -196,8 +255,10 @@ function createMockPrisma({ categories = [], posts = [] } = {}) {
           }) || null
         );
       }),
-      findMany: vi.fn(async ({ where } = {}) =>
-        state.posts.filter((post) => matchesWhere(post, where)).map((post) => decoratePost(post)),
+      findMany: vi.fn(async ({ orderBy, skip = 0, take, where } = {}) =>
+        sortPosts(state.posts.filter((post) => matchesWhere(post, where)), orderBy)
+          .slice(skip, take === undefined ? undefined : skip + take)
+          .map((post) => decoratePost(post)),
       ),
       findUnique: vi.fn(async ({ where }) => {
         const post = state.posts.find((entry) => entry.id === where.id);
@@ -326,6 +387,7 @@ describe("editorial workflow", () => {
       ],
     });
     const { publishPostRecord } = await import("./editorial-workflow");
+    const revalidate = vi.fn(async () => {});
 
     const result = await publishPostRecord(
       {
@@ -334,6 +396,7 @@ describe("editorial workflow", () => {
       },
       {
         actorId: "user_1",
+        revalidate,
       },
       prisma,
     );
@@ -343,8 +406,12 @@ describe("editorial workflow", () => {
       scheduledPublishAt: null,
       status: "PUBLISHED",
     });
+    expect(result.revalidation).toMatchObject({
+      status: "revalidated",
+    });
+    expect(revalidate).toHaveBeenCalled();
     expect(prisma.state.audits.map((audit) => audit.action)).toEqual(
-      expect.arrayContaining(["POST_PUBLISHED", "POST_STATUS_CHANGED"]),
+      expect.arrayContaining(["POST_PUBLISHED", "POST_PUBLISH_REVALIDATED", "POST_STATUS_CHANGED"]),
     );
   });
 
@@ -418,5 +485,42 @@ describe("editorial workflow", () => {
       publishedCount: 1,
       scheduledCount: 1,
     });
+  });
+
+  it("paginates published inventory snapshots", async () => {
+    const prisma = createMockPrisma({
+      posts: Array.from({ length: 30 }, (_, index) =>
+        createPost({
+          id: `post_${index + 1}`,
+          publishedAt: `2026-04-${`${30 - index}`.padStart(2, "0")}T08:30:00.000Z`,
+          slug: `microscope-published-${index + 1}`,
+          status: "PUBLISHED",
+          title: `Microscope published ${index + 1}`,
+        }),
+      ),
+    });
+    const { getPostInventorySnapshot } = await import("./editorial-workflow");
+
+    const snapshot = await getPostInventorySnapshot(
+      {
+        page: 2,
+        scope: "published",
+      },
+      prisma,
+    );
+
+    expect(snapshot.pagination).toMatchObject({
+      currentPage: 2,
+      endItem: 30,
+      hasNextPage: false,
+      hasPreviousPage: true,
+      pageSize: 24,
+      startItem: 25,
+      totalItems: 30,
+      totalPages: 2,
+    });
+    expect(snapshot.summary.matchingCount).toBe(30);
+    expect(snapshot.posts).toHaveLength(6);
+    expect(snapshot.posts[0].id).toBe("post_25");
   });
 });

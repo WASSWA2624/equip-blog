@@ -8,6 +8,7 @@ export default async function PublishedPostsPage({ searchParams }) {
   const [messages, snapshot] = await Promise.all([
     getMessages(defaultLocale),
     getPostInventorySnapshot({
+      page: resolvedSearchParams.page,
       scope: "published",
       search: resolvedSearchParams.search,
     }),

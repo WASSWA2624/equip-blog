@@ -3,6 +3,22 @@
 import Link from "next/link";
 import styled from "styled-components";
 
+function buildHref(pathname, query = {}) {
+  const searchParams = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(query)) {
+    if (value === undefined || value === null || value === "" || value === false) {
+      continue;
+    }
+
+    searchParams.set(key, `${value}`);
+  }
+
+  const serializedQuery = searchParams.toString();
+
+  return serializedQuery ? `${pathname}?${serializedQuery}` : pathname;
+}
+
 function formatDateTime(value) {
   if (!value) {
     return null;
@@ -264,6 +280,64 @@ const ActionRow = styled.div`
   gap: ${({ theme }) => theme.spacing.sm};
 `;
 
+const Pager = styled.nav`
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing.sm};
+  justify-content: space-between;
+`;
+
+const PagerSummary = styled.p`
+  color: ${({ theme }) => theme.colors.muted};
+  margin: 0;
+`;
+
+const PagerActions = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing.sm};
+`;
+
+function Pagination({ basePath, copy, pagination, search }) {
+  if (!pagination || pagination.totalItems <= pagination.pageSize) {
+    return null;
+  }
+
+  const baseQuery = search ? { search } : {};
+
+  return (
+    <Pager aria-label={copy.paginationLabel || "Post inventory pagination"}>
+      <PagerSummary>
+        {(copy.paginationSummaryLabel || "Posts").replace("{start}", `${pagination.startItem}`)
+          .replace("{end}", `${pagination.endItem}`)
+          .replace("{total}", `${pagination.totalItems}`)}
+      </PagerSummary>
+      <PagerActions>
+        {pagination.hasPreviousPage ? (
+          <LinkButton
+            href={buildHref(basePath, {
+              ...baseQuery,
+              page: pagination.currentPage - 1,
+            })}
+          >
+            {copy.previousPageAction || "Previous"}
+          </LinkButton>
+        ) : null}
+        {pagination.hasNextPage ? (
+          <LinkButton
+            href={buildHref(basePath, {
+              ...baseQuery,
+              page: pagination.currentPage + 1,
+            })}
+          >
+            {copy.nextPageAction || "Next"}
+          </LinkButton>
+        ) : null}
+      </PagerActions>
+    </Pager>
+  );
+}
+
 export default function PostInventoryScreen({ copy, initialData }) {
   const basePath =
     initialData.filters.scope === "published" ? "/admin/posts/published" : "/admin/posts/drafts";
@@ -366,6 +440,12 @@ export default function PostInventoryScreen({ copy, initialData }) {
         ) : (
           <SmallText>{copy.emptyState}</SmallText>
         )}
+        <Pagination
+          basePath={basePath}
+          copy={copy}
+          pagination={initialData.pagination}
+          search={initialData.filters.search}
+        />
       </Card>
     </Page>
   );

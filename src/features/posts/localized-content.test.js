@@ -161,6 +161,18 @@ describe("localized content persistence", () => {
           .mockResolvedValueOnce({
             equipment: {
               name: "Microscope",
+              slug: "microscope",
+            },
+            id: "post_1",
+            publishedAt: null,
+            slug: "microscope",
+            status: "DRAFT",
+            translations: [persistedTranslation],
+            updatedAt: new Date("2026-04-03T09:00:00.000Z"),
+          })
+          .mockResolvedValueOnce({
+            equipment: {
+              name: "Microscope",
             },
             id: "post_1",
             publishedAt: null,

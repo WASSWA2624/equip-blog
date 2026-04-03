@@ -34,11 +34,15 @@ function formatStatusLabel(value) {
     .join(" ");
 }
 
-function buildSnapshotUrl({ commentId, query, status }) {
+function buildSnapshotUrl({ commentId, page, query, status }) {
   const params = new URLSearchParams();
 
   if (commentId) {
     params.set("commentId", commentId);
+  }
+
+  if (page && Number(page) > 1) {
+    params.set("page", `${page}`);
   }
 
   if (query) {
@@ -423,6 +427,26 @@ const ButtonRow = styled.div`
   gap: 0.6rem;
 `;
 
+const Pager = styled.nav`
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: space-between;
+`;
+
+const PagerSummary = styled.p`
+  color: ${({ theme }) => theme.colors.muted};
+  font-size: 0.84rem;
+  line-height: 1.45;
+  margin: 0;
+`;
+
+const PagerActions = styled.div`
+  display: flex;
+  gap: 0.6rem;
+`;
+
 const PrimaryButton = styled.button`
   background: ${({ theme }) => theme.colors.primary};
   border: none;
@@ -705,6 +729,7 @@ export default function CommentModerationScreen({ copy, initialData }) {
 
   async function loadSnapshot({
     commentId = data.selection.commentId,
+    page = data.pagination?.currentPage || 1,
     query = queryDraft,
     status = statusDraft,
   } = {}) {
@@ -715,6 +740,7 @@ export default function CommentModerationScreen({ copy, initialData }) {
       const response = await fetch(
         buildSnapshotUrl({
           commentId,
+          page,
           query,
           status,
         }),
@@ -749,6 +775,7 @@ export default function CommentModerationScreen({ copy, initialData }) {
     event.preventDefault();
     await loadSnapshot({
       commentId: data.selection.commentId,
+      page: 1,
       query: queryDraft,
       status: statusDraft,
     });
@@ -759,6 +786,7 @@ export default function CommentModerationScreen({ copy, initialData }) {
     setStatusDraft("PENDING");
     await loadSnapshot({
       commentId: null,
+      page: 1,
       query: "",
       status: "PENDING",
     });
@@ -767,6 +795,7 @@ export default function CommentModerationScreen({ copy, initialData }) {
   async function handleSelectComment(commentId) {
     await loadSnapshot({
       commentId,
+      page: data.pagination?.currentPage || 1,
       query: queryDraft,
       status: statusDraft,
     });
@@ -821,6 +850,7 @@ export default function CommentModerationScreen({ copy, initialData }) {
 
       const didReload = await loadSnapshot({
         commentId: selectedComment.id,
+        page: data.pagination?.currentPage || 1,
         query: queryDraft,
         status: statusDraft,
       });
@@ -925,36 +955,82 @@ export default function CommentModerationScreen({ copy, initialData }) {
             </Form>
 
             {data.comments.length ? (
-              <QueueList>
-                {data.comments.map((comment) => (
-                  <ListButton
-                    key={comment.id}
-                    onClick={() => handleSelectComment(comment.id)}
-                    type="button"
-                    $active={data.selection.commentId === comment.id}
-                  >
-                    <ListHeader>
-                      <ListTitle>{comment.name}</ListTitle>
-                      <ListDate>{formatShortDate(comment.createdAt)}</ListDate>
-                    </ListHeader>
-                    <BadgeRow>
-                      <Pill $tone={statusTone(comment.status)}>
-                        {formatStatusLabel(comment.status)}
-                      </Pill>
-                      <Pill>{comment.isReply ? resolvedCopy.replyTypeLabel : resolvedCopy.topLevelTypeLabel}</Pill>
-                      {comment.repliesCount ? <Pill>{comment.repliesCount} replies</Pill> : null}
-                      {comment.parentName ? <Pill>{comment.parentName}</Pill> : null}
-                    </BadgeRow>
-                    <ListExcerpt>{comment.bodyPreview}</ListExcerpt>
-                    <ListMeta>{comment.post.title}</ListMeta>
-                    {comment.latestEvent ? (
-                      <ListMeta>
-                        Last action: {comment.latestEvent.actionLabel} by {comment.latestEvent.actorName}
-                      </ListMeta>
-                    ) : null}
-                  </ListButton>
-                ))}
-              </QueueList>
+              <>
+                <QueueList>
+                  {data.comments.map((comment) => (
+                    <ListButton
+                      key={comment.id}
+                      onClick={() => handleSelectComment(comment.id)}
+                      type="button"
+                      $active={data.selection.commentId === comment.id}
+                    >
+                      <ListHeader>
+                        <ListTitle>{comment.name}</ListTitle>
+                        <ListDate>{formatShortDate(comment.createdAt)}</ListDate>
+                      </ListHeader>
+                      <BadgeRow>
+                        <Pill $tone={statusTone(comment.status)}>
+                          {formatStatusLabel(comment.status)}
+                        </Pill>
+                        <Pill>{comment.isReply ? resolvedCopy.replyTypeLabel : resolvedCopy.topLevelTypeLabel}</Pill>
+                        {comment.repliesCount ? <Pill>{comment.repliesCount} replies</Pill> : null}
+                        {comment.parentName ? <Pill>{comment.parentName}</Pill> : null}
+                      </BadgeRow>
+                      <ListExcerpt>{comment.bodyPreview}</ListExcerpt>
+                      <ListMeta>{comment.post.title}</ListMeta>
+                      {comment.latestEvent ? (
+                        <ListMeta>
+                          Last action: {comment.latestEvent.actionLabel} by {comment.latestEvent.actorName}
+                        </ListMeta>
+                      ) : null}
+                    </ListButton>
+                  ))}
+                </QueueList>
+                {data.pagination && data.pagination.totalItems > data.pagination.pageSize ? (
+                  <Pager aria-label={resolvedCopy.paginationLabel || "Moderation queue pagination"}>
+                    <PagerSummary>
+                      {(resolvedCopy.paginationSummaryLabel || "{start}-{end} of {total} comments")
+                        .replace("{start}", `${data.pagination.startItem}`)
+                        .replace("{end}", `${data.pagination.endItem}`)
+                        .replace("{total}", `${data.pagination.totalItems}`)}
+                    </PagerSummary>
+                    <PagerActions>
+                      {data.pagination.hasPreviousPage ? (
+                        <SecondaryButton
+                          disabled={isBusy}
+                          onClick={() =>
+                            loadSnapshot({
+                              commentId: null,
+                              page: data.pagination.currentPage - 1,
+                              query: queryDraft,
+                              status: statusDraft,
+                            })
+                          }
+                          type="button"
+                        >
+                          {resolvedCopy.previousPageAction || "Previous"}
+                        </SecondaryButton>
+                      ) : null}
+                      {data.pagination.hasNextPage ? (
+                        <SecondaryButton
+                          disabled={isBusy}
+                          onClick={() =>
+                            loadSnapshot({
+                              commentId: null,
+                              page: data.pagination.currentPage + 1,
+                              query: queryDraft,
+                              status: statusDraft,
+                            })
+                          }
+                          type="button"
+                        >
+                          {resolvedCopy.nextPageAction || "Next"}
+                        </SecondaryButton>
+                      ) : null}
+                    </PagerActions>
+                  </Pager>
+                ) : null}
+              </>
             ) : (
               <SmallText>{resolvedCopy.emptyState}</SmallText>
             )}

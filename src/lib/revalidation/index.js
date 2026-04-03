@@ -56,6 +56,7 @@ function resolveLocales(locales = supportedLocales) {
 export function buildPublishedPostRevalidationPaths({
   categorySlugs = [],
   equipmentSlug,
+  manufacturerSlugs = [],
   locales = supportedLocales,
   slug,
 } = {}) {
@@ -77,6 +78,12 @@ export function buildPublishedPostRevalidationPaths({
     for (const categorySlug of categorySlugs) {
       if (typeof categorySlug === "string" && categorySlug.trim()) {
         paths.push(buildLocalizedPath(locale, publicRouteSegments.category(categorySlug)));
+      }
+    }
+
+    for (const manufacturerSlug of manufacturerSlugs) {
+      if (typeof manufacturerSlug === "string" && manufacturerSlug.trim()) {
+        paths.push(buildLocalizedPath(locale, publicRouteSegments.manufacturer(manufacturerSlug)));
       }
     }
   }

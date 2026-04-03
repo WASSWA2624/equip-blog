@@ -5,6 +5,8 @@ import { defaultLocale, isSupportedLocale, supportedLocales } from "@/features/i
 import { getMessages } from "@/features/i18n/get-messages";
 import { buildLocalizedPath, publicRouteSegments } from "@/features/i18n/routing";
 
+import { loadPostPublicRevalidationSnapshot, revalidatePostPublicSnapshots } from "./public-revalidation";
+
 const EMPTY_FAQ_JSON = Object.freeze([]);
 
 export const emptyStructuredContent = Object.freeze({
@@ -491,8 +493,22 @@ export async function savePostLocaleContent(input, options = {}, prisma) {
 
     return persistedTranslation;
   });
+  const nextPublicSnapshot = await loadPostPublicRevalidationSnapshot(parsedInput.postId, db);
+  const revalidation = await revalidatePostPublicSnapshots(
+    {
+      actorId: options.actorId || null,
+      afterSnapshot: nextPublicSnapshot,
+      beforeSnapshot: nextPublicSnapshot,
+      trigger: "localized_content_save",
+    },
+    {
+      revalidate: options.revalidate,
+    },
+    db,
+  );
 
   return {
+    revalidation,
     snapshot: await getLocalizationManagementSnapshot(
       {
         locale: parsedInput.locale,

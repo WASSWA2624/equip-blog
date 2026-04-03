@@ -27,6 +27,7 @@ export async function GET(request) {
   try {
     const snapshot = await getCommentModerationSnapshot({
       commentId: request.nextUrl.searchParams.get("commentId") || undefined,
+      page: request.nextUrl.searchParams.get("page") || undefined,
       query: request.nextUrl.searchParams.get("query") || undefined,
       status: request.nextUrl.searchParams.get("status") || undefined,
     });

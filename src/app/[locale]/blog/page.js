@@ -4,7 +4,7 @@ import { buildLocalizedPath, publicRouteSegments } from "@/features/i18n/routing
 import { listPublishedPosts } from "@/features/public-site";
 import { buildPageMetadata } from "@/lib/seo";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export async function generateMetadata({ params, searchParams }) {
   const { locale } = await params;

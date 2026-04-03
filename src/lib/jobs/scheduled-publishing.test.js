@@ -6,6 +6,7 @@ function createScheduledPost({
   categorySlugs = ["maintenance", "safety"],
   equipmentSlug = "microscope",
   id = "post_1",
+  manufacturerSlugs = ["acme-medical"],
   publishedAt = null,
   scheduledPublishAt = "2026-04-03T08:55:00.000Z",
   slug = "microscope",
@@ -21,6 +22,11 @@ function createScheduledPost({
       slug: equipmentSlug,
     },
     id,
+    manufacturers: manufacturerSlugs.map((manufacturerSlug) => ({
+      manufacturer: {
+        slug: manufacturerSlug,
+      },
+    })),
     publishedAt: publishedAt ? new Date(publishedAt) : null,
     scheduledPublishAt: scheduledPublishAt ? new Date(scheduledPublishAt) : null,
     slug,
@@ -223,6 +229,7 @@ describe("scheduled publishing worker", () => {
         "/en/equipment/microscope",
         "/en/category/maintenance",
         "/en/category/safety",
+        "/en/manufacturer/acme-medical",
       ],
       revalidationStatus: "revalidated",
       status: "published",
@@ -245,6 +252,7 @@ describe("scheduled publishing worker", () => {
       "/en/equipment/microscope",
       "/en/category/maintenance",
       "/en/category/safety",
+      "/en/manufacturer/acme-medical",
     ]);
     expect(prisma.state.audits.map((audit) => audit.action)).toEqual(
       expect.arrayContaining([

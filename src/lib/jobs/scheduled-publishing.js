@@ -70,6 +70,7 @@ function mapCandidateToPostContext(post) {
     categorySlugs: post.categories.map(({ category }) => category.slug),
     equipmentSlug: post.equipment?.slug || null,
     id: post.id,
+    manufacturerSlugs: post.manufacturers.map(({ manufacturer }) => manufacturer.slug),
     publishedAt: serializeDate(post.publishedAt),
     scheduledPublishAt: serializeDate(post.scheduledPublishAt),
     slug: post.slug,
@@ -129,6 +130,15 @@ async function getDueScheduledPosts({ batchSize, now }, db) {
         },
       },
       id: true,
+      manufacturers: {
+        select: {
+          manufacturer: {
+            select: {
+              slug: true,
+            },
+          },
+        },
+      },
       publishedAt: true,
       scheduledPublishAt: true,
       slug: true,
@@ -162,6 +172,15 @@ async function loadScheduledPostForExecution(tx, postId) {
         },
       },
       id: true,
+      manufacturers: {
+        select: {
+          manufacturer: {
+            select: {
+              slug: true,
+            },
+          },
+        },
+      },
       publishedAt: true,
       scheduledPublishAt: true,
       slug: true,
@@ -264,6 +283,7 @@ async function retryPublishedPostRevalidation({
         {
           categorySlugs: post.categories.map(({ category }) => category.slug),
           equipmentSlug: post.equipment?.slug || null,
+          manufacturerSlugs: post.manufacturers.map(({ manufacturer }) => manufacturer.slug),
           slug: post.slug,
         },
         revalidate,

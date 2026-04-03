@@ -9,6 +9,7 @@ export default async function CommentsPage({ searchParams }) {
     getMessages(defaultLocale),
     getCommentModerationSnapshot({
       commentId: resolvedSearchParams.commentId,
+      page: resolvedSearchParams.page,
       query: resolvedSearchParams.query,
       status: resolvedSearchParams.status,
     }),

@@ -29,6 +29,7 @@ export const commentModerationFilterValues = Object.freeze([
   "ALL",
   ...commentModerationStatusValues,
 ]);
+export const adminCommentModerationPageSize = 20;
 
 const commentModerationActionByStatus = Object.freeze({
   [CommentStatus.APPROVED]: "COMMENT_APPROVED",
@@ -75,6 +76,45 @@ async function resolvePrismaClient(prisma) {
   const { getPrismaClient } = await import("@/lib/prisma");
 
   return getPrismaClient();
+}
+
+function normalizePositiveInteger(value, fallback = 1, { max = 100 } = {}) {
+  const parsedValue = Number.parseInt(`${value ?? ""}`.trim(), 10);
+
+  if (Number.isNaN(parsedValue) || parsedValue < 1) {
+    return fallback;
+  }
+
+  return Math.min(parsedValue, max);
+}
+
+function createPagination(totalItems, currentPage, pageSize) {
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const resolvedCurrentPage = Math.min(currentPage, totalPages);
+
+  if (!totalItems) {
+    return {
+      currentPage: 1,
+      endItem: 0,
+      hasNextPage: false,
+      hasPreviousPage: false,
+      pageSize,
+      startItem: 0,
+      totalItems: 0,
+      totalPages: 1,
+    };
+  }
+
+  return {
+    currentPage: resolvedCurrentPage,
+    endItem: Math.min(totalItems, resolvedCurrentPage * pageSize),
+    hasNextPage: resolvedCurrentPage < totalPages,
+    hasPreviousPage: resolvedCurrentPage > 1,
+    pageSize,
+    startItem: (resolvedCurrentPage - 1) * pageSize + 1,
+    totalItems,
+    totalPages,
+  };
 }
 
 function normalizeFilterStatus(value) {
@@ -525,19 +565,48 @@ function buildCommentListWhere({ query, status }) {
 }
 
 export async function getCommentModerationSnapshot(
-  { commentId, query, status = "PENDING" } = {},
+  { commentId, page = 1, pageSize = adminCommentModerationPageSize, query, status = "PENDING" } = {},
   prisma,
 ) {
   const db = await resolvePrismaClient(prisma);
+  const requestedPage = normalizePositiveInteger(page);
+  const resolvedPageSize = normalizePositiveInteger(pageSize, adminCommentModerationPageSize);
   const normalizedQuery = normalizeDisplayText(query) || "";
   const normalizedStatus = normalizeFilterStatus(status);
   const where = buildCommentListWhere({
     query: normalizedQuery,
     status: normalizedStatus,
   });
-  const [comments, totalCount, pendingCount, approvedCount, rejectedCount, spamCount] =
+  const [totalCount, filteredCount, pendingCount, approvedCount, rejectedCount, spamCount] =
     await Promise.all([
-      db.comment.findMany({
+      db.comment.count(),
+      db.comment.count({
+        where,
+      }),
+      db.comment.count({
+        where: {
+          status: CommentStatus.PENDING,
+        },
+      }),
+      db.comment.count({
+        where: {
+          status: CommentStatus.APPROVED,
+        },
+      }),
+      db.comment.count({
+        where: {
+          status: CommentStatus.REJECTED,
+        },
+      }),
+      db.comment.count({
+        where: {
+          status: CommentStatus.SPAM,
+        },
+      }),
+    ]);
+  const pagination = createPagination(filteredCount, requestedPage, resolvedPageSize);
+  const comments = filteredCount
+    ? await db.comment.findMany({
         orderBy: [{ createdAt: "desc" }],
         select: {
           _count: {
@@ -594,30 +663,11 @@ export async function getCommentModerationSnapshot(
           },
           status: true,
         },
+        skip: (pagination.currentPage - 1) * pagination.pageSize,
+        take: pagination.pageSize,
         where,
-      }),
-      db.comment.count(),
-      db.comment.count({
-        where: {
-          status: CommentStatus.PENDING,
-        },
-      }),
-      db.comment.count({
-        where: {
-          status: CommentStatus.APPROVED,
-        },
-      }),
-      db.comment.count({
-        where: {
-          status: CommentStatus.REJECTED,
-        },
-      }),
-      db.comment.count({
-        where: {
-          status: CommentStatus.SPAM,
-        },
-      }),
-    ]);
+      })
+    : [];
   const selectedCommentId =
     comments.find((comment) => comment.id === commentId)?.id || comments[0]?.id || null;
   const editorComment = selectedCommentId
@@ -697,15 +747,17 @@ export async function getCommentModerationSnapshot(
     comments: comments.map(serializeCommentListItem),
     editor: serializeCommentEditor(editorComment),
     filters: {
+      page: pagination.currentPage,
       query: normalizedQuery,
       status: normalizedStatus,
     },
+    pagination,
     selection: {
       commentId: selectedCommentId,
     },
     summary: {
       approvedCount,
-      filteredCount: comments.length,
+      filteredCount,
       pendingCount,
       rejectedCount,
       spamCount,

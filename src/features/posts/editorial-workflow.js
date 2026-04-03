@@ -6,9 +6,15 @@ import { buildLocalizedPath, publicRouteSegments } from "@/features/i18n/routing
 import { createSlug, normalizeDisplayText } from "@/lib/normalization";
 
 import { emptyStructuredContent } from "./localized-content";
+import {
+  createPostPublicRevalidationSnapshot,
+  loadPostPublicRevalidationSnapshot,
+  revalidatePostPublicSnapshots,
+} from "./public-revalidation";
 
 const draftListStatuses = Object.freeze([PostStatus.DRAFT, PostStatus.SCHEDULED]);
 const publishedListStatuses = Object.freeze([PostStatus.PUBLISHED]);
+export const adminPostInventoryPageSize = 24;
 
 export const editorialStageOrder = Object.freeze([
   EditorialStage.GENERATED,
@@ -80,6 +86,45 @@ function serializeDate(value) {
 
 function dedupeStrings(values) {
   return [...new Set((values || []).map((value) => `${value}`.trim()).filter(Boolean))];
+}
+
+function normalizePositiveInteger(value, fallback = 1, { max = 100 } = {}) {
+  const parsedValue = Number.parseInt(`${value ?? ""}`.trim(), 10);
+
+  if (Number.isNaN(parsedValue) || parsedValue < 1) {
+    return fallback;
+  }
+
+  return Math.min(parsedValue, max);
+}
+
+function createPagination(totalItems, currentPage, pageSize) {
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const resolvedCurrentPage = Math.min(currentPage, totalPages);
+
+  if (!totalItems) {
+    return {
+      currentPage: 1,
+      endItem: 0,
+      hasNextPage: false,
+      hasPreviousPage: false,
+      pageSize,
+      startItem: 0,
+      totalItems: 0,
+      totalPages: 1,
+    };
+  }
+
+  return {
+    currentPage: resolvedCurrentPage,
+    endItem: Math.min(totalItems, resolvedCurrentPage * pageSize),
+    hasNextPage: resolvedCurrentPage < totalPages,
+    hasPreviousPage: resolvedCurrentPage > 1,
+    pageSize,
+    startItem: (resolvedCurrentPage - 1) * pageSize + 1,
+    totalItems,
+    totalPages,
+  };
 }
 
 async function resolvePrismaClient(prisma) {
@@ -275,6 +320,14 @@ function buildInventoryWhereClause({ locale, scope, search }) {
       },
     ],
   };
+}
+
+function buildInventoryOrderBy(scope) {
+  if (parseScope(scope) === "published") {
+    return [{ publishedAt: "desc" }, { updatedAt: "desc" }, { slug: "asc" }];
+  }
+
+  return [{ status: "desc" }, { scheduledPublishAt: "asc" }, { updatedAt: "desc" }, { slug: "asc" }];
 }
 
 function getNextEditorialStage(currentStage) {
@@ -662,60 +715,28 @@ async function writeWorkflowAuditEntries(tx, actorId, postId, slug, auditEntries
 }
 
 export async function getPostInventorySnapshot(
-  { locale = defaultLocale, scope = "drafts", search } = {},
+  { locale = defaultLocale, page = 1, pageSize = adminPostInventoryPageSize, scope = "drafts", search } = {},
   prisma,
 ) {
   const db = await resolvePrismaClient(prisma);
   const resolvedScope = parseScope(scope);
   const resolvedLocale = normalizeDisplayText(locale) || defaultLocale;
+  const requestedPage = normalizePositiveInteger(page);
+  const resolvedPageSize = normalizePositiveInteger(pageSize, adminPostInventoryPageSize);
   const where = buildInventoryWhereClause({
     locale: resolvedLocale,
     scope: resolvedScope,
     search,
   });
-  const [posts, draftCount, scheduledCount, publishedCount, archivedCount] = await Promise.all([
-    db.post.findMany({
+  const [
+    totalMatchingCount,
+    draftCount,
+    scheduledCount,
+    publishedCount,
+    archivedCount,
+  ] = await Promise.all([
+    db.post.count({
       where,
-      select: {
-        categories: {
-          orderBy: {
-            category: {
-              name: "asc",
-            },
-          },
-          select: {
-            category: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
-        editorialStage: true,
-        equipment: {
-          select: {
-            name: true,
-          },
-        },
-        id: true,
-        publishedAt: true,
-        scheduledPublishAt: true,
-        slug: true,
-        status: true,
-        translations: {
-          orderBy: {
-            updatedAt: "desc",
-          },
-          select: {
-            title: true,
-          },
-          take: 1,
-          where: {
-            locale: resolvedLocale,
-          },
-        },
-        updatedAt: true,
-      },
     }),
     db.post.count({
       where: {
@@ -738,21 +759,69 @@ export async function getPostInventorySnapshot(
       },
     }),
   ]);
+  const pagination = createPagination(totalMatchingCount, requestedPage, resolvedPageSize);
+  const posts = totalMatchingCount
+    ? await db.post.findMany({
+        orderBy: buildInventoryOrderBy(resolvedScope),
+        select: {
+          categories: {
+            orderBy: {
+              category: {
+                name: "asc",
+              },
+            },
+            select: {
+              category: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+          editorialStage: true,
+          equipment: {
+            select: {
+              name: true,
+            },
+          },
+          id: true,
+          publishedAt: true,
+          scheduledPublishAt: true,
+          slug: true,
+          status: true,
+          translations: {
+            orderBy: {
+              updatedAt: "desc",
+            },
+            select: {
+              title: true,
+            },
+            take: 1,
+            where: {
+              locale: resolvedLocale,
+            },
+          },
+          updatedAt: true,
+        },
+        skip: (pagination.currentPage - 1) * pagination.pageSize,
+        take: pagination.pageSize,
+        where,
+      })
+    : [];
 
   return {
     filters: {
       locale: resolvedLocale,
+      page: pagination.currentPage,
       scope: resolvedScope,
       search: normalizeDisplayText(search) || "",
     },
-    posts: sortInventoryPosts(
-      resolvedScope,
-      posts.map((post) => createInventoryPostSummary(post, resolvedLocale)),
-    ),
+    pagination,
+    posts: sortInventoryPosts(resolvedScope, posts.map((post) => createInventoryPostSummary(post, resolvedLocale))),
     summary: {
       archivedCount,
       draftCount,
-      matchingCount: posts.length,
+      matchingCount: totalMatchingCount,
       publishedCount,
       scheduledCount,
     },
@@ -909,6 +978,7 @@ export async function getPostEditorSnapshot({ locale = defaultLocale, postId }, 
 export async function updatePostEditorialRecord({ postId, ...input }, options = {}, prisma) {
   const parsedInput = updatePostEditorialRecordSchema.parse(input);
   const db = await resolvePrismaClient(prisma);
+  let previousPublicSnapshot = null;
 
   await db.$transaction(async (tx) => {
     const currentPost = await tx.post.findUnique({
@@ -916,8 +986,31 @@ export async function updatePostEditorialRecord({ postId, ...input }, options = 
         id: postId,
       },
       select: {
+        categories: {
+          select: {
+            category: {
+              select: {
+                slug: true,
+              },
+            },
+          },
+        },
         editorialStage: true,
+        equipment: {
+          select: {
+            slug: true,
+          },
+        },
         id: true,
+        manufacturers: {
+          select: {
+            manufacturer: {
+              select: {
+                slug: true,
+              },
+            },
+          },
+        },
         publishedAt: true,
         scheduledPublishAt: true,
         slug: true,
@@ -931,6 +1024,8 @@ export async function updatePostEditorialRecord({ postId, ...input }, options = 
         statusCode: 404,
       });
     }
+
+    previousPublicSnapshot = createPostPublicRevalidationSnapshot(currentPost);
 
     const updateData = {};
 
@@ -989,8 +1084,22 @@ export async function updatePostEditorialRecord({ postId, ...input }, options = 
       }),
     );
   });
+  const nextPublicSnapshot = await loadPostPublicRevalidationSnapshot(postId, db);
+  const revalidation = await revalidatePostPublicSnapshots(
+    {
+      actorId: options.actorId || null,
+      afterSnapshot: nextPublicSnapshot,
+      beforeSnapshot: previousPublicSnapshot,
+      trigger: "editorial_update",
+    },
+    {
+      revalidate: options.revalidate,
+    },
+    db,
+  );
 
   return {
+    revalidation,
     snapshot: await getPostEditorSnapshot(
       {
         locale: defaultLocale,

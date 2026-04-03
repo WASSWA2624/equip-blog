@@ -232,6 +232,7 @@ describe("comments workflow", () => {
           .fn()
           .mockResolvedValueOnce(4)
           .mockResolvedValueOnce(1)
+          .mockResolvedValueOnce(1)
           .mockResolvedValueOnce(2)
           .mockResolvedValueOnce(1)
           .mockResolvedValueOnce(0),
@@ -344,5 +345,89 @@ describe("comments workflow", () => {
       actionLabel: "Submitted",
       actorName: "System",
     });
+  });
+
+  it("paginates moderation snapshots", async () => {
+    const comments = Array.from({ length: 22 }, (_, index) => ({
+      _count: {
+        replies: 0,
+      },
+      body: `Helpful note ${index + 1}`,
+      createdAt: new Date(`2026-04-${`${22 - index}`.padStart(2, "0")}T10:00:00.000Z`),
+      email: null,
+      id: `comment_${index + 1}`,
+      moderationEvents: [],
+      name: `Reader ${index + 1}`,
+      parent: null,
+      parentId: null,
+      post: {
+        equipment: {
+          name: "Microscope",
+        },
+        slug: "microscope-basics",
+        translations: [
+          {
+            title: "Microscope basics",
+          },
+        ],
+      },
+      status: "PENDING",
+    }));
+    const prisma = {
+      comment: {
+        count: vi
+          .fn()
+          .mockResolvedValueOnce(22)
+          .mockResolvedValueOnce(22)
+          .mockResolvedValueOnce(22)
+          .mockResolvedValueOnce(0)
+          .mockResolvedValueOnce(0)
+          .mockResolvedValueOnce(0),
+        findMany: vi.fn(async ({ skip = 0, take } = {}) => comments.slice(skip, skip + take)),
+        findUnique: vi.fn(async ({ where }) =>
+          (() => {
+            const comment = comments.find((entry) => entry.id === where.id);
+
+            if (!comment) {
+              return null;
+            }
+
+            return {
+              ...comment,
+              post: {
+                ...comment.post,
+                publishedAt: new Date("2026-04-03T08:00:00.000Z"),
+              },
+              replies: [],
+              updatedAt: comment.createdAt,
+              userAgent: "Vitest",
+            };
+          })(),
+        ),
+      },
+    };
+    const { getCommentModerationSnapshot } = await import("./index");
+
+    const snapshot = await getCommentModerationSnapshot(
+      {
+        page: 2,
+        status: "PENDING",
+      },
+      prisma,
+    );
+
+    expect(snapshot.pagination).toMatchObject({
+      currentPage: 2,
+      endItem: 22,
+      hasNextPage: false,
+      hasPreviousPage: true,
+      pageSize: 20,
+      startItem: 21,
+      totalItems: 22,
+      totalPages: 2,
+    });
+    expect(snapshot.comments).toHaveLength(2);
+    expect(snapshot.comments[0].id).toBe("comment_21");
+    expect(snapshot.summary.filteredCount).toBe(22);
   });
 });

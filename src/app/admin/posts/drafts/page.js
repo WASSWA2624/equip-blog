@@ -8,6 +8,7 @@ export default async function DraftsPage({ searchParams }) {
   const [messages, snapshot] = await Promise.all([
     getMessages(defaultLocale),
     getPostInventorySnapshot({
+      page: resolvedSearchParams.page,
       scope: "drafts",
       search: resolvedSearchParams.search,
     }),

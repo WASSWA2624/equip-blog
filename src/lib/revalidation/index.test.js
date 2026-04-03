@@ -24,6 +24,7 @@ describe("revalidation helpers", () => {
       buildPublishedPostRevalidationPaths({
         categorySlugs: ["maintenance", "maintenance", "safety"],
         equipmentSlug: "microscope",
+        manufacturerSlugs: ["acme-medical", "acme-medical", "biocare"],
         slug: "microscope-repair",
       }),
     ).toEqual([
@@ -35,6 +36,8 @@ describe("revalidation helpers", () => {
       "/en/equipment/microscope",
       "/en/category/maintenance",
       "/en/category/safety",
+      "/en/manufacturer/acme-medical",
+      "/en/manufacturer/biocare",
     ]);
   });
 

@@ -261,6 +261,60 @@ function getMediaUrl(media) {
   return media?.publicUrl || media?.sourceUrl || null;
 }
 
+function normalizeImageDimension(value) {
+  const parsedValue = Number.parseInt(`${value ?? ""}`.trim(), 10);
+
+  return Number.isFinite(parsedValue) && parsedValue > 0 ? parsedValue : null;
+}
+
+function buildResponsiveImageSrcSet(media, url) {
+  const candidates = [];
+  const seenEntries = new Set();
+
+  for (const variant of media?.variants || []) {
+    const variantUrl = getMediaUrl(variant);
+    const variantWidth = normalizeImageDimension(variant?.width);
+
+    if (!variantUrl || !variantWidth) {
+      continue;
+    }
+
+    const candidateKey = `${variantUrl}:${variantWidth}`;
+
+    if (seenEntries.has(candidateKey)) {
+      continue;
+    }
+
+    seenEntries.add(candidateKey);
+    candidates.push({
+      url: variantUrl,
+      width: variantWidth,
+    });
+  }
+
+  const originalWidth = normalizeImageDimension(media?.width);
+
+  if (url && originalWidth) {
+    const candidateKey = `${url}:${originalWidth}`;
+
+    if (!seenEntries.has(candidateKey)) {
+      candidates.push({
+        url,
+        width: originalWidth,
+      });
+    }
+  }
+
+  if (candidates.length <= 1) {
+    return null;
+  }
+
+  return candidates
+    .sort((leftEntry, rightEntry) => leftEntry.width - rightEntry.width)
+    .map((candidate) => `${candidate.url} ${candidate.width}w`)
+    .join(", ");
+}
+
 function createMediaImage(media, fallbackAlt) {
   const url = getMediaUrl(media);
 
@@ -272,8 +326,11 @@ function createMediaImage(media, fallbackAlt) {
     alt: media?.alt || media?.caption || fallbackAlt,
     attributionText: media?.attributionText || null,
     caption: media?.caption || null,
+    height: normalizeImageDimension(media?.height),
     licenseType: media?.licenseType || null,
+    srcSet: buildResponsiveImageSrcSet(media, url),
     url,
+    width: normalizeImageDimension(media?.width),
   };
 }
 
@@ -288,8 +345,10 @@ function createSectionImage(image, fallbackAlt) {
     alt: image.alt || image.caption || fallbackAlt,
     attributionText: image.attributionText || null,
     caption: image.caption || null,
+    height: normalizeImageDimension(image?.height),
     licenseType: image.licenseType || null,
     url,
+    width: normalizeImageDimension(image?.width),
   };
 }
 
@@ -574,6 +633,28 @@ function buildPublishedSearchWhere({ locale, search }) {
   };
 }
 
+function createPublicMediaImageSelect() {
+  return {
+    alt: true,
+    attributionText: true,
+    caption: true,
+    height: true,
+    licenseType: true,
+    publicUrl: true,
+    sourceUrl: true,
+    variants: {
+      orderBy: {
+        width: "asc",
+      },
+      select: {
+        publicUrl: true,
+        width: true,
+      },
+    },
+    width: true,
+  };
+}
+
 function buildPublishedPostCardSelect(locale) {
   return {
     categories: {
@@ -599,14 +680,7 @@ function buildPublishedPostCardSelect(locale) {
     },
     excerpt: true,
     featuredImage: {
-      select: {
-        alt: true,
-        attributionText: true,
-        caption: true,
-        licenseType: true,
-        publicUrl: true,
-        sourceUrl: true,
-      },
+      select: createPublicMediaImageSelect(),
     },
     id: true,
     manufacturers: {
@@ -628,10 +702,7 @@ function buildPublishedPostCardSelect(locale) {
     slug: true,
     translations: {
       select: {
-        contentHtml: true,
-        contentMd: true,
         excerpt: true,
-        faqJson: true,
         locale: true,
         structuredContentJson: true,
         title: true,
@@ -663,6 +734,20 @@ function buildSearchPostSelect(locale) {
             slug: true,
           },
         },
+      },
+    },
+    translations: {
+      select: {
+        contentHtml: true,
+        contentMd: true,
+        excerpt: true,
+        locale: true,
+        structuredContentJson: true,
+        title: true,
+      },
+      take: 1,
+      where: {
+        locale,
       },
     },
   };
@@ -734,14 +819,7 @@ function buildRelatedPostSelect(locales = supportedLocales) {
     },
     excerpt: true,
     featuredImage: {
-      select: {
-        alt: true,
-        attributionText: true,
-        caption: true,
-        licenseType: true,
-        publicUrl: true,
-        sourceUrl: true,
-      },
+      select: createPublicMediaImageSelect(),
     },
     id: true,
     manufacturers: {
@@ -1606,14 +1684,7 @@ async function getPublishedPostPageDataInternal(
       },
       excerpt: true,
       featuredImage: {
-        select: {
-          alt: true,
-          attributionText: true,
-          caption: true,
-          licenseType: true,
-          publicUrl: true,
-          sourceUrl: true,
-        },
+        select: createPublicMediaImageSelect(),
       },
       id: true,
       manufacturers: {
@@ -1679,14 +1750,7 @@ async function getPublishedPostPageDataInternal(
               noindex: true,
               ogDescription: true,
               ogImage: {
-                select: {
-                  alt: true,
-                  attributionText: true,
-                  caption: true,
-                  licenseType: true,
-                  publicUrl: true,
-                  sourceUrl: true,
-                },
+                select: createPublicMediaImageSelect(),
               },
               ogTitle: true,
               twitterDescription: true,

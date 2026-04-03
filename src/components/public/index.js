@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import styled, { css } from "styled-components";
 
 import PublicViewTracker from "@/components/analytics/public-view-tracker";
 import { PublicCommentSection } from "@/components/comments";
+import ShareActions from "@/components/public/share-actions";
 
 function formatDateLabel(locale, value) {
   if (!value) {
@@ -350,6 +350,8 @@ const Card = styled.article`
   border: 1px solid rgba(16, 32, 51, 0.07);
   border-radius: 18px;
   box-shadow: 0 10px 24px rgba(22, 40, 64, 0.04);
+  contain-intrinsic-size: 320px;
+  content-visibility: auto;
   display: grid;
   gap: ${({ theme }) => theme.spacing.sm};
   min-height: 100%;
@@ -415,6 +417,7 @@ const FigureImage = styled.img`
   background: rgba(16, 32, 51, 0.04);
   border-radius: 14px;
   display: block;
+  height: auto;
   object-fit: cover;
   width: 100%;
 `;
@@ -425,12 +428,40 @@ const FigureCaption = styled.figcaption`
   line-height: 1.6;
 `;
 
+function ResponsiveImage({
+  image,
+  loading = "lazy",
+  priority = false,
+  sizes = "100vw",
+}) {
+  if (!image?.url) {
+    return null;
+  }
+
+  return (
+    <FigureImage
+      alt={image.alt}
+      decoding="async"
+      fetchPriority={priority ? "high" : "auto"}
+      height={image.height || undefined}
+      loading={priority ? "eager" : loading}
+      sizes={image.srcSet ? sizes : undefined}
+      src={image.url}
+      srcSet={image.srcSet || undefined}
+      width={image.width || undefined}
+    />
+  );
+}
+
 function PostCard({ copy, locale, post }) {
   return (
     <Card>
       {post.heroImage ? (
         <Figure>
-          <FigureImage alt={post.heroImage.alt} loading="lazy" src={post.heroImage.url} />
+          <ResponsiveImage
+            image={post.heroImage}
+            sizes="(min-width: 1080px) 28vw, (min-width: 720px) 46vw, 92vw"
+          />
           {post.heroImage.caption ? <FigureCaption>{post.heroImage.caption}</FigureCaption> : null}
         </Figure>
       ) : null}
@@ -983,6 +1014,8 @@ const HeroImageGrid = styled.div`
 `;
 
 const ArticleSection = styled(Panel)`
+  contain-intrinsic-size: 720px;
+  content-visibility: auto;
   gap: ${({ theme }) => theme.spacing.sm};
 `;
 
@@ -1017,29 +1050,6 @@ const FaultCard = styled.div`
   display: grid;
   gap: ${({ theme }) => theme.spacing.sm};
   padding: ${({ theme }) => theme.spacing.md};
-`;
-
-const ShareButtonRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.sm};
-`;
-
-const ShareLink = styled.a`
-  border: 1px solid rgba(16, 32, 51, 0.12);
-  border-radius: 999px;
-  display: inline-flex;
-  font-weight: 700;
-  padding: 0.55rem 0.9rem;
-`;
-
-const ShareButton = styled.button`
-  background: transparent;
-  border: 1px solid rgba(16, 32, 51, 0.12);
-  border-radius: 999px;
-  cursor: pointer;
-  font-weight: 700;
-  padding: 0.55rem 0.9rem;
 `;
 
 function renderArticleSection(section, copy) {
@@ -1167,7 +1177,13 @@ function renderArticleSection(section, copy) {
       <HeroImageGrid>
         {(section.images || []).map((image) => (
           <Figure key={image.url}>
-            <FigureImage alt={image.alt || copy.relatedPostsTitle} loading="lazy" src={image.url} />
+            <ResponsiveImage
+              image={{
+                ...image,
+                alt: image.alt || copy.relatedPostsTitle,
+              }}
+              sizes="(min-width: 720px) 46vw, 92vw"
+            />
             {image.caption ? <FigureCaption>{image.caption}</FigureCaption> : null}
           </Figure>
         ))}
@@ -1176,54 +1192,6 @@ function renderArticleSection(section, copy) {
   }
 
   return null;
-}
-
-function ShareActions({ article, copy }) {
-  const [copied, setCopied] = useState(false);
-  const title = encodeURIComponent(article.title);
-  const url = encodeURIComponent(article.url);
-  const shareLinks = [
-    { href: `https://twitter.com/intent/tweet?text=${title}&url=${url}`, label: "X" },
-    { href: `https://www.facebook.com/sharer/sharer.php?u=${url}`, label: "Facebook" },
-    {
-      href: `https://www.linkedin.com/shareArticle?mini=true&url=${url}&title=${title}`,
-      label: "LinkedIn",
-    },
-    { href: `https://wa.me/?text=${title}%20${url}`, label: "WhatsApp" },
-    {
-      href: `mailto:?subject=${title}&body=${encodeURIComponent(`${article.title}\n\n${article.url}`)}`,
-      label: "Email",
-    },
-  ];
-
-  async function handleCopyLink() {
-    try {
-      await navigator.clipboard.writeText(article.url);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1800);
-    } catch {
-      setCopied(false);
-    }
-  }
-
-  return (
-    <Panel>
-      <SectionHeader>
-        <SectionTitle>{copy.shareTitle}</SectionTitle>
-        <SectionDescription>{copy.shareDescription}</SectionDescription>
-      </SectionHeader>
-      <ShareButtonRow>
-        {shareLinks.map((link) => (
-          <ShareLink href={link.href} key={link.label} rel="noreferrer" target="_blank">
-            {link.label}
-          </ShareLink>
-        ))}
-        <ShareButton onClick={handleCopyLink} type="button">
-          {copied ? copy.copiedLink : copy.copyLink}
-        </ShareButton>
-      </ShareButtonRow>
-    </Panel>
-  );
 }
 
 export function PublicPostPage({ locale, messages, pageData }) {
@@ -1279,9 +1247,13 @@ export function PublicPostPage({ locale, messages, pageData }) {
       {article.heroImages.length ? (
         <Panel>
           <HeroImageGrid>
-            {article.heroImages.map((image) => (
+            {article.heroImages.map((image, index) => (
               <Figure key={image.url}>
-                <FigureImage alt={image.alt} loading="eager" src={image.url} />
+                <ResponsiveImage
+                  image={image}
+                  priority={index === 0}
+                  sizes="(min-width: 1100px) 50vw, 92vw"
+                />
                 {image.caption ? <FigureCaption>{image.caption}</FigureCaption> : null}
               </Figure>
             ))}
