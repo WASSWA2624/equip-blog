@@ -1,36 +1,64 @@
-import PlaceholderPage from "@/components/common/placeholder-page";
-import { buildLocalizedPath, buildPublicPageMetadata, publicRouteSegments } from "@/features/i18n/routing";
+import { notFound } from "next/navigation";
 
-const description =
-  "Category landing pages are scaffolded for topic discovery and locale-aware indexing.";
+import { PublicCollectionPage } from "@/components/public";
+import { getMessages } from "@/features/i18n/get-messages";
+import { buildPublicPageMetadata, publicRouteSegments } from "@/features/i18n/routing";
+import { getPublishedLandingPageData } from "@/features/public-site";
+
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }) {
   const { locale, slug } = await params;
-  const title = `Category scaffold: ${slug}`;
+  const messages = await getMessages(locale);
+  const pageData = await getPublishedLandingPageData({
+    entityKind: "category",
+    locale,
+    slug,
+  });
+  const title = pageData?.entity?.name
+    ? `${pageData.entity.name} category`
+    : messages.public?.common?.topCategoriesTitle || "Category";
 
   return buildPublicPageMetadata({
-    description,
+    description: pageData?.entity?.description || messages.public?.home?.discoveryDescription || messages.site.tagline,
     locale,
     segments: publicRouteSegments.category(slug),
     title,
   });
 }
 
-export default async function CategoryPage({ params }) {
+export default async function CategoryPage({ params, searchParams }) {
   const { locale, slug } = await params;
-  const title = `Category scaffold: ${slug}`;
+  const resolvedSearchParams = await searchParams;
+  const page = resolvedSearchParams?.page;
+  const [messages, pageData] = await Promise.all([
+    getMessages(locale),
+    getPublishedLandingPageData({
+      entityKind: "category",
+      locale,
+      page,
+      slug,
+    }),
+  ]);
+
+  if (!pageData) {
+    notFound();
+  }
 
   return (
-    <PlaceholderPage
-      badges={[buildLocalizedPath(locale, publicRouteSegments.category(slug)), "Discovery page"]}
-      description={description}
-      eyebrow="Category"
-      notes={[
-        "List published posts in the selected category.",
-        "Add SEO descriptions and related taxonomy links.",
-        "Stay read-only on the public surface.",
-      ]}
-      title={title}
+    <PublicCollectionPage
+      entity={pageData.entity}
+      locale={locale}
+      messages={messages.public}
+      pageContent={{
+        description: messages.public?.home?.discoveryDescription,
+        eyebrow: messages.public?.common?.topCategoriesTitle || "Category",
+        resultsTitle: messages.public?.blog?.resultsTitle,
+        title: messages.public?.common?.topCategoriesTitle || "Category",
+      }}
+      pageData={pageData}
+      pathname={pageData.entity.path}
+      query={{}}
     />
   );
 }

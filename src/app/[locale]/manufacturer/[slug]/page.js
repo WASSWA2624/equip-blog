@@ -1,39 +1,65 @@
-import PlaceholderPage from "@/components/common/placeholder-page";
-import { buildLocalizedPath, buildPublicPageMetadata, publicRouteSegments } from "@/features/i18n/routing";
+import { notFound } from "next/navigation";
 
-const description =
-  "Manufacturer landing pages are present and ready for published topical content.";
+import { PublicCollectionPage } from "@/components/public";
+import { getMessages } from "@/features/i18n/get-messages";
+import { buildPublicPageMetadata, publicRouteSegments } from "@/features/i18n/routing";
+import { getPublishedLandingPageData } from "@/features/public-site";
+
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }) {
   const { locale, slug } = await params;
-  const title = `Manufacturer scaffold: ${slug}`;
+  const messages = await getMessages(locale);
+  const pageData = await getPublishedLandingPageData({
+    entityKind: "manufacturer",
+    locale,
+    slug,
+  });
+  const title = pageData?.entity?.name
+    ? `${pageData.entity.name} manufacturer`
+    : messages.public?.common?.topManufacturersTitle || "Manufacturer";
 
   return buildPublicPageMetadata({
-    description,
+    description:
+      pageData?.entity?.description || messages.public?.home?.discoveryDescription || messages.site.tagline,
     locale,
     segments: publicRouteSegments.manufacturer(slug),
     title,
   });
 }
 
-export default async function ManufacturerPage({ params }) {
+export default async function ManufacturerPage({ params, searchParams }) {
   const { locale, slug } = await params;
-  const title = `Manufacturer scaffold: ${slug}`;
+  const resolvedSearchParams = await searchParams;
+  const page = resolvedSearchParams?.page;
+  const [messages, pageData] = await Promise.all([
+    getMessages(locale),
+    getPublishedLandingPageData({
+      entityKind: "manufacturer",
+      locale,
+      page,
+      slug,
+    }),
+  ]);
+
+  if (!pageData) {
+    notFound();
+  }
 
   return (
-    <PlaceholderPage
-      badges={[
-        buildLocalizedPath(locale, publicRouteSegments.manufacturer(slug)),
-        "Discovery page",
-      ]}
-      description={description}
-      eyebrow="Manufacturer"
-      notes={[
-        "Show manufacturer-specific posts and model references.",
-        "Support SEO landing page metadata.",
-        "Keep public pages strictly read-only.",
-      ]}
-      title={title}
+    <PublicCollectionPage
+      entity={pageData.entity}
+      locale={locale}
+      messages={messages.public}
+      pageContent={{
+        description: messages.public?.home?.discoveryDescription,
+        eyebrow: messages.public?.common?.topManufacturersTitle || "Manufacturer",
+        resultsTitle: messages.public?.blog?.resultsTitle,
+        title: messages.public?.common?.topManufacturersTitle || "Manufacturer",
+      }}
+      pageData={pageData}
+      pathname={pageData.entity.path}
+      query={{}}
     />
   );
 }

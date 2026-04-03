@@ -1,38 +1,23 @@
-import PlaceholderPage from "@/components/common/placeholder-page";
-import {
-  buildLocalizedPath,
-  buildPublicPageMetadata,
-  publicRouteSegments,
-} from "@/features/i18n/routing";
-
-const title = "Privacy policy";
-const description = "The privacy policy route is scaffolded and ready for locale-aware legal content.";
+import { PublicStaticPage } from "@/components/public";
+import { getMessages } from "@/features/i18n/get-messages";
+import { buildPublicPageMetadata, publicRouteSegments } from "@/features/i18n/routing";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
+  const messages = await getMessages(locale);
+  const pageContent = messages?.public?.pages?.privacy || {};
 
   return buildPublicPageMetadata({
-    description,
+    description: pageContent.metaDescription || pageContent.description || messages.site.tagline,
     locale,
     segments: publicRouteSegments.privacy,
-    title,
+    title: pageContent.metaTitle || pageContent.title || messages.site.title,
   });
 }
 
 export default async function PrivacyPage({ params }) {
   const { locale } = await params;
+  const messages = await getMessages(locale);
 
-  return (
-    <PlaceholderPage
-      badges={[buildLocalizedPath(locale, publicRouteSegments.privacy), "Public legal page"]}
-      description={description}
-      eyebrow="Privacy policy"
-      notes={[
-        "Document analytics, comments, and moderation data handling.",
-        "Explain guest comment data retention.",
-        "Maintain locale-prefixed canonical URLs.",
-      ]}
-      title={title}
-    />
-  );
+  return <PublicStaticPage pageContent={messages.public?.pages?.privacy || {}} />;
 }

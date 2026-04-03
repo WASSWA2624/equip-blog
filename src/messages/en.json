@@ -6,13 +6,216 @@
   "site": {
     "title": "Equip Blog",
     "tagline": "Source-grounded publishing for medical equipment knowledge.",
-    "footer": "Public scaffold ready for locale-aware expansion.",
+    "footer": "Source-grounded guides for medical equipment teams.",
     "navigation": {
       "about": "About",
       "blog": "Blog",
       "contact": "Contact",
       "home": "Home",
       "search": "Search"
+    },
+    "legalNavigation": {
+      "disclaimer": "Disclaimer",
+      "privacy": "Privacy"
+    }
+  },
+  "public": {
+    "common": {
+      "authorLabel": "Author",
+      "backToBlogAction": "Back to blog",
+      "browseCategory": "Browse category",
+      "browseEquipment": "Browse equipment",
+      "browseManufacturer": "Browse manufacturer",
+      "clearAction": "Clear",
+      "commentReplyLabel": "Reply",
+      "commentsDescription": "Approved comments appear here, while public submission stays in placeholder mode for this release step.",
+      "commentsEmpty": "No approved comments are visible yet.",
+      "commentsFormDescription": "Public comment submission will connect in a later step. This placeholder preserves the moderation-ready layout.",
+      "commentsFormTitle": "Comment form placeholder",
+      "commentsModerationNotice": "Comments are moderated before becoming public.",
+      "commentsTitle": "Comments",
+      "copiedLink": "Link copied",
+      "copyLink": "Copy link",
+      "emptyStateDescription": "Published content will appear here after editorial approval and release.",
+      "emptyStateTitle": "No published posts yet",
+      "latestPostsTitle": "Latest posts",
+      "nextPage": "Next",
+      "noSearchResults": "No published posts matched your search yet.",
+      "previousPage": "Previous",
+      "publishedLabel": "Published",
+      "readPostAction": "Read post",
+      "referencesHeading": "References",
+      "relatedPostsDescription": "These published guides share equipment, taxonomy, or manufacturer context with the current article.",
+      "relatedPostsTitle": "Related posts",
+      "resultsLabel": "Published posts",
+      "searchAction": "Search",
+      "searchPlaceholder": "Search published posts, equipment, or categories",
+      "shareDescription": "Send this article to a teammate or save it for later reference.",
+      "shareTitle": "Share this post",
+      "topCategoriesTitle": "Top categories",
+      "topEquipmentTitle": "Top equipment",
+      "topManufacturersTitle": "Top manufacturers",
+      "updatedLabel": "Updated"
+    },
+    "home": {
+      "eyebrow": "English release",
+      "title": "Published equipment guides built mobile-first.",
+      "description": "Equip Blog organizes published medical equipment explainers into discovery pages for categories, manufacturers, equipment families, and individual posts.",
+      "featuredTitle": "Start with the newest guide",
+      "featuredDescription": "The lead article stays prominent on small screens first, then expands cleanly for tablet and desktop scanning.",
+      "latestTitle": "Freshly published posts",
+      "latestDescription": "Browse the newest approved guides without leaving the locale-prefixed public route structure.",
+      "discoveryTitle": "Discovery routes",
+      "discoveryDescription": "Category, manufacturer, and equipment landing pages stay focused on published content only.",
+      "metaTitle": "Equip Blog home",
+      "metaDescription": "Browse published medical equipment guides, manufacturer landing pages, and equipment discovery routes."
+    },
+    "blog": {
+      "eyebrow": "Published library",
+      "title": "Published blog index",
+      "description": "Browse the currently published English guides, ordered by release date and ready for mobile reading first.",
+      "resultsTitle": "Published guides",
+      "metaTitle": "Published blog",
+      "metaDescription": "Read the published English medical equipment guides available on Equip Blog."
+    },
+    "search": {
+      "eyebrow": "Search",
+      "title": "Search published content",
+      "description": "Search the live English content library by equipment, article title, excerpt, manufacturer, or category.",
+      "searchTitle": "Search the published library",
+      "searchDescription": "Results stay limited to published content in the active locale route.",
+      "resultsTitle": "Search results",
+      "metaTitle": "Search published content",
+      "metaDescription": "Search the published Equip Blog library for English medical equipment guides."
+    },
+    "pages": {
+      "about": {
+        "eyebrow": "About",
+        "title": "About Equip Blog",
+        "description": "Equip Blog turns verified medical equipment research into source-grounded learning pages that stay explicit about limits, safety boundaries, and references.",
+        "metaTitle": "About Equip Blog",
+        "metaDescription": "Learn how Equip Blog publishes source-grounded medical equipment content for Release 1.",
+        "sections": [
+          {
+            "title": "What the public site is for",
+            "paragraphs": [
+              "Equip Blog publishes English-first guides that help readers understand what a device is, how it works, how it is maintained, and which references should be checked next.",
+              "Each public page is designed to stay readable on mobile first, then scale outward for tablet and desktop review."
+            ]
+          },
+          {
+            "title": "Editorial approach",
+            "paragraphs": [
+              "The research layer remains the source of truth. The writing layer organizes supported information into a stable learning sequence without presenting generated content as clinical instruction.",
+              "References, disclaimers, and uncertainty stay visible so readers can move from overview reading into official manuals and source documents."
+            ]
+          },
+          {
+            "title": "Release 1 boundaries",
+            "items": [
+              "Only locale-prefixed English public routes are active in Release 1.",
+              "Only published posts appear on public pages.",
+              "Comments and public submission controls remain visibly staged while moderation flows continue to land."
+            ],
+            "paragraphs": [
+              "The route structure is already locale-ready so future translations can reuse the same layout and content patterns."
+            ]
+          }
+        ]
+      },
+      "contact": {
+        "eyebrow": "Contact",
+        "title": "Contact the editorial team",
+        "description": "Use the contact route to understand how editorial questions, corrections, partnership notes, and moderation issues will be handled for the public site.",
+        "metaTitle": "Contact the editorial team",
+        "metaDescription": "Review the Equip Blog contact path and editorial response expectations.",
+        "sections": [
+          {
+            "title": "What to contact us about",
+            "items": [
+              "Factual corrections or broken reference links",
+              "Questions about scope, wording, or sourcing on a published guide",
+              "Requests related to moderation or public trust concerns"
+            ],
+            "paragraphs": [
+              "The public form and workflow are staged separately, but this page already holds the route and response guidance used for Release 1."
+            ]
+          },
+          {
+            "title": "Editorial expectations",
+            "paragraphs": [
+              "When a correction request points to an official manual, manufacturer page, or similarly approved source, the editorial team should review that source before updating public content.",
+              "Readers should continue to use official documentation and institutional procedures as the operational source of truth."
+            ]
+          },
+          {
+            "title": "Current contact path",
+            "links": [
+              {
+                "label": "Email the editorial team",
+                "href": "mailto:editorial@equip-blog.local"
+              }
+            ],
+            "paragraphs": [
+              "A validated public submission flow will connect to this route in a later execution step."
+            ]
+          }
+        ]
+      },
+      "disclaimer": {
+        "eyebrow": "Disclaimer",
+        "title": "Disclaimer",
+        "description": "Equip Blog is an educational publishing surface. Public pages summarize verified information but do not replace official manuals, manufacturer instructions, or institutional biomedical engineering procedures.",
+        "metaTitle": "Disclaimer",
+        "metaDescription": "Read the Release 1 educational and safety disclaimer for Equip Blog public pages.",
+        "sections": [
+          {
+            "title": "Educational use only",
+            "paragraphs": [
+              "Public content is provided for educational and informational use. It is not a substitute for official operator manuals, service manuals, manufacturer bulletins, or clinical governance requirements.",
+              "Readers should not interpret summaries, maintenance notes, or troubleshooting language on this site as authorization to bypass approved procedures."
+            ]
+          },
+          {
+            "title": "Safety boundary",
+            "items": [
+              "Use official manufacturer documentation for exact model-specific operation.",
+              "Follow institutional biomedical engineering and clinical safety protocols.",
+              "Escalate service or safety-critical questions through qualified channels."
+            ],
+            "paragraphs": [
+              "The public website intentionally keeps disclaimer language visible on post pages as well as this legal route."
+            ]
+          }
+        ]
+      },
+      "privacy": {
+        "eyebrow": "Privacy",
+        "title": "Privacy policy",
+        "description": "The privacy route explains how Release 1 public pages should treat analytics, comments, moderation records, and contact submissions once those capabilities are active.",
+        "metaTitle": "Privacy policy",
+        "metaDescription": "Review the Equip Blog Release 1 privacy expectations for public page interactions.",
+        "sections": [
+          {
+            "title": "Public page data handling",
+            "paragraphs": [
+              "Release 1 keeps the public site focused on reading published content, but analytics, comments, and contact flows are designed with explicit data boundaries from the start.",
+              "Any future comment or contact submission should capture only the minimum data required for moderation, response, and abuse prevention."
+            ]
+          },
+          {
+            "title": "Comment and moderation expectations",
+            "items": [
+              "Comment bodies may be reviewed before publication.",
+              "Guest contact details should only be retained for moderation or response purposes.",
+              "Publicly visible comments should only appear after approval."
+            ],
+            "paragraphs": [
+              "This policy route exists now so the legal content can evolve without changing the locale-aware public structure."
+            ]
+          }
+        ]
+      }
     }
   },
   "admin": {

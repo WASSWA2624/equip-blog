@@ -1,39 +1,23 @@
-import PlaceholderPage from "@/components/common/placeholder-page";
-import {
-  buildLocalizedPath,
-  buildPublicPageMetadata,
-  publicRouteSegments,
-} from "@/features/i18n/routing";
-
-const title = "Disclaimer";
-const description =
-  "The medical and educational disclaimer route is present so legal copy can be added without changing structure.";
+import { PublicStaticPage } from "@/components/public";
+import { getMessages } from "@/features/i18n/get-messages";
+import { buildPublicPageMetadata, publicRouteSegments } from "@/features/i18n/routing";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
+  const messages = await getMessages(locale);
+  const pageContent = messages?.public?.pages?.disclaimer || {};
 
   return buildPublicPageMetadata({
-    description,
+    description: pageContent.metaDescription || pageContent.description || messages.site.tagline,
     locale,
     segments: publicRouteSegments.disclaimer,
-    title,
+    title: pageContent.metaTitle || pageContent.title || messages.site.title,
   });
 }
 
 export default async function DisclaimerPage({ params }) {
   const { locale } = await params;
+  const messages = await getMessages(locale);
 
-  return (
-    <PlaceholderPage
-      badges={[buildLocalizedPath(locale, publicRouteSegments.disclaimer), "Public legal page"]}
-      description={description}
-      eyebrow="Disclaimer"
-      notes={[
-        "Add release-ready educational-use disclaimer text.",
-        "Keep locale-specific legal copy isolated from route structure.",
-        "Link to related privacy and contact surfaces.",
-      ]}
-      title={title}
-    />
-  );
+  return <PublicStaticPage pageContent={messages.public?.pages?.disclaimer || {}} />;
 }

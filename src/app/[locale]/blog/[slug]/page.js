@@ -1,40 +1,69 @@
-import PlaceholderPage from "@/components/common/placeholder-page";
-import { buildLocalizedPath, buildPublicPageMetadata, publicRouteSegments } from "@/features/i18n/routing";
+import { notFound } from "next/navigation";
 
-const description =
-  "Each individual article route exists now so later steps can plug in rendered HTML, share actions, and moderated comments.";
+import { PublicPostPage } from "@/components/public";
+import { getMessages } from "@/features/i18n/get-messages";
+import { buildPublicPageMetadata, publicRouteSegments } from "@/features/i18n/routing";
+import { getPublishedPostPageData } from "@/features/public-site";
+
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }) {
   const { locale, slug } = await params;
-  const title = `Post scaffold: ${slug}`;
+  const pageData = await getPublishedPostPageData({
+    locale,
+    slug,
+  });
 
-  return buildPublicPageMetadata({
-    description,
+  if (!pageData) {
+    return {};
+  }
+
+  const heroImage = pageData.article.heroImages[0]?.url;
+  const metadata = buildPublicPageMetadata({
+    description: pageData.article.metadata.description,
     locale,
     segments: publicRouteSegments.blogPost(slug),
-    title,
+    title: pageData.article.metadata.title,
   });
+
+  return {
+    ...metadata,
+    alternates: {
+      ...metadata.alternates,
+      canonical: pageData.article.url,
+    },
+    openGraph: {
+      description: pageData.article.metadata.description,
+      images: heroImage ? [{ url: heroImage }] : undefined,
+      title: pageData.article.metadata.title,
+      type: "article",
+      url: pageData.article.url,
+    },
+    twitter: {
+      card: heroImage ? "summary_large_image" : "summary",
+      description: pageData.article.metadata.description,
+      images: heroImage ? [heroImage] : undefined,
+      title: pageData.article.metadata.title,
+    },
+  };
 }
 
-export default async function BlogPostPage({ params }) {
+export default async function BlogPostPage({ params, searchParams }) {
   const { locale, slug } = await params;
-  const title = `Post scaffold: ${slug}`;
+  const resolvedSearchParams = await searchParams;
+  const commentsPage = resolvedSearchParams?.commentsPage;
+  const [messages, pageData] = await Promise.all([
+    getMessages(locale),
+    getPublishedPostPageData({
+      commentsPage,
+      locale,
+      slug,
+    }),
+  ]);
 
-  return (
-    <PlaceholderPage
-      badges={[
-        buildLocalizedPath(locale, publicRouteSegments.blogPost(slug)),
-        "Published content",
-        "Comments",
-      ]}
-      description={description}
-      eyebrow="Blog post"
-      notes={[
-        "Load only published post translations.",
-        "Attach comments and share actions.",
-        "Render stored Markdown, HTML, and structured JSON artifacts.",
-      ]}
-      title={title}
-    />
-  );
+  if (!pageData) {
+    notFound();
+  }
+
+  return <PublicPostPage locale={locale} messages={messages.public} pageData={pageData} />;
 }
