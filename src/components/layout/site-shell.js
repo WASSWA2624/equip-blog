@@ -44,7 +44,7 @@ const Shell = styled.div`
 `;
 
 const Header = styled.header`
-  padding: 0.7rem 0.8rem 0;
+  padding: 0.55rem 0.7rem 0;
   position: sticky;
   top: 0;
   z-index: 30;
@@ -63,20 +63,20 @@ const HeaderInner = styled.div`
   border-radius: ${({ theme }) => theme.radius.lg};
   box-shadow: 0 16px 42px rgba(16, 32, 51, 0.08);
   display: grid;
-  gap: 0.72rem;
+  gap: 0.58rem;
   margin: 0 auto;
   max-width: 1180px;
-  padding: 0.82rem 0.88rem;
+  padding: 0.72rem 0.8rem;
 
   @media (min-width: 760px) {
-    padding: 0.92rem 1.05rem;
+    padding: 0.8rem 0.95rem;
   }
 `;
 
 const TopRow = styled.div`
   align-items: start;
   display: grid;
-  gap: 0.65rem;
+  gap: 0.48rem;
 
   @media (min-width: 540px) {
     align-items: center;
@@ -100,7 +100,7 @@ const BrandLink = styled(Link)`
   align-items: flex-start;
   color: ${({ theme }) => theme.colors.text};
   display: inline-flex;
-  gap: 0.72rem;
+  gap: 0.62rem;
   min-width: 0;
 
   @media (min-width: 540px) {
@@ -322,7 +322,7 @@ const MobileNavLink = styled(Link)`
 
 const Footer = styled.footer`
   margin-top: auto;
-  padding: 0 ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.xl};
+  padding: 0 ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
 `;
 
 const FooterInner = styled.div`
@@ -333,19 +333,19 @@ const FooterInner = styled.div`
   border-radius: ${({ theme }) => theme.radius.lg};
   box-shadow: 0 22px 70px rgba(16, 32, 51, 0.08);
   display: grid;
-  gap: ${({ theme }) => theme.spacing.lg};
+  gap: ${({ theme }) => theme.spacing.md};
   margin: 0 auto;
   max-width: 1180px;
-  padding: 1.1rem;
+  padding: 0.95rem 1rem;
 
   @media (min-width: 900px) {
-    padding: 1.35rem 1.45rem;
+    padding: 1.05rem 1.15rem;
   }
 `;
 
 const FooterGrid = styled.div`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.lg};
+  gap: ${({ theme }) => theme.spacing.md};
 
   @media (min-width: 900px) {
     grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.78fr) minmax(0, 0.78fr);
@@ -377,7 +377,7 @@ const FooterBrandTitle = styled.strong`
 
 const FooterDescription = styled.p`
   color: ${({ theme }) => theme.colors.muted};
-  line-height: 1.68;
+  line-height: 1.56;
   margin: 0;
   max-width: 54ch;
 `;
@@ -398,7 +398,7 @@ const FooterSectionTitle = styled.strong`
 
 const FooterLinkList = styled.div`
   display: grid;
-  gap: 0.72rem;
+  gap: 0.5rem;
 `;
 
 const FooterLink = styled(Link)`
@@ -416,9 +416,9 @@ const FooterBottom = styled.div`
   color: ${({ theme }) => theme.colors.muted};
   display: flex;
   flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: 0.5rem;
   justify-content: space-between;
-  padding-top: ${({ theme }) => theme.spacing.md};
+  padding-top: 0.75rem;
 `;
 
 const FooterMetaRow = styled.div`

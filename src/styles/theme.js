@@ -16,10 +16,10 @@ export const lightTheme = {
     sm: "6px",
   },
   spacing: {
-    lg: "24px",
-    md: "16px",
+    lg: "20px",
+    md: "14px",
     sm: "8px",
-    xl: "32px",
+    xl: "24px",
     xs: "4px",
   },
 };

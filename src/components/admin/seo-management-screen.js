@@ -4,10 +4,10 @@ import styled from "styled-components";
 
 const Page = styled.main`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.lg};
+  gap: clamp(1rem, 2.1vw, 1.35rem);
   margin: 0 auto;
   max-width: 1360px;
-  padding: ${({ theme }) => theme.spacing.xl};
+  padding: clamp(1rem, 2.2vw, 1.45rem);
 `;
 
 const Hero = styled.section`
@@ -17,8 +17,8 @@ const Hero = styled.section`
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radius.lg};
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
-  padding: ${({ theme }) => theme.spacing.xl};
+  gap: 0.72rem;
+  padding: clamp(1.05rem, 2.6vw, 1.45rem);
 `;
 
 const Eyebrow = styled.p`
@@ -31,22 +31,23 @@ const Eyebrow = styled.p`
 `;
 
 const Title = styled.h1`
-  font-size: clamp(2rem, 5vw, 3.1rem);
-  line-height: 1.05;
+  font-size: clamp(1.85rem, 4.7vw, 2.8rem);
+  line-height: 1;
   margin: 0;
 `;
 
 const Description = styled.p`
   color: ${({ theme }) => theme.colors.muted};
-  line-height: 1.7;
+  font-size: 0.98rem;
+  line-height: 1.58;
   margin: 0;
-  max-width: 880px;
+  max-width: 64ch;
 `;
 
 const BadgeRow = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: 0.5rem;
 `;
 
 const Pill = styled.span`
@@ -58,63 +59,61 @@ const Pill = styled.span`
         : "rgba(0, 95, 115, 0.12)"};
   border-radius: 999px;
   display: inline-flex;
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   font-weight: 600;
-  padding: 0.3rem 0.7rem;
+  padding: 0.28rem 0.62rem;
 `;
 
 const SummaryGrid = styled.section`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
-
-  @media (min-width: 760px) {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
+  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
 `;
 
 const SummaryCard = styled.section`
   background: rgba(255, 255, 255, 0.94);
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radius.md};
-  box-shadow: 0 18px 50px rgba(16, 32, 51, 0.08);
+  box-shadow: 0 12px 34px rgba(16, 32, 51, 0.08);
   display: grid;
-  gap: ${({ theme }) => theme.spacing.xs};
-  padding: ${({ theme }) => theme.spacing.lg};
+  gap: 0.22rem;
+  padding: 0.92rem 1rem;
 `;
 
 const SummaryValue = styled.strong`
-  font-size: 2rem;
-  line-height: 1;
+  font-size: clamp(1.55rem, 3vw, 2rem);
+  line-height: 0.92;
 `;
 
 const SmallText = styled.p`
   color: ${({ theme }) => theme.colors.muted};
-  line-height: 1.6;
+  font-size: 0.94rem;
+  line-height: 1.45;
   margin: 0;
 `;
 
 const Layout = styled.section`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.lg};
+  gap: clamp(1rem, 2vw, 1.25rem);
 
   @media (min-width: 1120px) {
-    grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 330px) minmax(0, 1fr);
   }
 `;
 
 const Stack = styled.div`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.lg};
+  gap: clamp(0.95rem, 1.8vw, 1.2rem);
 `;
 
 const Card = styled.section`
   background: rgba(255, 255, 255, 0.94);
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radius.md};
-  box-shadow: 0 20px 60px rgba(16, 32, 51, 0.08);
+  box-shadow: 0 14px 38px rgba(16, 32, 51, 0.08);
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
-  padding: ${({ theme }) => theme.spacing.lg};
+  gap: 0.78rem;
+  padding: clamp(0.95rem, 2.1vw, 1.15rem);
 `;
 
 const CardTitle = styled.h2`
@@ -124,7 +123,7 @@ const CardTitle = styled.h2`
 
 const MetaGrid = styled.dl`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: 0.78rem;
 `;
 
 const MetaItem = styled.div`
@@ -157,7 +156,7 @@ const Anchor = styled.a`
 
 const RouteList = styled.div`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: 0.7rem;
 `;
 
 const RouteRow = styled.div`
@@ -165,8 +164,8 @@ const RouteRow = styled.div`
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radius.md};
   display: grid;
-  gap: ${({ theme }) => theme.spacing.sm};
-  padding: ${({ theme }) => theme.spacing.md};
+  gap: 0.55rem;
+  padding: 0.82rem 0.9rem;
 `;
 
 const RouteLabel = styled.strong`
@@ -175,7 +174,7 @@ const RouteLabel = styled.strong`
 
 const PostList = styled.div`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: 0.78rem;
 `;
 
 const PostCard = styled.article`
@@ -183,8 +182,8 @@ const PostCard = styled.article`
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radius.md};
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
-  padding: ${({ theme }) => theme.spacing.lg};
+  gap: 0.78rem;
+  padding: 0.95rem 1rem;
 `;
 
 const PostTitle = styled.h3`
@@ -194,7 +193,7 @@ const PostTitle = styled.h3`
 
 const PostMetaGrid = styled.dl`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: 0.78rem;
 
   @media (min-width: 760px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -108,15 +108,11 @@ function getCommonCopy(publicMessages = {}) {
 
 const PageMain = styled.main`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.xl};
+  gap: clamp(1rem, 2.3vw, 1.5rem);
   margin: 0 auto;
   max-width: 1180px;
-  padding: ${({ theme }) => theme.spacing.lg};
+  padding: clamp(0.95rem, 2vw, 1.25rem);
   width: 100%;
-
-  @media (min-width: 800px) {
-    padding: ${({ theme }) => theme.spacing.xl};
-  }
 `;
 
 const Panel = styled.section`
@@ -130,22 +126,18 @@ const Panel = styled.section`
   border-radius: ${({ theme }) => theme.radius.lg};
   box-shadow: 0 22px 80px rgba(16, 32, 51, 0.08);
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: ${({ theme }) => theme.spacing.sm};
   overflow: hidden;
-  padding: ${({ theme }) => theme.spacing.lg};
-
-  @media (min-width: 800px) {
-    padding: ${({ theme }) => theme.spacing.xl};
-  }
+  padding: clamp(0.95rem, 2.2vw, 1.25rem);
 `;
 
 const HeroPanel = styled(Panel)`
-  gap: ${({ theme }) => theme.spacing.lg};
+  gap: ${({ theme }) => theme.spacing.md};
 `;
 
 const SplitHero = styled.div`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.lg};
+  gap: ${({ theme }) => theme.spacing.md};
 
   @media (min-width: 960px) {
     align-items: start;
@@ -171,15 +163,15 @@ const Title = styled.h1`
 
 const Lead = styled.p`
   color: ${({ theme }) => theme.colors.muted};
-  font-size: 1.03rem;
-  line-height: 1.75;
+  font-size: 0.98rem;
+  line-height: 1.62;
   margin: 0;
   max-width: 66ch;
 `;
 
 const StatGrid = styled.div`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: ${({ theme }) => theme.spacing.sm};
   grid-template-columns: repeat(2, minmax(0, 1fr));
 
   @media (min-width: 800px) {
@@ -193,7 +185,7 @@ const StatCard = styled.div`
   border-radius: ${({ theme }) => theme.radius.md};
   display: grid;
   gap: ${({ theme }) => theme.spacing.xs};
-  padding: ${({ theme }) => theme.spacing.md};
+  padding: 0.82rem 0.88rem;
 `;
 
 const StatValue = styled.strong`
@@ -218,14 +210,14 @@ const SectionTitle = styled.h2`
 
 const SectionDescription = styled.p`
   color: ${({ theme }) => theme.colors.muted};
-  line-height: 1.7;
+  line-height: 1.58;
   margin: 0;
   max-width: 60ch;
 `;
 
 const Grid = styled.div`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: ${({ theme }) => theme.spacing.sm};
 
   ${({ $columns }) =>
     $columns === "three" &&
@@ -257,8 +249,8 @@ const Card = styled.article`
   border: 1px solid rgba(16, 32, 51, 0.08);
   border-radius: ${({ theme }) => theme.radius.md};
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
-  padding: ${({ theme }) => theme.spacing.lg};
+  gap: ${({ theme }) => theme.spacing.sm};
+  padding: ${({ theme }) => theme.spacing.md};
 `;
 
 const MetaRow = styled.div`
@@ -298,7 +290,7 @@ const TitleLink = styled(Link)`
 
 const PostCardText = styled.p`
   color: ${({ theme }) => theme.colors.muted};
-  line-height: 1.72;
+  line-height: 1.6;
   margin: 0;
 `;
 
@@ -756,14 +748,14 @@ export function PublicCollectionPage({
 }
 
 const ContentSection = styled(Panel)`
-  gap: ${({ theme }) => theme.spacing.lg};
+  gap: ${({ theme }) => theme.spacing.md};
 `;
 
 const RichText = styled.div`
   color: ${({ theme }) => theme.colors.muted};
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
-  line-height: 1.78;
+  gap: ${({ theme }) => theme.spacing.sm};
+  line-height: 1.62;
 `;
 
 const BulletList = styled.ul`
@@ -829,12 +821,12 @@ const BreadcrumbLink = styled(Link)`
 `;
 
 const PostHeader = styled(Panel)`
-  gap: ${({ theme }) => theme.spacing.lg};
+  gap: ${({ theme }) => theme.spacing.md};
 `;
 
 const PostLayout = styled.div`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.lg};
+  gap: ${({ theme }) => theme.spacing.md};
 
   @media (min-width: 1100px) {
     align-items: start;
@@ -844,7 +836,7 @@ const PostLayout = styled.div`
 
 const ArticleColumn = styled.div`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.lg};
+  gap: ${({ theme }) => theme.spacing.md};
 `;
 
 const SidebarColumn = styled.aside`
@@ -862,14 +854,14 @@ const HeroImageGrid = styled.div`
 `;
 
 const ArticleSection = styled(Panel)`
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: ${({ theme }) => theme.spacing.sm};
 `;
 
 const ArticleBody = styled.div`
   color: ${({ theme }) => theme.colors.muted};
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
-  line-height: 1.78;
+  gap: ${({ theme }) => theme.spacing.sm};
+  line-height: 1.62;
 `;
 
 const NumberedList = styled.ol`

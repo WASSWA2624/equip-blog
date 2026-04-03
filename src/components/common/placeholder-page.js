@@ -4,10 +4,10 @@ import styled from "styled-components";
 
 const Wrapper = styled.main`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.lg};
+  gap: ${({ theme }) => theme.spacing.md};
   margin: 0 auto;
   max-width: 1100px;
-  padding: ${({ theme }) => theme.spacing.xl};
+  padding: clamp(0.95rem, 2vw, 1.25rem);
 `;
 
 const Hero = styled.section`
@@ -16,9 +16,9 @@ const Hero = styled.section`
   border-radius: ${({ theme }) => theme.radius.lg};
   box-shadow: 0 24px 80px rgba(16, 32, 51, 0.08);
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: ${({ theme }) => theme.spacing.sm};
   overflow: hidden;
-  padding: ${({ theme }) => theme.spacing.xl};
+  padding: clamp(1rem, 2.4vw, 1.35rem);
   position: relative;
 
   &::after {
@@ -32,7 +32,7 @@ const Hero = styled.section`
 
 const HeroContent = styled.div`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: ${({ theme }) => theme.spacing.sm};
   position: relative;
   z-index: 1;
 `;
@@ -54,8 +54,8 @@ const Title = styled.h1`
 
 const Description = styled.p`
   color: ${({ theme }) => theme.colors.muted};
-  font-size: 1.05rem;
-  line-height: 1.7;
+  font-size: 1rem;
+  line-height: 1.58;
   margin: 0;
   max-width: 760px;
 `;
@@ -90,7 +90,7 @@ const Card = styled.article`
   border-radius: ${({ theme }) => theme.radius.md};
   display: grid;
   gap: ${({ theme }) => theme.spacing.sm};
-  padding: ${({ theme }) => theme.spacing.lg};
+  padding: ${({ theme }) => theme.spacing.md};
 `;
 
 const CardTitle = styled.h2`
