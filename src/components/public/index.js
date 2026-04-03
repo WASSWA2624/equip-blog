@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import styled, { css } from "styled-components";
 
+import PublicViewTracker from "@/components/analytics/public-view-tracker";
 import { PublicCommentSection } from "@/components/comments";
 
 function formatDateLabel(locale, value) {
@@ -541,6 +542,7 @@ export function PublicHomePage({ locale, messages, pageContent, pageData }) {
 
   return (
     <PageMain>
+      <PublicViewTracker eventType="WEBSITE_VIEW" locale={locale} />
       <HeroPanel $tinted>
         <SplitHero>
           <div>
@@ -662,6 +664,7 @@ export function PublicCollectionPage({
 
   return (
     <PageMain>
+      <PublicViewTracker eventType="PAGE_VIEW" locale={locale} />
       <HeroPanel $tinted>
         <Eyebrow>{pageContent.eyebrow}</Eyebrow>
         <Title>{entity?.name || pageContent.title}</Title>
@@ -771,9 +774,10 @@ const BulletList = styled.ul`
   padding-left: 1.25rem;
 `;
 
-export function PublicStaticPage({ pageContent }) {
+export function PublicStaticPage({ locale, pageContent }) {
   return (
     <PageMain>
+      <PublicViewTracker eventType="PAGE_VIEW" locale={locale} />
       <HeroPanel $tinted>
         <Eyebrow>{pageContent.eyebrow}</Eyebrow>
         <Title>{pageContent.title}</Title>
@@ -1107,6 +1111,7 @@ export function PublicPostPage({ locale, messages, pageData }) {
 
   return (
     <PageMain>
+      <PublicViewTracker eventType="POST_VIEW" locale={locale} postId={article.id} />
       <PostHeader $tinted>
         <Breadcrumbs aria-label="Breadcrumb">
           {article.breadcrumb.map((item, index) => (

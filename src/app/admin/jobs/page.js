@@ -1,17 +1,18 @@
-import PlaceholderPage from "@/components/common/placeholder-page";
+import JobLogsScreen from "@/components/admin/job-logs-screen";
+import { getAdminJobLogsSnapshot } from "@/features/analytics";
+import { defaultLocale } from "@/features/i18n/config";
+import { getMessages } from "@/features/i18n/get-messages";
 
-export default function JobsPage() {
-  return (
-    <PlaceholderPage
-      badges={["/admin/jobs", "Logs"]}
-      description="The jobs and generation logs route is scaffolded for operational visibility."
-      eyebrow="Jobs"
-      notes={[
-        "Display generation and publish job history.",
-        "Expose retry and status details later.",
-        "Keep admin access protected.",
-      ]}
-      title="Job and generation logs"
-    />
-  );
+export default async function JobsPage({ searchParams }) {
+  const resolvedSearchParams = await searchParams;
+  const [messages, snapshot] = await Promise.all([
+    getMessages(defaultLocale),
+    getAdminJobLogsSnapshot({
+      jobId: resolvedSearchParams.jobId,
+      search: resolvedSearchParams.search,
+      status: resolvedSearchParams.status,
+    }),
+  ]);
+
+  return <JobLogsScreen copy={messages.admin.jobLogs} initialData={snapshot} />;
 }

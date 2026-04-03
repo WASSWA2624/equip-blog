@@ -20,5 +20,5 @@ export default async function AboutPage({ params }) {
   const { locale } = await params;
   const messages = await getMessages(locale);
 
-  return <PublicStaticPage pageContent={messages.public?.pages?.about || {}} />;
+  return <PublicStaticPage locale={locale} pageContent={messages.public?.pages?.about || {}} />;
 }

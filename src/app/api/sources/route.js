@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { recordObservabilityEvent } from "@/lib/analytics";
 import { requireAdminApiPermission } from "@/lib/auth/api";
 import { ADMIN_PERMISSIONS } from "@/lib/auth/rbac";
 import {
@@ -25,6 +26,18 @@ export async function GET(request) {
       success: true,
     });
   } catch (error) {
+    await recordObservabilityEvent({
+      action: "SOURCE_FETCH_ERROR",
+      actorId: auth.user.id,
+      entityId: "source_configuration",
+      entityType: "source_config",
+      error,
+      message: "Source configuration request failed.",
+      payload: {
+        method: "GET",
+        route: "/api/sources",
+      },
+    }).catch(() => {});
     const payload = createResearchDataErrorPayload(error);
 
     return NextResponse.json(payload.body, { status: payload.statusCode });
@@ -54,6 +67,18 @@ export async function PUT(request) {
       success: true,
     });
   } catch (error) {
+    await recordObservabilityEvent({
+      action: "SOURCE_FETCH_ERROR",
+      actorId: auth.user.id,
+      entityId: "source_configuration",
+      entityType: "source_config",
+      error,
+      message: "Source configuration update failed.",
+      payload: {
+        method: "PUT",
+        route: "/api/sources",
+      },
+    }).catch(() => {});
     const payload = createResearchDataErrorPayload(error);
 
     return NextResponse.json(payload.body, { status: payload.statusCode });

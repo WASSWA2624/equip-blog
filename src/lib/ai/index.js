@@ -2,6 +2,7 @@ import { PostStatus } from "@prisma/client";
 import { z } from "zod";
 
 import { getMessages } from "@/features/i18n/get-messages";
+import { recordObservabilityEvent } from "@/lib/analytics";
 import { generatedArticleSectionOrder } from "@/lib/content/article-structure";
 import { detectDuplicateEquipmentPost } from "@/lib/generation/duplicates";
 import { generationStageOrder, generationTerminalStageIds } from "@/lib/generation/stages";
@@ -1453,9 +1454,31 @@ export async function composeDraftPackage(input, options = {}, prisma) {
       warnings: fixtureResolution.researchPayload.reliabilityWarnings,
     },
   };
-  const seoPayload = buildSeoPayload(articleWithArtifacts, {
-    locale: input.locale,
-  });
+  let seoPayload;
+
+  try {
+    seoPayload = buildSeoPayload(articleWithArtifacts, {
+      locale: input.locale,
+    });
+  } catch (error) {
+    await recordObservabilityEvent(
+      {
+        action: "SEO_FAILURE",
+        entityId: input.equipmentName || input.locale,
+        entityType: "seo_generation",
+        error,
+        message: `SEO payload generation failed for "${input.equipmentName}" in locale "${input.locale}".`,
+        payload: {
+          locale: input.locale,
+          providerConfigId: providerConfig.id,
+          stage: "seo_generation",
+        },
+      },
+      prisma,
+    ).catch(() => {});
+
+    throw error;
+  }
 
   return {
     article: articleWithArtifacts,
@@ -1489,6 +1512,7 @@ export async function generateDraftFromRequest(input, options = {}, prisma) {
   );
   const job = await createGenerationJobRecord(
     {
+      actorId: options.actorId,
       currentStage: generationStageOrder[0],
       equipmentName: input.equipmentName,
       locale: input.locale,
@@ -1512,6 +1536,7 @@ export async function generateDraftFromRequest(input, options = {}, prisma) {
       await cancelGenerationJob(
         job.id,
         {
+          actorId: options.actorId,
           currentStage: generationTerminalStageIds.duplicateCheckBlocked,
           postId: duplicateCheck.duplicateMatch?.postId || null,
           responseJson: {
@@ -1575,6 +1600,7 @@ export async function generateDraftFromRequest(input, options = {}, prisma) {
     await completeGenerationJob(
       job.id,
       {
+        actorId: options.actorId,
         currentStage: generationStageOrder[3],
         postId: persistedDraft.postId,
         responseJson: {
@@ -1615,6 +1641,7 @@ export async function generateDraftFromRequest(input, options = {}, prisma) {
         job.id,
         error,
         {
+          actorId: options.actorId,
           currentStage: generationTerminalStageIds.failed,
         },
         prisma,

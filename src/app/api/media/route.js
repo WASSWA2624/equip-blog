@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { recordObservabilityEvent } from "@/lib/analytics";
 import {
   createMediaLibraryErrorPayload,
   getMediaLibrarySnapshot,
@@ -38,6 +39,18 @@ export async function GET(request) {
       success: true,
     });
   } catch (error) {
+    await recordObservabilityEvent({
+      action: "MEDIA_LIBRARY_FAILURE",
+      actorId: auth.user.id,
+      entityId: "media_library",
+      entityType: "media_library",
+      error,
+      message: "Media library request failed.",
+      payload: {
+        method: "GET",
+        route: "/api/media",
+      },
+    }).catch(() => {});
     const payload = createMediaLibraryErrorPayload(error);
 
     return NextResponse.json(payload.body, { status: payload.statusCode });
@@ -74,6 +87,18 @@ export async function POST(request) {
       success: true,
     });
   } catch (error) {
+    await recordObservabilityEvent({
+      action: "MEDIA_LIBRARY_FAILURE",
+      actorId: auth.user.id,
+      entityId: "media_library",
+      entityType: "media_library",
+      error,
+      message: "Media upload failed.",
+      payload: {
+        method: "POST",
+        route: "/api/media",
+      },
+    }).catch(() => {});
     const payload = createMediaLibraryErrorPayload(error);
 
     return NextResponse.json(payload.body, { status: payload.statusCode });

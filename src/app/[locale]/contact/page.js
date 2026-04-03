@@ -20,5 +20,5 @@ export default async function ContactPage({ params }) {
   const { locale } = await params;
   const messages = await getMessages(locale);
 
-  return <PublicStaticPage pageContent={messages.public?.pages?.contact || {}} />;
+  return <PublicStaticPage locale={locale} pageContent={messages.public?.pages?.contact || {}} />;
 }

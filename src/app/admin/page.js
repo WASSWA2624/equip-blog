@@ -1,17 +1,15 @@
-import PlaceholderPage from "@/components/common/placeholder-page";
+import AnalyticsDashboardScreen from "@/components/admin/analytics-dashboard-screen";
+import { getAdminDashboardSnapshot } from "@/features/analytics";
+import { defaultLocale } from "@/features/i18n/config";
+import { getMessages } from "@/features/i18n/get-messages";
+import { requireAdminPageSession } from "@/lib/auth";
 
-export default function AdminDashboardPage() {
-  return (
-    <PlaceholderPage
-      badges={["/admin", "Protected route"]}
-      description="The admin dashboard route is scaffolded and ready for authenticated editorial overview widgets."
-      eyebrow="Dashboard"
-      notes={[
-        "Add jobs, content, and moderation summaries.",
-        "Require authenticated admin access.",
-        "Expose locale-ready labels from message files.",
-      ]}
-      title="Admin dashboard"
-    />
-  );
+export default async function AdminDashboardPage() {
+  const auth = await requireAdminPageSession("/admin");
+  const [messages, snapshot] = await Promise.all([
+    getMessages(defaultLocale),
+    getAdminDashboardSnapshot(auth.user),
+  ]);
+
+  return <AnalyticsDashboardScreen copy={messages.admin.dashboard} initialData={snapshot} />;
 }

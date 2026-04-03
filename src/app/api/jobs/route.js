@@ -1,6 +1,8 @@
+import { NextResponse } from "next/server";
+
+import { getAdminJobLogsSnapshot } from "@/features/analytics";
 import { requireAdminApiPermission } from "@/lib/auth/api";
 import { ADMIN_PERMISSIONS } from "@/lib/auth/rbac";
-import { scaffoldRouteResponse } from "@/lib/validation/api-placeholders";
 
 export async function GET(request) {
   const auth = await requireAdminApiPermission(request, ADMIN_PERMISSIONS.VIEW_JOBS);
@@ -9,9 +11,25 @@ export async function GET(request) {
     return auth.response;
   }
 
-  return scaffoldRouteResponse({
-    access: "admin",
-    method: "GET",
-    route: "/api/jobs",
-  });
+  try {
+    const snapshot = await getAdminJobLogsSnapshot({
+      jobId: request.nextUrl.searchParams.get("jobId") || undefined,
+      search: request.nextUrl.searchParams.get("search") || undefined,
+      status: request.nextUrl.searchParams.get("status") || undefined,
+    });
+
+    return NextResponse.json({
+      data: snapshot,
+      success: true,
+    });
+  } catch {
+    return NextResponse.json(
+      {
+        message: "Unable to load job logs.",
+        status: "internal_error",
+        success: false,
+      },
+      { status: 500 },
+    );
+  }
 }
