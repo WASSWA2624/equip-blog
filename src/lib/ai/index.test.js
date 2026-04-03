@@ -102,6 +102,34 @@ function createGenerationRequest(overrides = {}) {
   };
 }
 
+async function createMicroscopeFixtureResolution() {
+  const [{ getFixtureByNormalizedEquipmentName }, { buildVerifiedResearchPayload }] = await Promise.all([
+    import("./fixture-data"),
+    import("@/lib/research"),
+  ]);
+  const fixture = getFixtureByNormalizedEquipmentName("microscope");
+  const researchPayload = buildVerifiedResearchPayload(
+    {
+      ...fixture.researchInput,
+      equipment: {
+        aliases: fixture.researchInput.aliases || [],
+        name: "Microscope",
+      },
+      equipmentName: "Microscope",
+      locale: "en",
+      sourceConfigs: [],
+    },
+    {
+      now: new Date("2026-04-03T08:00:00.000Z"),
+    },
+  );
+
+  return {
+    fixture,
+    researchPayload,
+  };
+}
+
 function createDuplicatePost(overrides = {}) {
   return {
     createdAt: new Date("2026-04-03T07:00:00.000Z"),
@@ -172,6 +200,7 @@ describe("AI composition pipeline", () => {
       },
     };
     const { composeDraftPackage, generatedArticleSectionOrder } = await import("./index");
+    const fixtureResolution = await createMicroscopeFixtureResolution();
 
     const draft = await composeDraftPackage(
       {
@@ -196,6 +225,10 @@ describe("AI composition pipeline", () => {
           model: "gpt-5.4",
           provider: "openai",
         },
+        providerOptions: {
+          useDeterministicFixture: true,
+        },
+        fixtureResolution,
       },
       prisma,
     );
@@ -232,6 +265,9 @@ describe("AI composition pipeline", () => {
           model: "claude-sonnet-4-5-20250929",
           provider: "anthropic",
         },
+        providerOptions: {
+          useDeterministicFixture: true,
+        },
       },
       prisma,
     );
@@ -240,6 +276,37 @@ describe("AI composition pipeline", () => {
       model: "claude-sonnet-4-5-20250929",
       provider: "anthropic",
     });
+    expect(draft.providerExecutionMode).toBe("deterministic_fixture");
+  });
+
+  it("no longer fixture-blocks non-microscope equipment when a provider composition path is available", async () => {
+    const prisma = {
+      sourceConfig: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
+    };
+    const { composeDraftPackage } = await import("./index");
+
+    const draft = await composeDraftPackage(
+      createGenerationRequest({
+        equipmentName: "Centrifuge",
+      }),
+      {
+        disclaimer: "English disclaimer",
+        promptLayers: createPromptLayers(),
+        providerConfig: {
+          id: "provider_cfg_default_generation",
+          model: "gpt-5.4",
+          provider: "openai",
+        },
+        providerOptions: {
+          useDeterministicFixture: true,
+        },
+      },
+      prisma,
+    );
+
+    expect(draft.article.title).toContain("Centrifuge");
     expect(draft.providerExecutionMode).toBe("deterministic_fixture");
   });
 
@@ -283,6 +350,9 @@ describe("AI composition pipeline", () => {
         disclaimer: "English disclaimer",
         promptLayers: createPromptLayers(),
         providerConfig: primaryProviderConfig,
+        providerOptions: {
+          useDeterministicFixture: true,
+        },
       },
       baselinePrisma,
     );
@@ -497,6 +567,9 @@ describe("AI composition pipeline", () => {
           model: "gpt-5.4",
           provider: "openai",
         },
+        providerOptions: {
+          useDeterministicFixture: true,
+        },
       },
       {
         sourceConfig: {
@@ -645,9 +718,14 @@ describe("AI composition pipeline", () => {
       },
     };
     const { generateDraftFromRequest } = await import("./index");
+    const fixtureResolution = await createMicroscopeFixtureResolution();
 
     const result = await generateDraftFromRequest(createGenerationRequest(), {
         actorId: "user_1",
+        fixtureResolution,
+        providerOptions: {
+          useDeterministicFixture: true,
+        },
       }, prisma);
 
     expect(result).toMatchObject({
@@ -715,6 +793,9 @@ describe("AI composition pipeline", () => {
         createGenerationRequest(),
         {
           actorId: "user_1",
+          providerOptions: {
+            useDeterministicFixture: true,
+          },
         },
         prisma,
       ),
@@ -872,6 +953,7 @@ describe("AI composition pipeline", () => {
       },
     };
     const { generateDraftFromRequest } = await import("./index");
+    const fixtureResolution = await createMicroscopeFixtureResolution();
 
     const result = await generateDraftFromRequest(
       createGenerationRequest({
@@ -879,6 +961,10 @@ describe("AI composition pipeline", () => {
       }),
       {
         actorId: "user_1",
+        fixtureResolution,
+        providerOptions: {
+          useDeterministicFixture: true,
+        },
       },
       prisma,
     );

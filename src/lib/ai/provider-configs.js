@@ -577,6 +577,10 @@ export async function getProviderConfigById(providerConfigId, prisma) {
 export async function findFallbackProviderConfig(prisma, excludeId = null) {
   const db = await resolvePrismaClient(prisma);
 
+  if (typeof db.modelProviderConfig?.findFirst !== "function") {
+    return null;
+  }
+
   return db.modelProviderConfig.findFirst({
     orderBy: [{ updatedAt: "desc" }, { model: "asc" }],
     select: buildProviderConfigSelect(),

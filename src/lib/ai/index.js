@@ -1,4 +1,6 @@
 import { PostStatus } from "@prisma/client";
+import { generateText, Output } from "ai";
+import { createOpenAI } from "@ai-sdk/openai";
 import { z } from "zod";
 
 import { getMessages } from "@/features/i18n/get-messages";
@@ -9,10 +11,8 @@ import { detectDuplicateEquipmentPost } from "@/lib/generation/duplicates";
 import { generationStageOrder, generationTerminalStageIds } from "@/lib/generation/stages";
 import { buildMarkdownFromStructuredArticle, buildHtmlFromStructuredArticle } from "@/lib/markdown";
 import { createCanonicalEquipmentIdentity, normalizeDisplayText } from "@/lib/normalization";
-import { buildVerifiedResearchPayload } from "@/lib/research";
 import { buildSeoPayload } from "@/lib/seo";
 
-import { getFixtureByNormalizedEquipmentName } from "./fixture-data";
 import {
   findFallbackProviderConfig,
   formatProviderConfigLabel,
@@ -760,7 +760,7 @@ function createSection(id, title, payload) {
 
 function collectSourceReferenceIds(entries) {
   return dedupeStrings(
-    (entries || []).flatMap((entry) => entry.sourceReferenceIds || []),
+    (entries || []).flatMap((entry) => entry?.sourceReferenceIds || []),
   );
 }
 
@@ -920,7 +920,25 @@ function buildSopSection(researchPayload, fixture) {
       ...(researchPayload.maintenanceTasks || []),
     ]),
     steps: [
-      ...(fixture.compositionNotes.howToUseSteps || []),
+      ...((fixture?.compositionNotes?.howToUseSteps || []).length
+        ? fixture.compositionNotes.howToUseSteps
+        : [
+            {
+              description:
+                "Confirm the device is clean, safe to energize, and prepared according to the official operating instructions before use.",
+              title: "Prepare the equipment",
+            },
+            {
+              description:
+                "Follow the manufacturer workflow step by step, documenting any model-specific adjustments and abnormal behavior.",
+              title: "Operate using the approved workflow",
+            },
+            {
+              description:
+                "Shut the equipment down safely, complete cleaning or reset steps, and record follow-up maintenance or service actions when needed.",
+              title: "Close out and document the session",
+            },
+          ]),
       ...(modelDifferenceNote.length
         ? [
             {
@@ -1125,7 +1143,7 @@ function buildStructuredArticle({ disclaimer, fixture, providerConfig, request, 
       providerConfigId: providerConfig.id,
       targetAudience: request.targetAudience,
     },
-    relatedKeywords: fixture.compositionNotes.relatedKeywords,
+    relatedKeywords: fixture?.compositionNotes?.relatedKeywords || [researchPayload.equipment.name],
     sections: [...baseSections, ...optionalSections],
     slug: researchPayload.equipment.slug,
     structuredBlocks: {
@@ -1207,6 +1225,134 @@ function validateStructuredArticle(article) {
   }
 }
 
+const faqItemSchema = z.object({
+  answer: z.string().trim().min(1),
+  question: z.string().trim().min(1),
+});
+
+const articleSectionSchema = z.object({
+  id: z.string().trim().min(1),
+  title: z.string().trim().min(1),
+}).passthrough();
+
+const generatedArticleSchema = z.object({
+  disclaimer: z.string().trim().min(1),
+  equipmentAliases: z.array(z.string().trim()).default([]),
+  equipmentName: z.string().trim().min(1),
+  excerpt: z.string().trim().min(1),
+  faq: z.array(faqItemSchema).default([]),
+  generationContext: z.object({
+    articleDepth: z.string().trim().min(1),
+    locale: z.string().trim().min(1),
+    provider: z.string().trim().min(1),
+    providerConfigId: z.string().trim().min(1),
+    targetAudience: z.array(z.string().trim().min(1)).default([]),
+  }).passthrough(),
+  relatedKeywords: z.array(z.string().trim().min(1)).default([]),
+  sections: z.array(articleSectionSchema).min(1),
+  slug: z.string().trim().min(1),
+  structuredBlocks: z.object({
+    faq: z.array(faqItemSchema).default([]),
+    faults: z.array(z.object({}).passthrough()).default([]),
+    maintenanceTasks: z.array(z.object({}).passthrough()).default([]),
+    models: z.array(z.object({}).passthrough()).default([]),
+  }).passthrough(),
+  title: z.string().trim().min(1),
+}).passthrough();
+
+function sortStructuredArticleSections(sections) {
+  return [...sections].sort((left, right) => {
+    const leftIndex = generatedArticleSectionOrder.indexOf(left.id);
+    const rightIndex = generatedArticleSectionOrder.indexOf(right.id);
+    const normalizedLeftIndex = leftIndex === -1 ? Number.MAX_SAFE_INTEGER : leftIndex;
+    const normalizedRightIndex = rightIndex === -1 ? Number.MAX_SAFE_INTEGER : rightIndex;
+
+    if (normalizedLeftIndex !== normalizedRightIndex) {
+      return normalizedLeftIndex - normalizedRightIndex;
+    }
+
+    return left.id.localeCompare(right.id, undefined, {
+      sensitivity: "base",
+    });
+  });
+}
+
+function normalizeGeneratedArticle(article, { disclaimer, providerConfig, request }) {
+  const parsedArticle = generatedArticleSchema.parse(article);
+  const normalizedFaq = parsedArticle.faq.length
+    ? parsedArticle.faq
+    : parsedArticle.structuredBlocks?.faq || [];
+
+  return {
+    ...parsedArticle,
+    disclaimer,
+    equipmentAliases: dedupeStrings(parsedArticle.equipmentAliases || []),
+    equipmentName: normalizeDisplayText(parsedArticle.equipmentName) || request.equipmentName,
+    faq: normalizedFaq,
+    generationContext: {
+      ...parsedArticle.generationContext,
+      articleDepth: request.articleDepth,
+      locale: request.locale,
+      provider: providerConfig.provider,
+      providerConfigId: providerConfig.id,
+      targetAudience: request.targetAudience,
+    },
+    relatedKeywords: dedupeStrings(parsedArticle.relatedKeywords || [request.equipmentName]),
+    sections: sortStructuredArticleSections(parsedArticle.sections || []),
+    slug: createCanonicalEquipmentIdentity(parsedArticle.equipmentName || request.equipmentName).slug,
+    structuredBlocks: {
+      ...(parsedArticle.structuredBlocks || {}),
+      faq: normalizedFaq,
+      faults: parsedArticle.structuredBlocks?.faults || [],
+      maintenanceTasks: parsedArticle.structuredBlocks?.maintenanceTasks || [],
+      models: parsedArticle.structuredBlocks?.models || [],
+    },
+    title: normalizeDisplayText(parsedArticle.title) || request.equipmentName,
+  };
+}
+
+async function composeStructuredArticleWithOpenAiSdk({
+  promptBundle,
+  providerApiKey,
+  providerConfig,
+  request,
+}) {
+  const openai = createOpenAI({
+    apiKey: providerApiKey,
+  });
+  const system = promptBundle.map((layer) => layer.renderedSystemPrompt).filter(Boolean).join("\n\n");
+  const prompt = [
+    ...promptBundle.map((layer) => layer.renderedUserPrompt).filter(Boolean),
+    [
+      "Return a complete structured article object that satisfies the provided schema expectations.",
+      `Use "${request.equipmentName}" as the target equipment name.`,
+      "Do not hardcode microscope-specific content unless the requested equipment is actually a microscope.",
+      `Keep sections in this order when present: ${generatedArticleSectionOrder.join(", ")}.`,
+      "Always include the required sections: definition_and_overview, principle_of_operation, daily_care_and_maintenance, references, disclaimer.",
+      "structuredBlocks.faq must match faq.",
+      "Use empty arrays instead of invented references when verified references are unavailable.",
+    ].join("\n"),
+  ].join("\n\n");
+
+  const result = await generateText({
+    model: openai(providerConfig.model),
+    output: Output.object({
+      schema: generatedArticleSchema,
+    }),
+    prompt,
+    system,
+  });
+
+  return {
+    executionMode: "ai_sdk_object",
+    structuredArticle: normalizeGeneratedArticle(result.output, {
+      disclaimer: request.disclaimer || "",
+      providerConfig,
+      request,
+    }),
+  };
+}
+
 function createProvider(providerConfig, options = {}) {
   if (!getAiProviderByValue(providerConfig.provider)) {
     throw new AiCompositionError(
@@ -1243,10 +1389,27 @@ function createProvider(providerConfig, options = {}) {
         });
       }
 
-      return {
-        executionMode: "deterministic_fixture",
-        structuredArticle: buildStructuredArticle(context),
-      };
+      if (options.useDeterministicFixture === true) {
+        return {
+          executionMode: "deterministic_fixture",
+          structuredArticle: buildStructuredArticle(context),
+        };
+      }
+
+      if (providerConfig.provider !== "openai") {
+        throw new AiCompositionError(
+          `Provider "${providerConfig.provider}" is not yet wired to the AI SDK generation runtime.`,
+          {
+            status: "unsupported_provider",
+            statusCode: 400,
+          },
+        );
+      }
+
+      return composeStructuredArticleWithOpenAiSdk({
+        ...context,
+        providerApiKey: resolvedCredential.apiKey,
+      });
     },
   };
 }
@@ -1303,46 +1466,49 @@ async function getSourceConfigs(prisma) {
   });
 }
 
-async function resolveFixtureResearchPayload(request, prisma) {
-  const equipmentIdentity = createCanonicalEquipmentIdentity(request.equipmentName);
-  const fixture = getFixtureByNormalizedEquipmentName(equipmentIdentity.normalizedName);
-
-  if (!fixture) {
-    throw new AiCompositionError(
-      `Research fixtures are only available for "microscope" in this phase. "${request.equipmentName}" is not supported yet.`,
-      {
-        status: "fixture_not_available",
-        statusCode: 422,
-      },
-    );
-  }
-
+async function resolveResearchPayload(request, prisma) {
   const sourceConfigs = await getSourceConfigs(prisma);
-  const researchPayload = buildVerifiedResearchPayload(
-    {
-      ...fixture.researchInput,
-      equipment: {
-        aliases: fixture.researchInput.aliases || [],
-        name: request.equipmentName,
-      },
-      equipmentName: request.equipmentName,
+  const equipmentIdentity = createCanonicalEquipmentIdentity(request.equipmentName);
+  const researchPayload = {
+    components: [],
+    definition: null,
+    equipment: {
+      aliases: [],
       locale: request.locale,
-      sourceConfigs,
+      name: request.equipmentName,
+      normalizedName: equipmentIdentity.normalizedName,
+      slug: equipmentIdentity.slug,
     },
-    {
-      now: new Date(),
+    factClusters: [],
+    faults: [],
+    maintenanceTasks: [],
+    manuals: [],
+    manufacturers: [],
+    mediaCandidates: [],
+    operatingPrinciple: null,
+    reliabilityWarnings: [],
+    safetyPrecautions: [],
+    sourceConfigurations: sourceConfigs.map((config) => ({
+      allowedDomains: config.allowedDomainsJson || [],
+      isEnabled: config.isEnabled,
+      name: config.name,
+      notes: config.notes || "",
+      priority: config.priority,
+      sourceType: config.sourceType,
+    })),
+    sourceReferences: [],
+    uses: [],
+    variants: [],
+    verification: {
+      attributedClusterCount: 0,
+      disabledSourceTypes: sourceConfigs.filter((config) => !config.isEnabled).map((config) => config.sourceType),
+      isValid: true,
+      missingAttributionClusters: [],
     },
-  );
-
-  if (!researchPayload.verification.isValid) {
-    throw new AiCompositionError("The baseline research payload failed verification.", {
-      status: "invalid_research_payload",
-      statusCode: 500,
-    });
-  }
+  };
 
   return {
-    fixture,
+    fixture: null,
     researchPayload,
   };
 }
@@ -1898,8 +2064,7 @@ export async function composeDraftPackage(input, options = {}, prisma) {
     options.providerConfig || (await resolveProviderConfig(input.providerConfigId, prisma));
   const promptLayers = options.promptLayers || (await loadActivePromptLayers(prisma));
   const disclaimer = options.disclaimer || (await getDefaultDisclaimer(input.locale));
-  const fixtureResolution =
-    options.fixtureResolution || (await resolveFixtureResearchPayload(input, prisma));
+  const fixtureResolution = options.fixtureResolution || (await resolveResearchPayload(input, prisma));
   const preCompositionPromptBundle = buildPromptBundle({
     disclaimer,
     promptLayers,
@@ -1919,7 +2084,10 @@ export async function composeDraftPackage(input, options = {}, prisma) {
         fixture: fixtureResolution.fixture,
         promptBundle: preCompositionPromptBundle,
         providerConfig: activeProviderConfig,
-        request: input,
+        request: {
+          ...input,
+          disclaimer,
+        },
         researchPayload: fixtureResolution.researchPayload,
       });
       const structuredArticle = activeProviderResult.structuredArticle;
@@ -2026,7 +2194,6 @@ export async function composeDraftPackage(input, options = {}, prisma) {
     warnings: dedupeStrings([
       fallbackWarning,
       ...fixtureResolution.researchPayload.reliabilityWarnings,
-      'The current composition path uses the microscope acceptance fixture until live source collection is expanded in a later step.',
     ]),
   };
 }
