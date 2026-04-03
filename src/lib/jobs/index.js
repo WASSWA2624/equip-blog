@@ -95,3 +95,5 @@ export async function failGenerationJob(jobId, error, data = {}, prisma) {
     prisma,
   );
 }
+
+export { runScheduledPublishingWorker } from "./scheduled-publishing";
