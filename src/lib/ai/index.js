@@ -1629,6 +1629,10 @@ function createDuplicateBlockedWarning(request, duplicateCheck) {
   return `Duplicate detection blocked generation for "${request.equipmentName}" in locale "${request.locale}". Existing post slug: ${duplicateSlug}.`;
 }
 
+function getSeoRecordDelegate(prisma) {
+  return prisma?.sEORecord || prisma?.seoRecord || null;
+}
+
 function createDraftPreviewPayload({
   article,
   duplicateCheck,
@@ -1791,7 +1795,16 @@ async function persistDraftPackage(
       },
     });
 
-    await tx.seoRecord.upsert({
+    const seoRecordDelegate = getSeoRecordDelegate(tx);
+
+    if (!seoRecordDelegate) {
+      throw new AiCompositionError("The Prisma SEO record delegate is unavailable.", {
+        status: "internal_error",
+        statusCode: 500,
+      });
+    }
+
+    await seoRecordDelegate.upsert({
       where: {
         postTranslationId: translation.id,
       },

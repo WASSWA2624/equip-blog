@@ -60,18 +60,26 @@ function getModelFieldNames(prisma, modelName) {
 }
 
 function hasExpectedDelegates(prisma) {
-  if (!prisma || typeof prisma.mediaAsset === "undefined" || typeof prisma.mediaVariant === "undefined") {
+  if (
+    !prisma ||
+    typeof prisma.mediaAsset === "undefined" ||
+    typeof prisma.mediaVariant === "undefined" ||
+    typeof prisma.sEORecord === "undefined"
+  ) {
     return false;
   }
 
   const mediaAssetFields = new Set(getModelFieldNames(prisma, "MediaAsset"));
   const mediaVariantFields = new Set(getModelFieldNames(prisma, "MediaVariant"));
+  const seoRecordFields = new Set(getModelFieldNames(prisma, "SEORecord"));
 
   return (
     mediaAssetFields.has("fileName") &&
     mediaAssetFields.has("fileSizeBytes") &&
     mediaAssetFields.has("variants") &&
-    mediaVariantFields.has("variantKey")
+    mediaVariantFields.has("variantKey") &&
+    seoRecordFields.has("canonicalUrl") &&
+    seoRecordFields.has("postTranslation")
   );
 }
 

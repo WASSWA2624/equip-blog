@@ -732,25 +732,21 @@ export default function GeneratePostScreen({ copy, initialData }) {
   }, [dispatch, formData]);
 
   function handleFormPatch(patch, options = {}) {
-    setFormData((currentFormData) => {
-      const nextFormData = {
-        ...currentFormData,
-        ...patch,
-      };
+    setFormData((currentFormData) => ({
+      ...currentFormData,
+      ...patch,
+    }));
 
-      if (options.clearDuplicate) {
-        dispatch(
-          setGeneratorState({
-            duplicateDecision: null,
-            duplicateMatch: null,
-            error: null,
-            status: generator.preview ? "ready" : "idle",
-          }),
-        );
-      }
-
-      return nextFormData;
-    });
+    if (options.clearDuplicate) {
+      dispatch(
+        setGeneratorState({
+          duplicateDecision: null,
+          duplicateMatch: null,
+          error: null,
+          status: generator.preview ? "ready" : "idle",
+        }),
+      );
+    }
   }
 
   function handleTargetAudienceToggle(audience) {
