@@ -390,6 +390,21 @@ const FieldLabel = styled.span`
   font-weight: 600;
 `;
 
+const FieldLabelRow = styled.div`
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing.sm};
+  justify-content: space-between;
+`;
+
+const FieldLink = styled(Link)`
+  color: ${({ theme }) => theme.colors.primary};
+  display: inline-flex;
+  font-size: 0.9rem;
+  font-weight: 700;
+`;
+
 const TextInput = styled.input`
   background: white;
   border: 1px solid ${({ $invalid, theme }) => ($invalid ? theme.colors.danger : theme.colors.border)};
@@ -1102,7 +1117,12 @@ export default function GeneratePostScreen({ copy, initialData }) {
                   ) : null}
                 </Field>
                 <Field>
-                  <FieldLabel>{copy.providerLabel}</FieldLabel>
+                  <FieldLabelRow>
+                    <FieldLabel>{copy.providerLabel}</FieldLabel>
+                    {initialData.permissions.canManageProviders ? (
+                      <FieldLink href="/admin/providers">{copy.manageProvidersAction}</FieldLink>
+                    ) : null}
+                  </FieldLabelRow>
                   <Select
                     $invalid={Boolean(getFirstFieldError(fieldErrors, "providerConfigId"))}
                     onChange={(event) =>
@@ -1121,6 +1141,12 @@ export default function GeneratePostScreen({ copy, initialData }) {
                   </Select>
                   {getFirstFieldError(fieldErrors, "providerConfigId") ? (
                     <FieldError>{getFirstFieldError(fieldErrors, "providerConfigId")}</FieldError>
+                  ) : null}
+                  {activeProviderConfig?.credentialLabel ? (
+                    <SmallText>{activeProviderConfig.credentialLabel}</SmallText>
+                  ) : null}
+                  {initialData.permissions.canManageProviders ? (
+                    <SmallText>{copy.manageProvidersHint}</SmallText>
                   ) : null}
                 </Field>
               </FieldGrid>

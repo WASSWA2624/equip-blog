@@ -32,6 +32,9 @@ describe("RBAC policy", () => {
     expect(getAdminPageAccess("/admin/prompts")).toMatchObject({
       permission: ADMIN_PERMISSIONS.MANAGE_PROMPTS,
     });
+    expect(getAdminPageAccess("/admin/providers")).toMatchObject({
+      permission: ADMIN_PERMISSIONS.MANAGE_PROVIDER_CONFIG,
+    });
     expect(getAdminPageAccess("/admin/posts/example-post")).toMatchObject({
       permission: ADMIN_PERMISSIONS.EDIT_POSTS,
     });
@@ -65,6 +68,7 @@ describe("RBAC policy", () => {
       "categories",
       "manufacturers",
       "prompts",
+      "providers",
       "sources",
       "localization",
       "seo",

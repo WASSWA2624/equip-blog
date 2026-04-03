@@ -400,6 +400,32 @@ function sortConfigs(leftConfig, rightConfig) {
   );
 }
 
+function ensureValidDefault(configs) {
+  const hasValidDefault = configs.some(
+    (config) => config.isDefault && config.isEnabled && config.purpose === "draft_generation",
+  );
+
+  if (hasValidDefault) {
+    return configs;
+  }
+
+  const nextDefaultConfig = configs.find(
+    (config) => config.isEnabled && config.purpose === "draft_generation",
+  );
+
+  if (!nextDefaultConfig) {
+    return configs.map((config) => ({
+      ...config,
+      isDefault: false,
+    }));
+  }
+
+  return configs.map((config) => ({
+    ...config,
+    isDefault: config.id === nextDefaultConfig.id,
+  }));
+}
+
 export default function ProviderConfigurationScreen({ copy, initialData }) {
   const [data, setData] = useState(initialData);
   const [draftConfigs, setDraftConfigs] = useState(() =>
@@ -435,7 +461,7 @@ export default function ProviderConfigurationScreen({ copy, initialData }) {
         );
       }
 
-      return nextConfigs;
+      return ensureValidDefault(nextConfigs);
     });
   }
 

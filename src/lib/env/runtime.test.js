@@ -63,6 +63,23 @@ describe("environment runtime schema", () => {
     });
   });
 
+  it("allows provider credentials to be managed outside environment variables", () => {
+    const env = createBaseEnv();
+
+    delete env.AI_PROVIDER_DEFAULT;
+    delete env.AI_MODEL_DEFAULT;
+    delete env.AI_PROVIDER_FALLBACK;
+    delete env.AI_MODEL_FALLBACK;
+    delete env.OPENAI_API_KEY;
+
+    const parsedEnv = parseServerEnv(env);
+
+    expect(parsedEnv.ai.default).toBeNull();
+    expect(parsedEnv.ai.fallback).toBeNull();
+    expect(parsedEnv.ai.openaiApiKey).toBeNull();
+    expect(parsedEnv.ai.providerConfigSecret).toBe("change-me");
+  });
+
   it("fails when a required variable is missing", () => {
     const env = createBaseEnv();
 

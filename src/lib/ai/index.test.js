@@ -213,6 +213,79 @@ describe("AI composition pipeline", () => {
     expect(draft.seoPayload.canonicalUrl).toContain("/en/blog/microscope");
   });
 
+  it("retries with the configured fallback provider when the selected config fails", async () => {
+    const baselinePrisma = {
+      sourceConfig: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
+    };
+    const primaryProviderConfig = {
+      apiKeyEncrypted: null,
+      apiKeyEnvName: "OPENAI_API_KEY",
+      id: "provider_cfg_default_generation",
+      model: "gpt-5.4",
+      provider: "openai",
+      purpose: "draft_generation",
+    };
+    const fallbackProviderConfig = {
+      apiKeyEncrypted: null,
+      apiKeyEnvName: "OPENAI_API_KEY",
+      id: "provider_cfg_fallback_generation",
+      isDefault: false,
+      isEnabled: true,
+      model: "gpt-5.4-mini",
+      provider: "openai",
+      purpose: "draft_generation_fallback",
+      updatedAt: new Date("2026-04-03T08:00:00.000Z"),
+    };
+    const prisma = {
+      modelProviderConfig: {
+        findFirst: vi.fn().mockResolvedValue(fallbackProviderConfig),
+      },
+      sourceConfig: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
+    };
+    const { composeDraftPackage } = await import("./index");
+    const baselineDraft = await composeDraftPackage(
+      createGenerationRequest(),
+      {
+        disclaimer: "English disclaimer",
+        promptLayers: createPromptLayers(),
+        providerConfig: primaryProviderConfig,
+      },
+      baselinePrisma,
+    );
+
+    const fallbackDraft = await composeDraftPackage(
+      createGenerationRequest(),
+      {
+        disclaimer: "English disclaimer",
+        promptLayers: createPromptLayers(),
+        providerConfig: primaryProviderConfig,
+        providerOptions: {
+          composeStructuredArticle: vi.fn(async (context) => {
+            if (context.providerConfig.id === primaryProviderConfig.id) {
+              throw new Error("Primary provider request failed");
+            }
+
+            return {
+              executionMode: "fallback_fixture",
+              structuredArticle: baselineDraft.article,
+            };
+          }),
+        },
+      },
+      prisma,
+    );
+
+    expect(fallbackDraft.providerConfig.id).toBe("provider_cfg_fallback_generation");
+    expect(fallbackDraft.providerExecutionMode).toBe("fallback_fixture");
+    expect(fallbackDraft.warnings.some((warning) => warning.includes("Retried with fallback"))).toBe(
+      true,
+    );
+  });
+
   it("persists the microscope acceptance draft, seo payload, structured blocks, and generation job", async () => {
     const generationJobCreate = vi.fn().mockResolvedValue({
       id: "job_1",

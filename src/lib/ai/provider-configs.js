@@ -130,7 +130,9 @@ export function decryptProviderApiKey(encryptedApiKey, secret = env.ai.providerC
     return null;
   }
 
-  const [version, encodedIv, encodedAuthTag, encodedPayload] = normalizedPayload.split(".");
+  const payloadSegments = normalizedPayload.split(".");
+  const version = payloadSegments.slice(0, 2).join(".");
+  const [encodedIv, encodedAuthTag, encodedPayload] = payloadSegments.slice(2);
 
   if (version !== PROVIDER_SECRET_VERSION || !encodedIv || !encodedAuthTag || !encodedPayload) {
     throw new ProviderConfigurationError("Stored provider credentials could not be decrypted.", {

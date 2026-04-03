@@ -412,6 +412,9 @@ model ModelProviderConfig {
   model          String          @db.VarChar(128)
   purpose        String          @db.VarChar(64)
   apiKeyEnvName  String          @db.VarChar(64)
+  apiKeyEncrypted String?        @db.LongText
+  apiKeyLast4    String?         @db.VarChar(8)
+  apiKeyUpdatedAt DateTime?
   isDefault      Boolean         @default(false)
   isEnabled      Boolean         @default(true)
   createdAt      DateTime        @default(now())
