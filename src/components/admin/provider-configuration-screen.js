@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useMemo, useState } from "react";
+import { startTransition, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 
 const providerOptions = Object.freeze([
@@ -155,6 +155,46 @@ const SaveButton = styled.button`
 const Form = styled.form`
   display: grid;
   gap: ${({ theme }) => theme.spacing.md};
+`;
+
+const ConfigPicker = styled.div`
+  display: grid;
+  gap: ${({ theme }) => theme.spacing.sm};
+`;
+
+const ConfigPickerGrid = styled.div`
+  display: grid;
+  gap: ${({ theme }) => theme.spacing.sm};
+
+  @media (min-width: 860px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+`;
+
+const ConfigPickerButton = styled.button`
+  background: ${({ $active }) =>
+    $active
+      ? "linear-gradient(180deg, rgba(0, 95, 115, 0.12), rgba(0, 95, 115, 0.07))"
+      : "rgba(247, 249, 252, 0.96)"};
+  border: 1px solid
+    ${({ $active, theme }) => ($active ? theme.colors.primary : theme.colors.border)};
+  border-radius: ${({ theme }) => theme.radius.md};
+  color: ${({ theme }) => theme.colors.text};
+  cursor: pointer;
+  display: grid;
+  gap: ${({ theme }) => theme.spacing.xs};
+  padding: ${({ theme }) => theme.spacing.md};
+  text-align: left;
+`;
+
+const ConfigPickerTitle = styled.span`
+  font-size: 0.98rem;
+  font-weight: 700;
+`;
+
+const ConfigPickerMeta = styled.span`
+  color: ${({ theme }) => theme.colors.muted};
+  font-size: 0.9rem;
 `;
 
 const ConfigCard = styled.article`
@@ -318,6 +358,14 @@ function formatPurposeLabel(copy, purpose) {
   return purpose === "draft_generation_fallback" ? copy.purposeFallback : copy.purposePrimary;
 }
 
+function formatConfigName(copy, config) {
+  if (!config?.model) {
+    return copy.newConfigLabel;
+  }
+
+  return `${config.provider} / ${config.model}`;
+}
+
 function formatCredentialBadge(copy, state) {
   if (state === "stored") {
     return copy.credentialStoredBadge;
@@ -433,12 +481,28 @@ export default function ProviderConfigurationScreen({ copy, initialData }) {
   );
   const [notice, setNotice] = useState(null);
   const [isBusy, setIsBusy] = useState(false);
+  const [selectedConfigId, setSelectedConfigId] = useState(initialData.configs[0]?.id || null);
 
   const dirtyCount = useMemo(() => getDirtyCount(data, draftConfigs), [data, draftConfigs]);
   const orderedDraftConfigs = useMemo(
     () => [...draftConfigs].sort(sortConfigs),
     [draftConfigs],
   );
+  const selectedConfig = useMemo(
+    () =>
+      orderedDraftConfigs.find((config) => config.id === selectedConfigId) || orderedDraftConfigs[0] || null,
+    [orderedDraftConfigs, selectedConfigId],
+  );
+
+  useEffect(() => {
+    setSelectedConfigId((currentConfigId) => {
+      if (currentConfigId && orderedDraftConfigs.some((config) => config.id === currentConfigId)) {
+        return currentConfigId;
+      }
+
+      return orderedDraftConfigs[0]?.id || null;
+    });
+  }, [orderedDraftConfigs]);
 
   function updateDraftConfig(configId, updates) {
     setDraftConfigs((currentConfigs) => {
@@ -466,13 +530,13 @@ export default function ProviderConfigurationScreen({ copy, initialData }) {
   }
 
   function handleAddConfig() {
-    setDraftConfigs((currentConfigs) => [
-      ...currentConfigs,
-      createNewConfig(
-        currentConfigs.length,
-        currentConfigs.some((config) => config.purpose === "draft_generation_fallback"),
-      ),
-    ]);
+    const newConfig = createNewConfig(
+      draftConfigs.length,
+      draftConfigs.some((config) => config.purpose === "draft_generation_fallback"),
+    );
+
+    setDraftConfigs((currentConfigs) => [...currentConfigs, newConfig]);
+    setSelectedConfigId(newConfig.id);
   }
 
   async function handleSave(event) {
@@ -579,47 +643,74 @@ export default function ProviderConfigurationScreen({ copy, initialData }) {
             </ActionRow>
             {notice ? <StatusBanner $tone={notice.kind}>{notice.message}</StatusBanner> : null}
             <Form onSubmit={handleSave}>
-              {orderedDraftConfigs.map((config) => (
-                <ConfigCard $enabled={config.isEnabled} key={config.id}>
+              {orderedDraftConfigs.length > 1 ? (
+                <ConfigPicker>
+                  <div>
+                    <FieldLabel>{copy.configListTitle}</FieldLabel>
+                    <SmallText>{copy.configListDescription}</SmallText>
+                  </div>
+                  <ConfigPickerGrid>
+                    {orderedDraftConfigs.map((config) => (
+                      <ConfigPickerButton
+                        $active={config.id === selectedConfig?.id}
+                        key={config.id}
+                        onClick={() => setSelectedConfigId(config.id)}
+                        type="button"
+                      >
+                        <ConfigPickerTitle>{formatConfigName(copy, config)}</ConfigPickerTitle>
+                        <ConfigPickerMeta>{formatPurposeLabel(copy, config.purpose)}</ConfigPickerMeta>
+                        <BadgeRow>
+                          {config.isDefault ? <Pill $tone="primary">{copy.defaultBadge}</Pill> : null}
+                          {config.purpose === "draft_generation_fallback" ? (
+                            <Pill $tone="accent">{copy.fallbackBadge}</Pill>
+                          ) : null}
+                          <Pill>{config.isEnabled ? copy.enabledBadge : "Disabled"}</Pill>
+                        </BadgeRow>
+                      </ConfigPickerButton>
+                    ))}
+                  </ConfigPickerGrid>
+                </ConfigPicker>
+              ) : null}
+
+              {selectedConfig ? (
+                <ConfigCard $enabled={selectedConfig.isEnabled} key={selectedConfig.id}>
                   <ConfigHeader>
                     <ConfigMeta>
-                      <ConfigTitle>
-                        {config.model ? `${config.provider} / ${config.model}` : "New provider config"}
-                      </ConfigTitle>
+                      <ConfigTitle>{formatConfigName(copy, selectedConfig)}</ConfigTitle>
                       <BadgeRow>
-                        {config.isDefault ? <Pill $tone="primary">{copy.defaultBadge}</Pill> : null}
-                        {config.purpose === "draft_generation_fallback" ? (
+                        {selectedConfig.isDefault ? <Pill $tone="primary">{copy.defaultBadge}</Pill> : null}
+                        {selectedConfig.purpose === "draft_generation_fallback" ? (
                           <Pill $tone="accent">{copy.fallbackBadge}</Pill>
                         ) : null}
-                        <Pill>{config.isEnabled ? copy.enabledBadge : "Disabled"}</Pill>
+                        <Pill>{selectedConfig.isEnabled ? copy.enabledBadge : "Disabled"}</Pill>
                         <Pill
                           $tone={
-                            config.credentialState === "stored"
+                            selectedConfig.credentialState === "stored"
                               ? "primary"
-                              : config.credentialState === "environment"
+                              : selectedConfig.credentialState === "environment"
                                 ? undefined
                                 : "danger"
                           }
                         >
-                          {formatCredentialBadge(copy, config.credentialState)}
+                          {formatCredentialBadge(copy, selectedConfig.credentialState)}
                         </Pill>
                       </BadgeRow>
                     </ConfigMeta>
                     <ToggleGroup>
                       <Toggle>
                         <Radio
-                          checked={config.isDefault}
+                          checked={selectedConfig.isDefault}
                           name="default-provider-config"
-                          onChange={() => updateDraftConfig(config.id, { isDefault: true })}
+                          onChange={() => updateDraftConfig(selectedConfig.id, { isDefault: true })}
                           type="radio"
                         />
                         {copy.defaultLabel}
                       </Toggle>
                       <Toggle>
                         <Checkbox
-                          checked={config.isEnabled}
+                          checked={selectedConfig.isEnabled}
                           onChange={(event) =>
-                            updateDraftConfig(config.id, {
+                            updateDraftConfig(selectedConfig.id, {
                               isEnabled: event.target.checked,
                             })
                           }
@@ -635,11 +726,11 @@ export default function ProviderConfigurationScreen({ copy, initialData }) {
                       <FieldLabel>{copy.providerLabel}</FieldLabel>
                       <Select
                         onChange={(event) =>
-                          updateDraftConfig(config.id, {
+                          updateDraftConfig(selectedConfig.id, {
                             provider: event.target.value,
                           })
                         }
-                        value={config.provider}
+                        value={selectedConfig.provider}
                       >
                         {providerOptions.map((providerOption) => (
                           <option key={providerOption.value} value={providerOption.value}>
@@ -652,11 +743,11 @@ export default function ProviderConfigurationScreen({ copy, initialData }) {
                       <FieldLabel>{copy.modelLabel}</FieldLabel>
                       <Input
                         onChange={(event) =>
-                          updateDraftConfig(config.id, {
+                          updateDraftConfig(selectedConfig.id, {
                             model: event.target.value,
                           })
                         }
-                        value={config.model}
+                        value={selectedConfig.model}
                       />
                     </Field>
                   </FieldGrid>
@@ -666,11 +757,11 @@ export default function ProviderConfigurationScreen({ copy, initialData }) {
                       <FieldLabel>{copy.purposeLabel}</FieldLabel>
                       <Select
                         onChange={(event) =>
-                          updateDraftConfig(config.id, {
+                          updateDraftConfig(selectedConfig.id, {
                             purpose: event.target.value,
                           })
                         }
-                        value={config.purpose}
+                        value={selectedConfig.purpose}
                       >
                         <option value="draft_generation">{copy.purposePrimary}</option>
                         <option value="draft_generation_fallback">{copy.purposeFallback}</option>
@@ -682,21 +773,21 @@ export default function ProviderConfigurationScreen({ copy, initialData }) {
                       <BadgeRow>
                         <Pill
                           $tone={
-                            config.credentialState === "stored"
+                            selectedConfig.credentialState === "stored"
                               ? "primary"
-                              : config.credentialState === "environment"
+                              : selectedConfig.credentialState === "environment"
                                 ? undefined
                                 : "danger"
                           }
                         >
-                          {formatCredentialBadge(copy, config.credentialState)}
+                          {formatCredentialBadge(copy, selectedConfig.credentialState)}
                         </Pill>
-                        <Pill>{formatPurposeLabel(copy, config.purpose)}</Pill>
+                        <Pill>{formatPurposeLabel(copy, selectedConfig.purpose)}</Pill>
                       </BadgeRow>
-                      <SmallText>{config.credentialLabel}</SmallText>
-                      <SmallText>{formatCredentialDescription(copy, config.credentialState)}</SmallText>
+                      <SmallText>{selectedConfig.credentialLabel}</SmallText>
+                      <SmallText>{formatCredentialDescription(copy, selectedConfig.credentialState)}</SmallText>
                       <SmallText>
-                        {copy.updatedAtLabel}: {formatTimestamp(config.updatedAt)}
+                        {copy.updatedAtLabel}: {formatTimestamp(selectedConfig.updatedAt)}
                       </SmallText>
                     </CredentialCard>
                   </FieldGrid>
@@ -706,25 +797,25 @@ export default function ProviderConfigurationScreen({ copy, initialData }) {
                     <Input
                       autoComplete="new-password"
                       onChange={(event) =>
-                        updateDraftConfig(config.id, {
+                        updateDraftConfig(selectedConfig.id, {
                           apiKey: event.target.value,
-                          clearApiKey: event.target.value ? false : config.clearApiKey,
+                          clearApiKey: event.target.value ? false : selectedConfig.clearApiKey,
                         })
                       }
                       placeholder={copy.apiKeyPlaceholder}
                       type="password"
-                      value={config.apiKey}
+                      value={selectedConfig.apiKey}
                     />
                     <SmallText>{copy.apiKeyHint}</SmallText>
                   </Field>
 
-                  {config.hasStoredApiKey ? (
+                  {selectedConfig.hasStoredApiKey ? (
                     <Toggle>
                       <Checkbox
-                        checked={config.clearApiKey}
-                        disabled={Boolean(config.apiKey)}
+                        checked={selectedConfig.clearApiKey}
+                        disabled={Boolean(selectedConfig.apiKey)}
                         onChange={(event) =>
-                          updateDraftConfig(config.id, {
+                          updateDraftConfig(selectedConfig.id, {
                             clearApiKey: event.target.checked,
                           })
                         }
@@ -734,7 +825,7 @@ export default function ProviderConfigurationScreen({ copy, initialData }) {
                     </Toggle>
                   ) : null}
                 </ConfigCard>
-              ))}
+              ) : null}
 
               <ActionRow>
                 <SmallText>
