@@ -149,6 +149,43 @@ const MetaPill = styled.span`
   white-space: nowrap;
 `;
 
+const SearchQuickLink = styled(Link)`
+  align-items: center;
+  background:
+    linear-gradient(180deg, rgba(0, 95, 115, 0.14), rgba(0, 95, 115, 0.08)),
+    rgba(255, 255, 255, 0.88);
+  border: 1px solid ${({ $active }) => ($active ? "rgba(0, 95, 115, 0.3)" : "rgba(0, 95, 115, 0.16)")};
+  border-radius: 999px;
+  box-shadow: 0 10px 24px rgba(0, 95, 115, 0.08);
+  color: ${({ theme }) => theme.colors.primary};
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 800;
+  justify-content: center;
+  letter-spacing: 0.01em;
+  min-height: 38px;
+  padding: 0.38rem 0.78rem;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease;
+  white-space: nowrap;
+
+  &:hover {
+    background:
+      linear-gradient(180deg, rgba(0, 95, 115, 0.18), rgba(0, 95, 115, 0.1)),
+      rgba(255, 255, 255, 0.92);
+    border-color: rgba(0, 95, 115, 0.24);
+    box-shadow: 0 12px 26px rgba(0, 95, 115, 0.1);
+    transform: translateY(-1px);
+  }
+
+  @media (max-width: 539px) {
+    flex: 1 1 8rem;
+  }
+`;
+
 const MenuButton = styled.button`
   align-items: center;
   background: rgba(255, 255, 255, 0.82);
@@ -443,18 +480,19 @@ export default function SiteShell({ children, locale, messages }) {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const legalNavigation = messages.site.legalNavigation || {};
-  const navigationItems = publicNavigationRoutes.map((item) => ({
-    ...item,
-    href: buildLocalizedPath(locale, item.segments),
-    label: messages.site.navigation[item.key],
-  }));
+  const searchHref = buildLocalizedPath(locale, publicRouteSegments.search);
+  const searchLabel = messages.site.navigation.search;
+  const navigationItems = publicNavigationRoutes
+    .filter((item) => item.key !== "search")
+    .map((item) => ({
+      ...item,
+      href: buildLocalizedPath(locale, item.segments),
+      label: messages.site.navigation[item.key],
+    }));
   const exploreLinks = [
     { href: buildLocalizedPath(locale, publicRouteSegments.home), label: messages.site.navigation.home },
     { href: buildLocalizedPath(locale, publicRouteSegments.blog), label: messages.site.navigation.blog },
-    {
-      href: buildLocalizedPath(locale, publicRouteSegments.search),
-      label: messages.site.navigation.search,
-    },
+    { href: searchHref, label: searchLabel },
   ];
   const companyLinks = [
     { href: buildLocalizedPath(locale, publicRouteSegments.about), label: messages.site.navigation.about },
@@ -471,6 +509,7 @@ export default function SiteShell({ children, locale, messages }) {
       label: legalNavigation.privacy || "Privacy",
     },
   ];
+  const isSearchActive = isNavigationActive(pathname, searchHref);
 
   return (
     <Shell>
@@ -485,6 +524,13 @@ export default function SiteShell({ children, locale, messages }) {
               </BrandCopy>
             </BrandLink>
             <TopControls>
+              <SearchQuickLink
+                aria-current={isSearchActive ? "page" : undefined}
+                href={searchHref}
+                $active={isSearchActive}
+              >
+                {searchLabel}
+              </SearchQuickLink>
               <MetaPill>Locale {locale.toUpperCase()}</MetaPill>
               <MenuButton
                 aria-controls="mobile-public-navigation"
