@@ -1592,6 +1592,19 @@ async function syncSourceReferences(tx, postId, equipmentId, researchPayload) {
   });
 
   for (const reference of researchPayload.sourceReferences) {
+    if (!reference.url) {
+      throw new AiCompositionError(
+        `Source reference "${reference.title || reference.sourceDomain || "untitled"}" is missing a canonical URL.`,
+        {
+          details: {
+            reference,
+          },
+          status: "invalid_research_payload",
+          statusCode: 500,
+        },
+      );
+    }
+
     await tx.sourceReference.create({
       data: {
         accessStatus: reference.accessStatus || null,

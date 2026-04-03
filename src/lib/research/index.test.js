@@ -270,4 +270,52 @@ describe("research payload builder", () => {
       expect.arrayContaining(["definition"]),
     );
   });
+
+  it("promotes media sourceUrl values into persisted source references", () => {
+    const payload = buildVerifiedResearchPayload({
+      definition: {
+        sources: [
+          {
+            sourceType: SourceType.TRUSTED_BIOMEDICAL_REFERENCE,
+            title: "Definition",
+            url: "https://nih.gov/definition",
+          },
+        ],
+        summary: "Microscope definition.",
+      },
+      equipment: {
+        name: "Microscope",
+      },
+      mediaCandidates: [
+        {
+          alt: "Microscope bench image",
+          sourceDomain: "fixtures.example",
+          sourceType: SourceType.APPROVED_SEARCH_RESULT,
+          sourceUrl: "https://fixtures.example/images/microscope-bench.jpg",
+        },
+      ],
+      operatingPrinciple: {
+        sources: [
+          {
+            sourceType: SourceType.TRUSTED_BIOMEDICAL_REFERENCE,
+            title: "Principle",
+            url: "https://nih.gov/principle",
+          },
+        ],
+        summary: "Light and lenses produce magnification.",
+      },
+    });
+
+    const mediaReference = payload.sourceReferences.find(
+      (reference) => reference.url === "https://fixtures.example/images/microscope-bench.jpg",
+    );
+
+    expect(mediaReference).toMatchObject({
+      sourceDomain: "fixtures.example",
+      sourceType: SourceType.APPROVED_SEARCH_RESULT,
+      title: "fixtures.example",
+      url: "https://fixtures.example/images/microscope-bench.jpg",
+    });
+    expect(payload.mediaCandidates[0].sourceReferenceIds).toContain(mediaReference.id);
+  });
 });

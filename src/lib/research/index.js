@@ -574,11 +574,18 @@ function normalizeInlineSourceCandidate(
     return null;
   }
 
-  const url = trimToUndefined(candidate.url);
+  const url = trimToUndefined(candidate.url || candidate.sourceUrl);
   const sourceDomain = normalizeDomain(candidate.sourceDomain || url);
   const allowedDomains = normalizeAllowedDomainPatterns(
     sourceConfig.allowedDomainsJson || sourceConfig.allowedDomains || [],
   );
+
+  if (!url) {
+    warnings.push(
+      `Skipped source "${candidate?.title || sourceDomain || sourceType}" because a canonical URL is required.`,
+    );
+    return null;
+  }
 
   if (!matchesAllowedDomain(sourceDomain, allowedDomains)) {
     warnings.push(
