@@ -325,9 +325,10 @@ const UserBadge = styled.div`
   display: grid;
   gap: 0.35rem;
   grid-template-columns: minmax(0, 1fr);
-  max-width: min(100%, 300px);
-  min-width: min(100%, 132px);
+  justify-self: end;
+  max-width: min(100%, 20rem);
   padding: 0.35rem 0.5rem;
+  width: fit-content;
 
   @media (min-width: 480px) {
     grid-template-columns: minmax(0, 1fr) auto;
@@ -335,10 +336,7 @@ const UserBadge = styled.div`
 
   @media (min-width: ${DESKTOP_BREAKPOINT}px) {
     gap: 0.45rem;
-    max-width: 265px;
-    min-width: 235px;
     padding: 0.32rem 0.48rem;
-    justify-self: end;
   }
 `;
 

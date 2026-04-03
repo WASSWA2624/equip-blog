@@ -568,10 +568,8 @@ export default function ProviderConfigurationScreen({ copy, initialData }) {
           <Card>
             <ActionRow>
               <div>
-                <CardTitle>{copy.title}</CardTitle>
-                <SmallText>
-                  {dirtyCount ? `${dirtyCount} ${copy.dirtyLabel}` : copy.noPendingChanges}
-                </SmallText>
+                <CardTitle>{copy.editorTitle}</CardTitle>
+                <SmallText>{copy.editorDescription}</SmallText>
               </div>
               <ButtonRow>
                 <SecondaryButton onClick={handleAddConfig} type="button">

@@ -461,6 +461,8 @@
       "defaultLabel": "Default primary config",
       "description": "Manage which AI provider and model combinations the admin workspace can use, keep one fallback ready, and store API keys securely on the server instead of exposing them in the browser.",
       "dirtyLabel": "pending changes",
+      "editorDescription": "Each card below is one provider config. Keep one default primary config and one enabled fallback ready for retries.",
+      "editorTitle": "Provider configs",
       "enabledBadge": "Enabled",
       "enabledCountLabel": "Enabled configs",
       "enabledLabel": "Enabled for generation",
