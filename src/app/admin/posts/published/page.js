@@ -2,8 +2,11 @@ import PostInventoryScreen from "@/components/admin/post-inventory-screen";
 import { defaultLocale } from "@/features/i18n/config";
 import { getMessages } from "@/features/i18n/get-messages";
 import { getPostInventorySnapshot } from "@/features/posts";
+import { requireAdminPageSession } from "@/lib/auth";
+import { ADMIN_PERMISSIONS, hasAdminPermission } from "@/lib/auth/rbac";
 
 export default async function PublishedPostsPage({ searchParams }) {
+  const auth = await requireAdminPageSession("/admin/posts/published");
   const resolvedSearchParams = await searchParams;
   const [messages, snapshot] = await Promise.all([
     getMessages(defaultLocale),
@@ -14,5 +17,14 @@ export default async function PublishedPostsPage({ searchParams }) {
     }),
   ]);
 
-  return <PostInventoryScreen copy={messages.admin.publishedList} initialData={snapshot} />;
+  return (
+    <PostInventoryScreen
+      copy={messages.admin.publishedList}
+      initialData={snapshot}
+      permissions={{
+        canManageLocalization: hasAdminPermission(auth.user, ADMIN_PERMISSIONS.MANAGE_LOCALIZATION),
+        canPublish: hasAdminPermission(auth.user, ADMIN_PERMISSIONS.PUBLISH_POSTS),
+      }}
+    />
+  );
 }

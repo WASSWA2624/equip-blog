@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { startTransition, useState } from "react";
+import { useRouter } from "next/navigation";
 import styled from "styled-components";
 
 function buildHref(pathname, query = {}) {
@@ -280,6 +282,27 @@ const ActionRow = styled.div`
   gap: ${({ theme }) => theme.spacing.sm};
 `;
 
+const ActionCluster = styled.div`
+  display: grid;
+  gap: ${({ theme }) => theme.spacing.sm};
+`;
+
+const ActionGroupLabel = styled.strong`
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+`;
+
+const InlineNotice = styled.p`
+  background: ${({ $tone }) =>
+    $tone === "error" ? "rgba(180, 35, 24, 0.12)" : "rgba(21, 115, 71, 0.12)"};
+  border: 1px solid
+    ${({ $tone, theme }) => ($tone === "error" ? theme.colors.danger : theme.colors.success)};
+  border-radius: ${({ theme }) => theme.radius.sm};
+  margin: 0;
+  padding: ${({ theme }) => theme.spacing.sm};
+`;
+
 const Pager = styled.nav`
   align-items: center;
   display: flex;
@@ -338,10 +361,83 @@ function Pagination({ basePath, copy, pagination, search }) {
   );
 }
 
-export default function PostInventoryScreen({ copy, initialData }) {
+function PostActionRow({ copy, permissions, post }) {
+  const router = useRouter();
+  const [publishState, setPublishState] = useState("idle");
+  const [notice, setNotice] = useState(null);
+  const isPublishable = post.status !== "PUBLISHED" && permissions.canPublish;
+
+  async function handlePublish() {
+    setPublishState("publishing");
+    setNotice(null);
+
+    try {
+      const response = await fetch("/api/publish-post", {
+        body: JSON.stringify({
+          postId: post.id,
+          publishAt: null,
+        }),
+        headers: {
+          "content-type": "application/json",
+        },
+        method: "POST",
+      });
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(payload.message || copy.publishErrorPrefix);
+      }
+
+      setNotice({
+        kind: "success",
+        message: copy.publishSuccess,
+      });
+      startTransition(() => {
+        router.refresh();
+      });
+    } catch (error) {
+      setNotice({
+        kind: "error",
+        message: `${copy.publishErrorPrefix}: ${error.message}`,
+      });
+    } finally {
+      setPublishState("idle");
+    }
+  }
+
+  return (
+    <ActionCluster>
+      <ActionGroupLabel>{copy.actionsLabel}</ActionGroupLabel>
+      <ActionRow>
+        <LinkButton href={`/admin/posts/${post.id}`}>{copy.editAction}</LinkButton>
+        <LinkButton href={`/admin/posts/${post.id}#workflow`}>{copy.reviewAction}</LinkButton>
+        {post.status === "PUBLISHED" ? (
+          <LinkButton href={post.publicPath}>{copy.openLiveAction}</LinkButton>
+        ) : null}
+        <LinkButton href={`/admin/posts/${post.id}#content`}>{copy.editAndReviewAction}</LinkButton>
+        <LinkButton href={`/admin/posts/${post.id}#workflow`}>{copy.reviewAndPublishAction}</LinkButton>
+        {permissions.canManageLocalization ? (
+          <LinkButton href={`/admin/localization?postId=${post.id}&locale=${post.locale}`}>
+            {copy.localizationAction}
+          </LinkButton>
+        ) : null}
+        {isPublishable ? (
+          <Button disabled={publishState !== "idle"} onClick={handlePublish} type="button">
+            {publishState === "publishing" ? copy.publishWorking : copy.publishAction}
+          </Button>
+        ) : null}
+      </ActionRow>
+      {notice ? <InlineNotice $tone={notice.kind}>{notice.message}</InlineNotice> : null}
+      {!permissions.canPublish && post.status !== "PUBLISHED" ? (
+        <SmallText>{copy.publishPermissionHint}</SmallText>
+      ) : null}
+    </ActionCluster>
+  );
+}
+
+export default function PostInventoryScreen({ copy, initialData, permissions }) {
   const basePath =
     initialData.filters.scope === "published" ? "/admin/posts/published" : "/admin/posts/drafts";
-  const isDraftScope = initialData.filters.scope === "drafts";
 
   return (
     <Page>
@@ -429,19 +525,7 @@ export default function PostInventoryScreen({ copy, initialData }) {
                     <SmallText>{post.locale}</SmallText>
                   </MetaCard>
                 </MetaGrid>
-                <ActionRow>
-                  {isDraftScope ? (
-                    <LinkButton href={`/admin/posts/${post.id}#workflow`}>
-                      {copy.openEditorAction}
-                    </LinkButton>
-                  ) : null}
-                  <LinkButton href={`/admin/posts/${post.id}`}>
-                    {isDraftScope ? copy.editAction : copy.openEditorAction}
-                  </LinkButton>
-                  <LinkButton href={`/admin/localization?postId=${post.id}&locale=${post.locale}`}>
-                    {copy.localizationAction}
-                  </LinkButton>
-                </ActionRow>
+                <PostActionRow copy={copy} permissions={permissions} post={post} />
               </Item>
             ))}
           </List>

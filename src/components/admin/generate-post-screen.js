@@ -717,6 +717,23 @@ const SecondaryActions = styled.div`
   gap: ${({ theme }) => theme.spacing.sm};
 `;
 
+const ActionPanel = styled.div`
+  background:
+    linear-gradient(135deg, rgba(0, 95, 115, 0.08), rgba(201, 123, 42, 0.08)),
+    rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(0, 95, 115, 0.14);
+  border-radius: ${({ theme }) => theme.radius.md};
+  display: grid;
+  gap: ${({ theme }) => theme.spacing.sm};
+  padding: ${({ theme }) => theme.spacing.md};
+`;
+
+const ActionPanelLabel = styled.strong`
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+`;
+
 export default function GeneratePostScreen({ copy, initialData }) {
   const dispatch = useDispatch();
   const generator = useSelector((state) => state.generator);
@@ -1653,19 +1670,28 @@ export default function GeneratePostScreen({ copy, initialData }) {
                     </StatusBanner>
                   ) : null}
                   {resolvedPostId ? (
-                    <SecondaryActions>
-                      {resolvedPublicPath ? (
-                        <LinkButton href={resolvedPublicPath}>{copy.openLiveAction}</LinkButton>
-                      ) : null}
-                      <LinkButton
-                        href={`/admin/localization?postId=${resolvedPostId}&locale=${reviewDraft.locale}`}
-                      >
-                        {copy.openLocalizationAction}
-                      </LinkButton>
-                      <LinkButton href={`/admin/posts/${resolvedPostId}#workflow`}>
-                        {copy.openPostAction}
-                      </LinkButton>
-                    </SecondaryActions>
+                    <ActionPanel>
+                      <ActionPanelLabel>{copy.quickActionsLabel}</ActionPanelLabel>
+                      <SecondaryActions>
+                        <LinkButton href={`/admin/posts/${resolvedPostId}#content`}>
+                          {copy.editDraftAction}
+                        </LinkButton>
+                        <LinkButton href={`/admin/posts/${resolvedPostId}#workflow`}>
+                          {copy.openPostAction}
+                        </LinkButton>
+                        <LinkButton href={`/admin/posts/${resolvedPostId}`}>
+                          {copy.editAndReviewAction}
+                        </LinkButton>
+                        {resolvedPublicPath ? (
+                          <LinkButton href={resolvedPublicPath}>{copy.openLiveAction}</LinkButton>
+                        ) : null}
+                        <LinkButton
+                          href={`/admin/localization?postId=${resolvedPostId}&locale=${reviewDraft.locale}`}
+                        >
+                          {copy.openLocalizationAction}
+                        </LinkButton>
+                      </SecondaryActions>
+                    </ActionPanel>
                   ) : null}
                 </Stack>
                 <PreviewFrame>

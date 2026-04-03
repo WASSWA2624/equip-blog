@@ -252,6 +252,7 @@ function createInventoryPostSummary(post, locale) {
     equipmentName: post.equipment.name,
     id: post.id,
     locale,
+    publicPath: buildLocalizedPath(locale, publicRouteSegments.blogPost(post.slug)),
     publishedAt: serializeDate(post.publishedAt),
     scheduledPublishAt: serializeDate(post.scheduledPublishAt),
     slug: post.slug,

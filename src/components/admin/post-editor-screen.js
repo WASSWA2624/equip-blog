@@ -306,6 +306,23 @@ const ButtonRow = styled.div`
   gap: ${({ theme }) => theme.spacing.sm};
 `;
 
+const ActionPanel = styled.div`
+  background:
+    linear-gradient(135deg, rgba(0, 95, 115, 0.08), rgba(201, 123, 42, 0.08)),
+    rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(0, 95, 115, 0.14);
+  border-radius: ${({ theme }) => theme.radius.md};
+  display: grid;
+  gap: ${({ theme }) => theme.spacing.sm};
+  padding: ${({ theme }) => theme.spacing.md};
+`;
+
+const ActionLabel = styled.strong`
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+`;
+
 const Button = styled.button`
   background: ${({ $tone, theme }) =>
     $tone === "secondary"
@@ -414,6 +431,24 @@ export default function PostEditorScreen({ copy, initialData, permissions }) {
     });
   }
 
+  async function patchPost(payload) {
+    const response = await fetch(`/api/posts/${data.post.id}`, {
+      body: JSON.stringify(payload),
+      headers: {
+        "content-type": "application/json",
+      },
+      method: "PATCH",
+    });
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || copy.workflowErrorPrefix);
+    }
+
+    await applyEditorSnapshot(result.data.snapshot);
+    return result.data.snapshot;
+  }
+
   function handleCategoryToggle(categoryId) {
     setDraft((currentDraft) => ({
       ...currentDraft,
@@ -489,6 +524,72 @@ export default function PostEditorScreen({ copy, initialData, permissions }) {
     }
   }
 
+  async function handleSaveContentAndReview() {
+    setContentState("saving");
+    setNotice(null);
+
+    try {
+      const response = await fetch("/api/save-draft", {
+        body: JSON.stringify({
+          contentHtml: draft.contentHtml,
+          contentMd: draft.contentMd,
+          disclaimer: draft.disclaimer,
+          excerpt: draft.excerpt,
+          faqJson: parseJsonField(copy.fieldFaqJson, draft.faqJsonText, []),
+          locale: data.selection.locale,
+          postId: data.post.id,
+          structuredContentJson: parseJsonField(
+            copy.fieldStructuredContentJson,
+            draft.structuredContentJsonText,
+            {},
+          ),
+          title: draft.title,
+        }),
+        headers: {
+          "content-type": "application/json",
+        },
+        method: "POST",
+      });
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(payload.message || copy.contentSaveErrorPrefix);
+      }
+
+      await applyEditorSnapshot({
+        ...data,
+        translation: {
+          ...data.translation,
+          contentHtml: draft.contentHtml,
+          contentMd: draft.contentMd,
+          disclaimer: draft.disclaimer,
+          excerpt: draft.excerpt,
+          faqJson: parseJsonField(copy.fieldFaqJson, draft.faqJsonText, []),
+          structuredContentJson: parseJsonField(
+            copy.fieldStructuredContentJson,
+            draft.structuredContentJsonText,
+            {},
+          ),
+          title: draft.title,
+          updatedAt: payload.data.translation.updatedAt,
+        },
+      });
+
+      setContentState("saved");
+      setNotice({
+        kind: "success",
+        message: copy.contentSaveAndReviewSuccess,
+      });
+      document.getElementById("workflow")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch (error) {
+      setContentState("error");
+      setNotice({
+        kind: "error",
+        message: `${copy.contentSaveErrorPrefix}: ${error.message}`,
+      });
+    }
+  }
+
   async function handleSaveSettings(event) {
     event.preventDefault();
     setSettingsState("saving");
@@ -535,22 +636,9 @@ export default function PostEditorScreen({ copy, initialData, permissions }) {
     setNotice(null);
 
     try {
-      const response = await fetch(`/api/posts/${data.post.id}`, {
-        body: JSON.stringify({
-          editorialStage: data.lifecycle.nextEditorialStage,
-        }),
-        headers: {
-          "content-type": "application/json",
-        },
-        method: "PATCH",
+      await patchPost({
+        editorialStage: data.lifecycle.nextEditorialStage,
       });
-      const payload = await response.json();
-
-      if (!response.ok) {
-        throw new Error(payload.message || copy.workflowErrorPrefix);
-      }
-
-      await applyEditorSnapshot(payload.data.snapshot);
       setNotice({
         kind: "success",
         message: copy.workflowSuccess,
@@ -643,6 +731,50 @@ export default function PostEditorScreen({ copy, initialData, permissions }) {
     }
   }
 
+  async function handleReviewAndPublish() {
+    setWorkflowState("publishing");
+    setNotice(null);
+
+    try {
+      let snapshot = data;
+
+      while (snapshot.lifecycle.nextEditorialStage) {
+        snapshot = await patchPost({
+          editorialStage: snapshot.lifecycle.nextEditorialStage,
+        });
+      }
+
+      const response = await fetch("/api/publish-post", {
+        body: JSON.stringify({
+          postId: data.post.id,
+          publishAt: null,
+        }),
+        headers: {
+          "content-type": "application/json",
+        },
+        method: "POST",
+      });
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(payload.message || copy.publishErrorPrefix);
+      }
+
+      await applyEditorSnapshot(payload.data.snapshot);
+      setNotice({
+        kind: "success",
+        message: copy.reviewAndPublishSuccess,
+      });
+    } catch (error) {
+      setNotice({
+        kind: "error",
+        message: `${copy.publishErrorPrefix}: ${error.message}`,
+      });
+    } finally {
+      setWorkflowState("idle");
+    }
+  }
+
   const nextEditorialActionLabel = getNextEditorialActionLabel(copy, data.lifecycle.nextEditorialStage);
   const backToListHref =
     data.post.status === "PUBLISHED" ? "/admin/posts/published" : "/admin/posts/drafts";
@@ -677,6 +809,34 @@ export default function PostEditorScreen({ copy, initialData, permissions }) {
           <Card>
             <CardTitle>{copy.summaryTitle}</CardTitle>
             <SmallText>{copy.summaryDescription}</SmallText>
+            <ActionPanel>
+              <ActionLabel>{copy.quickActionsLabel}</ActionLabel>
+              <ButtonRow>
+                <LinkButton href="#content">{copy.editAction}</LinkButton>
+                <LinkButton href="#workflow">{copy.reviewAction}</LinkButton>
+                {permissions.canPublish ? (
+                  <Button
+                    disabled={workflowState !== "idle" || data.post.status === "PUBLISHED"}
+                    onClick={() => handleStatusAction("publish")}
+                    type="button"
+                  >
+                    {workflowState === "publish" ? copy.publishWorking : copy.publishAction}
+                  </Button>
+                ) : null}
+                {permissions.canPublish ? (
+                  <Button
+                    $tone="secondary"
+                    disabled={workflowState !== "idle" || data.post.status === "PUBLISHED"}
+                    onClick={handleReviewAndPublish}
+                    type="button"
+                  >
+                    {workflowState === "publishing"
+                      ? copy.reviewAndPublishWorking
+                      : copy.reviewAndPublishAction}
+                  </Button>
+                ) : null}
+              </ButtonRow>
+            </ActionPanel>
             <MetaGrid>
               <MetaCard>
                 <MetaLabel>{copy.equipmentLabel}</MetaLabel>
@@ -833,7 +993,7 @@ export default function PostEditorScreen({ copy, initialData, permissions }) {
           </Card>
         </Stack>
         <Stack>
-          <Card>
+          <Card id="content">
             <CardTitle>{copy.contentTitle}</CardTitle>
             <SmallText>{copy.contentDescription}</SmallText>
             <Form onSubmit={handleSaveContent}>
@@ -935,9 +1095,19 @@ export default function PostEditorScreen({ copy, initialData, permissions }) {
               </FieldGrid>
               <ActionRow>
                 <SmallText>{contentState === "saving" ? copy.contentSaveWorking : copy.contentStatus}</SmallText>
-                <Button disabled={contentState === "saving"} type="submit">
-                  {contentState === "saving" ? copy.contentSaveWorking : copy.contentSaveAction}
-                </Button>
+                <ButtonRow>
+                  <Button
+                    $tone="secondary"
+                    disabled={contentState === "saving"}
+                    onClick={handleSaveContentAndReview}
+                    type="button"
+                  >
+                    {contentState === "saving" ? copy.contentSaveWorking : copy.saveAndReviewAction}
+                  </Button>
+                  <Button disabled={contentState === "saving"} type="submit">
+                    {contentState === "saving" ? copy.contentSaveWorking : copy.contentSaveAction}
+                  </Button>
+                </ButtonRow>
               </ActionRow>
             </Form>
           </Card>
