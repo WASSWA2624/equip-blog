@@ -83,8 +83,8 @@ const Page = styled.main`
   display: grid;
   gap: ${({ theme }) => theme.spacing.lg};
   margin: 0 auto;
-  max-width: 1340px;
-  padding: ${({ theme }) => theme.spacing.xl};
+  max-width: 1480px;
+  padding: clamp(1rem, 2vw, 2rem);
 `;
 
 const Hero = styled.section`
@@ -95,7 +95,7 @@ const Hero = styled.section`
   border-radius: ${({ theme }) => theme.radius.lg};
   display: grid;
   gap: ${({ theme }) => theme.spacing.md};
-  padding: ${({ theme }) => theme.spacing.xl};
+  padding: clamp(1.2rem, 2.2vw, 2rem);
 `;
 
 const Eyebrow = styled.p`
@@ -123,10 +123,7 @@ const Description = styled.p`
 const SummaryGrid = styled.section`
   display: grid;
   gap: ${({ theme }) => theme.spacing.md};
-
-  @media (min-width: 760px) {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
 `;
 
 const SummaryCard = styled.section`
@@ -148,16 +145,28 @@ const SmallText = styled.p`
   color: ${({ theme }) => theme.colors.muted};
   line-height: 1.6;
   margin: 0;
+  overflow-wrap: anywhere;
 `;
 
 const Card = styled.section`
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.94);
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radius.md};
   box-shadow: 0 18px 50px rgba(16, 32, 51, 0.08);
   display: grid;
   gap: ${({ theme }) => theme.spacing.md};
+  min-width: 0;
+  overflow: hidden;
   padding: ${({ theme }) => theme.spacing.lg};
+  position: relative;
+
+  &::before {
+    background: linear-gradient(90deg, rgba(0, 95, 115, 0.16), rgba(201, 123, 42, 0.12));
+    content: "";
+    height: 3px;
+    inset: 0 0 auto;
+    position: absolute;
+  }
 `;
 
 const SectionHeader = styled.div`
@@ -171,11 +180,12 @@ const CardTitle = styled.h2`
 `;
 
 const Layout = styled.section`
+  align-items: start;
   display: grid;
   gap: ${({ theme }) => theme.spacing.lg};
 
-  @media (min-width: 1020px) {
-    grid-template-columns: minmax(340px, 0.85fr) minmax(0, 1.4fr);
+  @media (min-width: 1240px) {
+    grid-template-columns: minmax(360px, 0.95fr) minmax(0, 1.45fr);
   }
 `;
 
@@ -183,15 +193,16 @@ const SearchForm = styled.form`
   display: grid;
   gap: ${({ theme }) => theme.spacing.sm};
 
-  @media (min-width: 760px) {
+  @media (min-width: 900px) {
     align-items: end;
-    grid-template-columns: minmax(0, 1fr) 200px auto auto;
+    grid-template-columns: minmax(0, 1fr) minmax(210px, 240px) auto auto;
   }
 `;
 
 const Field = styled.label`
   display: grid;
   gap: 0.35rem;
+  min-width: 0;
 `;
 
 const FieldLabel = styled.span`
@@ -203,20 +214,38 @@ const Input = styled.input`
   background: white;
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radius.md};
+  box-sizing: border-box;
   color: ${({ theme }) => theme.colors.text};
   font: inherit;
   min-height: 46px;
+  min-width: 0;
   padding: 0.76rem 0.95rem;
+  width: 100%;
+
+  &:focus {
+    border-color: ${({ theme }) => theme.colors.primary};
+    box-shadow: 0 0 0 4px rgba(0, 95, 115, 0.12);
+    outline: none;
+  }
 `;
 
 const Select = styled.select`
   background: white;
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radius.md};
+  box-sizing: border-box;
   color: ${({ theme }) => theme.colors.text};
   font: inherit;
   min-height: 46px;
+  min-width: 0;
   padding: 0.76rem 0.95rem;
+  width: 100%;
+
+  &:focus {
+    border-color: ${({ theme }) => theme.colors.primary};
+    box-shadow: 0 0 0 4px rgba(0, 95, 115, 0.12);
+    outline: none;
+  }
 `;
 
 const Button = styled.button`
@@ -230,6 +259,14 @@ const Button = styled.button`
   font-weight: 700;
   min-height: 46px;
   padding: 0 1.15rem;
+  transition:
+    box-shadow 160ms ease,
+    transform 160ms ease;
+
+  &:hover {
+    box-shadow: 0 14px 28px rgba(16, 32, 51, 0.1);
+    transform: translateY(-1px);
+  }
 `;
 
 const LinkButton = styled(Link)`
@@ -242,11 +279,22 @@ const LinkButton = styled(Link)`
   justify-content: center;
   min-height: 46px;
   padding: 0 1.15rem;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.primary};
+    box-shadow: 0 14px 28px rgba(16, 32, 51, 0.08);
+    transform: translateY(-1px);
+  }
 `;
 
 const ItemList = styled.div`
   display: grid;
   gap: ${({ theme }) => theme.spacing.md};
+  min-width: 0;
 `;
 
 const Item = styled.article`
@@ -255,6 +303,7 @@ const Item = styled.article`
   border-radius: ${({ theme }) => theme.radius.md};
   display: grid;
   gap: ${({ theme }) => theme.spacing.sm};
+  min-width: 0;
   padding: ${({ theme }) => theme.spacing.md};
 `;
 
@@ -269,6 +318,7 @@ const Row = styled.div`
 const ItemTitle = styled.h3`
   font-size: 1rem;
   margin: 0;
+  overflow-wrap: anywhere;
 `;
 
 const MetaRow = styled.div`
@@ -345,8 +395,10 @@ const WarningList = styled.ul`
 `;
 
 const AsideStack = styled.div`
+  align-content: start;
   display: grid;
   gap: ${({ theme }) => theme.spacing.lg};
+  min-width: 0;
 `;
 
 export default function JobLogsScreen({ copy, initialData }) {

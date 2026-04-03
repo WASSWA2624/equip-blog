@@ -7,8 +7,8 @@ const Page = styled.main`
   display: grid;
   gap: ${({ theme }) => theme.spacing.lg};
   margin: 0 auto;
-  max-width: 1360px;
-  padding: ${({ theme }) => theme.spacing.xl};
+  max-width: 1480px;
+  padding: clamp(1rem, 2vw, 2rem);
 `;
 
 const Hero = styled.section`
@@ -47,10 +47,7 @@ const Description = styled.p`
 const SummaryGrid = styled.section`
   display: grid;
   gap: ${({ theme }) => theme.spacing.md};
-
-  @media (min-width: 760px) {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
 `;
 
 const SummaryCard = styled.section`
@@ -71,15 +68,18 @@ const SummaryValue = styled.strong`
 const Layout = styled.section`
   display: grid;
   gap: ${({ theme }) => theme.spacing.lg};
+  align-items: start;
 
-  @media (min-width: 1120px) {
-    grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
+  @media (min-width: 1240px) {
+    grid-template-columns: minmax(360px, 430px) minmax(0, 1fr);
   }
 `;
 
 const Stack = styled.div`
   display: grid;
   gap: ${({ theme }) => theme.spacing.lg};
+  align-content: start;
+  min-width: 0;
 `;
 
 const Card = styled.section`
@@ -89,11 +89,23 @@ const Card = styled.section`
   box-shadow: 0 20px 60px rgba(16, 32, 51, 0.08);
   display: grid;
   gap: ${({ theme }) => theme.spacing.md};
+  min-width: 0;
+  overflow: hidden;
   padding: ${({ theme }) => theme.spacing.lg};
+  position: relative;
+
+  &::before {
+    background: linear-gradient(90deg, rgba(0, 95, 115, 0.16), rgba(201, 123, 42, 0.12));
+    content: "";
+    height: 3px;
+    inset: 0 0 auto;
+    position: absolute;
+  }
 `;
 
 const CardTitle = styled.h2`
-  font-size: 1.05rem;
+  font-size: clamp(1.05rem, 1vw, 1.2rem);
+  line-height: 1.15;
   margin: 0;
 `;
 
@@ -109,28 +121,38 @@ const StatusBanner = styled.div`
     ${({ $tone, theme }) => ($tone === "success" ? theme.colors.success : theme.colors.danger)};
   border-radius: ${({ theme }) => theme.radius.md};
   padding: ${({ theme }) => theme.spacing.md};
+  position: relative;
+
+  &::before {
+    background: ${({ $tone, theme }) => ($tone === "success" ? theme.colors.success : theme.colors.danger)};
+    border-radius: 999px;
+    content: "";
+    inset: 0 auto 0 0;
+    position: absolute;
+    width: 4px;
+  }
 `;
 
 const Form = styled.form`
   display: grid;
   gap: ${({ theme }) => theme.spacing.md};
+  min-width: 0;
 `;
 
 const FieldGrid = styled.div`
   display: grid;
   gap: ${({ theme }) => theme.spacing.md};
-
-  @media (min-width: 720px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
 `;
 
 const Field = styled.label`
   display: grid;
   gap: ${({ theme }) => theme.spacing.xs};
+  min-width: 0;
 `;
 
 const FieldLabel = styled.span`
+  color: ${({ theme }) => theme.colors.text};
   font-weight: 600;
 `;
 
@@ -138,20 +160,65 @@ const Input = styled.input`
   background: white;
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radius.sm};
+  box-sizing: border-box;
   color: ${({ theme }) => theme.colors.text};
   font: inherit;
+  min-width: 0;
   padding: 0.8rem 0.92rem;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+  width: 100%;
+
+  &:focus {
+    border-color: ${({ theme }) => theme.colors.primary};
+    box-shadow: 0 0 0 4px rgba(0, 95, 115, 0.12);
+    outline: none;
+  }
+
+  &[type="file"] {
+    background:
+      linear-gradient(180deg, rgba(247, 249, 252, 0.98), rgba(255, 255, 255, 0.98));
+    cursor: pointer;
+    padding: 0.6rem 0.72rem;
+  }
+
+  &::file-selector-button {
+    background: linear-gradient(180deg, #244b73, #1c3a59);
+    border: none;
+    border-radius: 999px;
+    color: white;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 700;
+    margin-right: 0.75rem;
+    padding: 0.62rem 0.95rem;
+  }
 `;
 
 const Textarea = styled.textarea`
   background: white;
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radius.sm};
+  box-sizing: border-box;
   color: ${({ theme }) => theme.colors.text};
   font: inherit;
   min-height: 7.5rem;
+  min-width: 0;
   padding: 0.8rem 0.92rem;
   resize: vertical;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+  width: 100%;
+
+  &:focus {
+    border-color: ${({ theme }) => theme.colors.primary};
+    box-shadow: 0 0 0 4px rgba(0, 95, 115, 0.12);
+    outline: none;
+  }
 `;
 
 const CheckboxLabel = styled.label`
@@ -209,8 +276,19 @@ const ListButton = styled.button`
   cursor: pointer;
   display: grid;
   gap: ${({ theme }) => theme.spacing.sm};
+  min-width: 0;
   padding: ${({ theme }) => theme.spacing.md};
   text-align: left;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.primary};
+    box-shadow: 0 16px 34px rgba(16, 32, 51, 0.08);
+    transform: translateY(-1px);
+  }
 `;
 
 const AssetRow = styled.div`
@@ -296,10 +374,7 @@ const PreviewImage = styled.img`
 const MetaGrid = styled.dl`
   display: grid;
   gap: ${({ theme }) => theme.spacing.md};
-
-  @media (min-width: 760px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
 `;
 
 const MetaItem = styled.div`
@@ -333,10 +408,7 @@ const LinkValue = styled.a`
 const VariantGrid = styled.div`
   display: grid;
   gap: ${({ theme }) => theme.spacing.sm};
-
-  @media (min-width: 760px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
 `;
 
 const VariantCard = styled.div`

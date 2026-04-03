@@ -12,6 +12,12 @@ import { buildVerifiedResearchPayload } from "@/lib/research";
 import { buildSeoPayload } from "@/lib/seo";
 
 import { getFixtureByNormalizedEquipmentName } from "./fixture-data";
+import {
+  findFallbackProviderConfig,
+  formatProviderConfigLabel,
+  getProviderConfigById,
+  resolveProviderApiKey,
+} from "./provider-configs";
 
 export { generatedArticleSectionOrder };
 
@@ -769,12 +775,29 @@ function createProvider(providerConfig, options = {}) {
     );
   }
 
+  const resolvedCredential = resolveProviderApiKey(providerConfig);
+
+  if (!resolvedCredential.apiKey) {
+    throw new AiCompositionError(
+      `Provider configuration "${providerConfig.id}" is missing an API key. Add a stored key or configure ${resolvedCredential.envName}.`,
+      {
+        status: "invalid_provider_credentials",
+        statusCode: 400,
+      },
+    );
+  }
+
   return {
+    apiKeySource: resolvedCredential.source,
     model: providerConfig.model,
     name: providerConfig.provider,
     async composeStructuredArticle(context) {
       if (typeof options.composeStructuredArticle === "function") {
-        return options.composeStructuredArticle(context);
+        return options.composeStructuredArticle({
+          ...context,
+          apiKeySource: resolvedCredential.source,
+          providerApiKey: resolvedCredential.apiKey,
+        });
       }
 
       return {
@@ -786,12 +809,7 @@ function createProvider(providerConfig, options = {}) {
 }
 
 async function resolveProviderConfig(providerConfigId, prisma) {
-  const db = await resolvePrismaClient(prisma);
-  const providerConfig = await db.modelProviderConfig.findUnique({
-    where: {
-      id: providerConfigId,
-    },
-  });
+  const providerConfig = await getProviderConfigById(providerConfigId, prisma);
 
   if (!providerConfig || !providerConfig.isEnabled) {
     throw new AiCompositionError(
@@ -804,6 +822,12 @@ async function resolveProviderConfig(providerConfigId, prisma) {
   }
 
   return providerConfig;
+}
+
+function createProviderFallbackWarning(primaryProviderConfig, fallbackProviderConfig, error) {
+  const reason = error instanceof Error ? error.message : `${error}`;
+
+  return `Primary provider ${formatProviderConfigLabel(primaryProviderConfig)} failed (${reason}). Retried with fallback ${formatProviderConfigLabel(fallbackProviderConfig)}.`;
 }
 
 async function getDefaultDisclaimer(locale) {
@@ -1231,7 +1255,10 @@ async function recordDuplicateBlockedAuditEvent(
   });
 }
 
-async function persistDraftPackage({ actorId, article, request, researchPayload, seoPayload }, prisma) {
+async function persistDraftPackage(
+  { actorId, article, providerConfig, request, researchPayload, seoPayload },
+  prisma,
+) {
   const db = await resolvePrismaClient(prisma);
   const editorialStage = "GENERATED";
 
@@ -1368,7 +1395,7 @@ async function persistDraftPackage({ actorId, article, request, researchPayload,
           payloadJson: {
             duplicateCheck: createDuplicateDecisionSnapshot(duplicateCheck),
             locale: request.locale,
-            providerConfigId: request.providerConfigId,
+            providerConfigId: providerConfig.id,
             slug: post.slug,
           },
         },
@@ -1383,7 +1410,7 @@ async function persistDraftPackage({ actorId, article, request, researchPayload,
         entityType: "post",
         payloadJson: {
           locale: request.locale,
-          providerConfigId: request.providerConfigId,
+          providerConfigId: providerConfig.id,
           slug: post.slug,
         },
       },
@@ -1398,7 +1425,7 @@ async function persistDraftPackage({ actorId, article, request, researchPayload,
 }
 
 export async function composeDraftPackage(input, options = {}, prisma) {
-  const providerConfig =
+  const requestedProviderConfig =
     options.providerConfig || (await resolveProviderConfig(input.providerConfigId, prisma));
   const promptLayers = options.promptLayers || (await loadActivePromptLayers(prisma));
   const disclaimer = options.disclaimer || (await getDefaultDisclaimer(input.locale));
@@ -1410,19 +1437,55 @@ export async function composeDraftPackage(input, options = {}, prisma) {
     request: input,
     researchPayload: fixtureResolution.researchPayload,
   });
-  const provider = createProvider(providerConfig, options.providerOptions);
-  const providerResult = await provider.composeStructuredArticle({
-    disclaimer,
-    fixture: fixtureResolution.fixture,
-    promptBundle: preCompositionPromptBundle,
-    providerConfig,
-    request: input,
-    researchPayload: fixtureResolution.researchPayload,
-  });
-  const structuredArticle = providerResult.structuredArticle;
+  let providerConfig = requestedProviderConfig;
+  let provider;
+  let providerResult;
+  let structuredArticle;
 
-  validateStructuredArticle(structuredArticle);
+  async function composeWithProviderConfig(activeProviderConfig) {
+    const activeProvider = createProvider(activeProviderConfig, options.providerOptions);
+    const activeProviderResult = await activeProvider.composeStructuredArticle({
+      disclaimer,
+      fixture: fixtureResolution.fixture,
+      promptBundle: preCompositionPromptBundle,
+      providerConfig: activeProviderConfig,
+      request: input,
+      researchPayload: fixtureResolution.researchPayload,
+    });
+    const structuredArticle = activeProviderResult.structuredArticle;
 
+    validateStructuredArticle(structuredArticle);
+
+    return {
+      provider: activeProvider,
+      providerConfig: activeProviderConfig,
+      providerResult: activeProviderResult,
+      structuredArticle,
+    };
+  }
+
+  let fallbackWarning = null;
+
+  try {
+    ({ provider, providerConfig, providerResult, structuredArticle } = await composeWithProviderConfig(
+      requestedProviderConfig,
+    ));
+  } catch (error) {
+    const fallbackProviderConfig = await findFallbackProviderConfig(prisma, requestedProviderConfig.id);
+
+    if (!fallbackProviderConfig) {
+      throw error;
+    }
+
+    ({ provider, providerConfig, providerResult, structuredArticle } = await composeWithProviderConfig(
+      fallbackProviderConfig,
+    ));
+    fallbackWarning = createProviderFallbackWarning(
+      requestedProviderConfig,
+      fallbackProviderConfig,
+      error,
+    );
+  }
   const promptBundle = buildPromptBundle({
     article: structuredArticle,
     disclaimer,
@@ -1488,6 +1551,7 @@ export async function composeDraftPackage(input, options = {}, prisma) {
     researchPayload: fixtureResolution.researchPayload,
     seoPayload,
     warnings: dedupeStrings([
+      fallbackWarning,
       ...fixtureResolution.researchPayload.reliabilityWarnings,
       'The current composition path uses the microscope acceptance fixture until live source collection is expanded in a later step.',
     ]),
@@ -1590,6 +1654,7 @@ export async function generateDraftFromRequest(input, options = {}, prisma) {
       {
         actorId: options.actorId,
         article: composed.article,
+        providerConfig: composed.providerConfig,
         request: input,
         researchPayload: composed.researchPayload,
         seoPayload: composed.seoPayload,
@@ -1603,6 +1668,7 @@ export async function generateDraftFromRequest(input, options = {}, prisma) {
         actorId: options.actorId,
         currentStage: generationStageOrder[3],
         postId: persistedDraft.postId,
+        providerConfigId: composed.providerConfig.id,
         responseJson: {
           duplicateCheck: createDuplicateDecisionSnapshot(duplicateCheck),
           duplicateDecision: duplicateCheck.duplicateDetected ? "replace_existing" : "create_new",
@@ -1626,7 +1692,7 @@ export async function generateDraftFromRequest(input, options = {}, prisma) {
         article: composed.article,
         duplicateCheck,
         persistedDraft,
-        providerConfig,
+        providerConfig: composed.providerConfig,
         providerExecutionMode: composed.providerExecutionMode,
         promptBundle: composed.promptBundle,
         request: input,

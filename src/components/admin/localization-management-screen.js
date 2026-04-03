@@ -7,8 +7,8 @@ const Page = styled.main`
   display: grid;
   gap: ${({ theme }) => theme.spacing.lg};
   margin: 0 auto;
-  max-width: 1280px;
-  padding: ${({ theme }) => theme.spacing.xl};
+  max-width: 1480px;
+  padding: clamp(1rem, 2vw, 2rem);
 `;
 
 const Hero = styled.section`
@@ -19,7 +19,7 @@ const Hero = styled.section`
   border-radius: ${({ theme }) => theme.radius.lg};
   display: grid;
   gap: ${({ theme }) => theme.spacing.md};
-  padding: ${({ theme }) => theme.spacing.xl};
+  padding: clamp(1.2rem, 2.2vw, 2rem);
 `;
 
 const Eyebrow = styled.p`
@@ -48,28 +48,42 @@ const SummaryGrid = styled.section`
   display: grid;
   gap: ${({ theme }) => theme.spacing.lg};
 
-  @media (min-width: 980px) {
-    grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
+  @media (min-width: 1120px) {
+    grid-template-columns: minmax(340px, 0.9fr) minmax(0, 1.2fr);
   }
 `;
 
 const Stack = styled.div`
+  align-content: start;
   display: grid;
   gap: ${({ theme }) => theme.spacing.lg};
+  min-width: 0;
 `;
 
 const Card = styled.section`
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.94);
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radius.md};
   box-shadow: 0 20px 60px rgba(16, 32, 51, 0.08);
   display: grid;
   gap: ${({ theme }) => theme.spacing.md};
+  min-width: 0;
+  overflow: hidden;
   padding: ${({ theme }) => theme.spacing.lg};
+  position: relative;
+
+  &::before {
+    background: linear-gradient(90deg, rgba(0, 95, 115, 0.16), rgba(201, 123, 42, 0.12));
+    content: "";
+    height: 3px;
+    inset: 0 0 auto;
+    position: absolute;
+  }
 `;
 
 const CardTitle = styled.h2`
-  font-size: 1.05rem;
+  font-size: clamp(1.05rem, 1vw, 1.2rem);
+  line-height: 1.15;
   margin: 0;
 `;
 
@@ -110,14 +124,15 @@ const Pill = styled.span`
   color: ${({ theme }) => theme.colors.text};
   display: inline-flex;
   font-size: 0.78rem;
-  font-weight: 600;
-  padding: 0.28rem 0.65rem;
+  font-weight: 700;
+  padding: 0.32rem 0.68rem;
 `;
 
 const SmallText = styled.p`
   color: ${({ theme }) => theme.colors.muted};
   line-height: 1.6;
   margin: 0;
+  overflow-wrap: anywhere;
 `;
 
 const StepList = styled.ol`
@@ -130,6 +145,7 @@ const StepList = styled.ol`
 const PostList = styled.div`
   display: grid;
   gap: ${({ theme }) => theme.spacing.sm};
+  min-width: 0;
 `;
 
 const PostButton = styled.button`
@@ -140,12 +156,24 @@ const PostButton = styled.button`
   cursor: pointer;
   display: grid;
   gap: ${({ theme }) => theme.spacing.xs};
+  min-width: 0;
   padding: ${({ theme }) => theme.spacing.md};
   text-align: left;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.accent};
+    box-shadow: 0 18px 34px rgba(16, 32, 51, 0.08);
+    transform: translateY(-1px);
+  }
 `;
 
 const PostTitle = styled.strong`
   font-size: 1rem;
+  overflow-wrap: anywhere;
 `;
 
 const CoverageRow = styled.div`
@@ -167,49 +195,82 @@ const StatusBanner = styled.div`
   border-radius: ${({ theme }) => theme.radius.md};
   color: ${({ theme }) => theme.colors.text};
   padding: ${({ theme }) => theme.spacing.md};
+  position: relative;
+
+  &::before {
+    background: ${({ $tone, theme }) => ($tone === "success" ? theme.colors.success : theme.colors.danger)};
+    border-radius: 999px;
+    content: "";
+    inset: 0 auto 0 0;
+    position: absolute;
+    width: 4px;
+  }
 `;
 
 const Form = styled.form`
   display: grid;
   gap: ${({ theme }) => theme.spacing.md};
+  min-width: 0;
 `;
 
 const FieldGrid = styled.div`
   display: grid;
   gap: ${({ theme }) => theme.spacing.md};
-
-  @media (min-width: 900px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
 `;
 
 const Field = styled.label`
   display: grid;
   gap: ${({ theme }) => theme.spacing.xs};
+  min-width: 0;
 `;
 
 const FieldLabel = styled.span`
-  font-weight: 600;
+  font-weight: 700;
 `;
 
 const Input = styled.input`
   background: white;
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radius.sm};
+  box-sizing: border-box;
   color: ${({ theme }) => theme.colors.text};
   font: inherit;
+  min-width: 0;
   padding: 0.8rem 0.9rem;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+  width: 100%;
+
+  &:focus {
+    border-color: ${({ theme }) => theme.colors.primary};
+    box-shadow: 0 0 0 4px rgba(0, 95, 115, 0.12);
+    outline: none;
+  }
 `;
 
 const Textarea = styled.textarea`
   background: white;
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radius.sm};
+  box-sizing: border-box;
   color: ${({ theme }) => theme.colors.text};
   font: inherit;
   min-height: ${({ $rows }) => `${$rows * 1.65}rem`};
+  min-width: 0;
   padding: 0.8rem 0.9rem;
   resize: vertical;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+  width: 100%;
+
+  &:focus {
+    border-color: ${({ theme }) => theme.colors.primary};
+    box-shadow: 0 0 0 4px rgba(0, 95, 115, 0.12);
+    outline: none;
+  }
 `;
 
 const ActionRow = styled.div`
@@ -228,7 +289,16 @@ const SaveButton = styled.button`
   cursor: pointer;
   font: inherit;
   font-weight: 700;
+  min-height: 44px;
   padding: 0.8rem 1.3rem;
+  transition:
+    box-shadow 160ms ease,
+    transform 160ms ease;
+
+  &:hover {
+    box-shadow: 0 16px 28px rgba(0, 95, 115, 0.22);
+    transform: translateY(-1px);
+  }
 `;
 
 function formatJsonField(value, fallback) {

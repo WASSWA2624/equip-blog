@@ -63,8 +63,8 @@ const Page = styled.main`
   display: grid;
   gap: ${({ theme }) => theme.spacing.lg};
   margin: 0 auto;
-  max-width: 1360px;
-  padding: ${({ theme }) => theme.spacing.xl};
+  max-width: 1480px;
+  padding: clamp(1rem, 2vw, 2rem);
 `;
 
 const Hero = styled.section`
@@ -75,7 +75,7 @@ const Hero = styled.section`
   border-radius: ${({ theme }) => theme.radius.lg};
   display: grid;
   gap: ${({ theme }) => theme.spacing.md};
-  padding: ${({ theme }) => theme.spacing.xl};
+  padding: clamp(1.2rem, 2.2vw, 2rem);
 `;
 
 const Eyebrow = styled.p`
@@ -103,10 +103,7 @@ const Description = styled.p`
 const SummaryGrid = styled.section`
   display: grid;
   gap: ${({ theme }) => theme.spacing.md};
-
-  @media (min-width: 760px) {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
 `;
 
 const SummaryCard = styled.section`
@@ -128,20 +125,24 @@ const SmallText = styled.p`
   color: ${({ theme }) => theme.colors.muted};
   line-height: 1.6;
   margin: 0;
+  overflow-wrap: anywhere;
 `;
 
 const Layout = styled.section`
+  align-items: start;
   display: grid;
   gap: ${({ theme }) => theme.spacing.lg};
 
-  @media (min-width: 1120px) {
-    grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
+  @media (min-width: 1240px) {
+    grid-template-columns: minmax(360px, 430px) minmax(0, 1fr);
   }
 `;
 
 const Stack = styled.div`
+  align-content: start;
   display: grid;
   gap: ${({ theme }) => theme.spacing.lg};
+  min-width: 0;
 `;
 
 const Card = styled.section`
@@ -151,32 +152,60 @@ const Card = styled.section`
   box-shadow: 0 20px 60px rgba(16, 32, 51, 0.08);
   display: grid;
   gap: ${({ theme }) => theme.spacing.md};
+  min-width: 0;
+  overflow: hidden;
   padding: ${({ theme }) => theme.spacing.lg};
+  position: relative;
+
+  &::before {
+    background: linear-gradient(90deg, rgba(0, 95, 115, 0.16), rgba(201, 123, 42, 0.12));
+    content: "";
+    height: 3px;
+    inset: 0 0 auto;
+    position: absolute;
+  }
 `;
 
 const CardTitle = styled.h2`
-  font-size: 1.05rem;
+  font-size: clamp(1.05rem, 1vw, 1.2rem);
+  line-height: 1.15;
   margin: 0;
 `;
 
 const List = styled.div`
   display: grid;
   gap: ${({ theme }) => theme.spacing.sm};
+  min-width: 0;
 `;
 
 const ListButton = styled.button`
-  background: ${({ $active }) => ($active ? "rgba(0, 95, 115, 0.12)" : "rgba(255, 255, 255, 0.98)")};
+  background: ${({ $active }) =>
+    $active
+      ? "linear-gradient(180deg, rgba(0, 95, 115, 0.12), rgba(0, 95, 115, 0.08))"
+      : "rgba(255, 255, 255, 0.98)"};
   border: 1px solid ${({ $active, theme }) => ($active ? theme.colors.primary : theme.colors.border)};
   border-radius: ${({ theme }) => theme.radius.md};
   cursor: pointer;
   display: grid;
   gap: ${({ theme }) => theme.spacing.sm};
+  min-width: 0;
   padding: ${({ theme }) => theme.spacing.md};
   text-align: left;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.primary};
+    box-shadow: 0 18px 34px rgba(16, 32, 51, 0.08);
+    transform: translateY(-1px);
+  }
 `;
 
 const ListTitle = styled.strong`
   font-size: 1rem;
+  overflow-wrap: anywhere;
 `;
 
 const BadgeRow = styled.div`
@@ -201,8 +230,8 @@ const Pill = styled.span`
         : theme.colors.primary};
   display: inline-flex;
   font-size: 0.78rem;
-  font-weight: 600;
-  padding: 0.3rem 0.7rem;
+  font-weight: 700;
+  padding: 0.34rem 0.72rem;
 `;
 
 const StatusBanner = styled.div`
@@ -212,58 +241,103 @@ const StatusBanner = styled.div`
     ${({ $tone, theme }) => ($tone === "success" ? theme.colors.success : theme.colors.danger)};
   border-radius: ${({ theme }) => theme.radius.md};
   padding: ${({ theme }) => theme.spacing.md};
+  position: relative;
+
+  &::before {
+    background: ${({ $tone, theme }) => ($tone === "success" ? theme.colors.success : theme.colors.danger)};
+    border-radius: 999px;
+    content: "";
+    inset: 0 auto 0 0;
+    position: absolute;
+    width: 4px;
+  }
 `;
 
 const Form = styled.form`
   display: grid;
   gap: ${({ theme }) => theme.spacing.md};
+  min-width: 0;
 `;
 
 const FilterGrid = styled.div`
   display: grid;
   gap: ${({ theme }) => theme.spacing.md};
-
-  @media (min-width: 720px) {
-    grid-template-columns: minmax(0, 1fr) minmax(180px, 220px);
-  }
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
 `;
 
 const Field = styled.label`
   display: grid;
   gap: ${({ theme }) => theme.spacing.xs};
+  min-width: 0;
 `;
 
 const FieldLabel = styled.span`
-  font-weight: 600;
+  font-weight: 700;
 `;
 
 const Input = styled.input`
   background: white;
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radius.sm};
+  box-sizing: border-box;
   color: ${({ theme }) => theme.colors.text};
   font: inherit;
+  min-width: 0;
   padding: 0.82rem 0.92rem;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+  width: 100%;
+
+  &:focus {
+    border-color: ${({ theme }) => theme.colors.primary};
+    box-shadow: 0 0 0 4px rgba(0, 95, 115, 0.12);
+    outline: none;
+  }
 `;
 
 const Select = styled.select`
   background: white;
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radius.sm};
+  box-sizing: border-box;
   color: ${({ theme }) => theme.colors.text};
   font: inherit;
+  min-width: 0;
   padding: 0.82rem 0.92rem;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+  width: 100%;
+
+  &:focus {
+    border-color: ${({ theme }) => theme.colors.primary};
+    box-shadow: 0 0 0 4px rgba(0, 95, 115, 0.12);
+    outline: none;
+  }
 `;
 
 const Textarea = styled.textarea`
   background: white;
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radius.sm};
+  box-sizing: border-box;
   color: ${({ theme }) => theme.colors.text};
   font: inherit;
   min-height: 8.5rem;
+  min-width: 0;
   padding: 0.82rem 0.92rem;
   resize: vertical;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+  width: 100%;
+
+  &:focus {
+    border-color: ${({ theme }) => theme.colors.primary};
+    box-shadow: 0 0 0 4px rgba(0, 95, 115, 0.12);
+    outline: none;
+  }
 `;
 
 const ButtonRow = styled.div`
@@ -280,8 +354,18 @@ const PrimaryButton = styled.button`
   cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
   font: inherit;
   font-weight: 700;
+  min-height: 44px;
   opacity: ${({ disabled }) => (disabled ? 0.7 : 1)};
   padding: 0.82rem 1.35rem;
+  transition:
+    box-shadow 160ms ease,
+    transform 160ms ease;
+
+  &:hover {
+    box-shadow: ${({ disabled }) =>
+      disabled ? "none" : "0 16px 28px rgba(0, 95, 115, 0.22)"};
+    transform: ${({ disabled }) => (disabled ? "none" : "translateY(-1px)")};
+  }
 `;
 
 const SecondaryButton = styled.button`
@@ -291,8 +375,19 @@ const SecondaryButton = styled.button`
   color: ${({ theme }) => theme.colors.text};
   cursor: pointer;
   font: inherit;
-  font-weight: 600;
+  font-weight: 700;
+  min-height: 44px;
   padding: 0.82rem 1.1rem;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.primary};
+    box-shadow: 0 14px 28px rgba(16, 32, 51, 0.08);
+    transform: translateY(-1px);
+  }
 `;
 
 const DangerButton = styled(PrimaryButton)`
@@ -302,10 +397,7 @@ const DangerButton = styled(PrimaryButton)`
 const MetaGrid = styled.dl`
   display: grid;
   gap: ${({ theme }) => theme.spacing.md};
-
-  @media (min-width: 760px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
 `;
 
 const MetaItem = styled.div`
@@ -367,8 +459,25 @@ const ModerationButton = styled.button`
   cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
   font: inherit;
   font-weight: 700;
+  min-height: 44px;
   opacity: ${({ disabled }) => (disabled ? 0.7 : 1)};
   padding: 0.78rem 1.05rem;
+  transition:
+    box-shadow 160ms ease,
+    transform 160ms ease;
+
+  &:hover {
+    box-shadow: ${({ disabled }) =>
+      disabled ? "none" : "0 16px 28px rgba(16, 32, 51, 0.14)"};
+    transform: ${({ disabled }) => (disabled ? "none" : "translateY(-1px)")};
+  }
+`;
+
+const StickyCard = styled(Card)`
+  @media (min-width: 1240px) {
+    position: sticky;
+    top: 1rem;
+  }
 `;
 
 export default function CommentModerationScreen({ copy, initialData }) {
@@ -618,7 +727,7 @@ export default function CommentModerationScreen({ copy, initialData }) {
 
       <Layout>
         <Stack>
-          <Card>
+          <StickyCard>
             <CardTitle>{resolvedCopy.listTitle}</CardTitle>
             <SmallText>{resolvedCopy.listDescription}</SmallText>
             {notice ? <StatusBanner $tone={notice.tone}>{notice.message}</StatusBanner> : null}
@@ -683,7 +792,7 @@ export default function CommentModerationScreen({ copy, initialData }) {
             ) : (
               <SmallText>{resolvedCopy.emptyState}</SmallText>
             )}
-          </Card>
+          </StickyCard>
         </Stack>
 
         <Stack>

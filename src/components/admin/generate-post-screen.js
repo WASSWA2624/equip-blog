@@ -376,6 +376,16 @@ const Field = styled.label`
   gap: ${({ theme }) => theme.spacing.xs};
 `;
 
+const FieldControlRow = styled.div`
+  display: grid;
+  gap: ${({ theme }) => theme.spacing.sm};
+
+  @media (min-width: 760px) {
+    align-items: start;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+`;
+
 const FieldLabel = styled.span`
   font-weight: 600;
 `;
@@ -451,12 +461,8 @@ const Divider = styled.div`
   width: 100%;
 `;
 
-const ActionRow = styled.div`
-  align-items: center;
-  display: flex;
-  flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.sm};
-  justify-content: space-between;
+const FormStatus = styled(SmallText)`
+  min-height: 1.6rem;
 `;
 
 const ButtonRow = styled.div`
@@ -479,6 +485,12 @@ const Button = styled.button`
   font-weight: 700;
   opacity: ${({ disabled }) => (disabled ? 0.65 : 1)};
   padding: 0.82rem 1.24rem;
+`;
+
+const InlineSubmitButton = styled(Button)`
+  justify-content: center;
+  min-height: 48px;
+  white-space: nowrap;
 `;
 
 const LinkButton = styled(Link)`
@@ -1061,22 +1073,30 @@ export default function GeneratePostScreen({ copy, initialData }) {
             ) : null}
             <Form onSubmit={handleGenerate}>
               <FieldGrid>
-                <Field>
+                <Field as="div">
                   <FieldLabel>{copy.equipmentNameLabel}</FieldLabel>
-                  <TextInput
-                    $invalid={Boolean(getFirstFieldError(fieldErrors, "equipmentName"))}
-                    onChange={(event) =>
-                      handleFormPatch(
-                        {
-                          equipmentName: event.target.value,
-                        },
-                        {
-                          clearDuplicate: true,
-                        },
-                      )
-                    }
-                    value={formData.equipmentName}
-                  />
+                  <FieldControlRow>
+                    <TextInput
+                      $invalid={Boolean(getFirstFieldError(fieldErrors, "equipmentName"))}
+                      onChange={(event) =>
+                        handleFormPatch(
+                          {
+                            equipmentName: event.target.value,
+                          },
+                          {
+                            clearDuplicate: true,
+                          },
+                        )
+                      }
+                      value={formData.equipmentName}
+                    />
+                    <InlineSubmitButton
+                      disabled={generator.loading || !initialData.providerConfigs.length}
+                      type="submit"
+                    >
+                      {generator.loading ? copy.generateWorking : copy.generateAction}
+                    </InlineSubmitButton>
+                  </FieldControlRow>
                   {getFirstFieldError(fieldErrors, "equipmentName") ? (
                     <FieldError>{getFirstFieldError(fieldErrors, "equipmentName")}</FieldError>
                   ) : null}
@@ -1244,18 +1264,13 @@ export default function GeneratePostScreen({ copy, initialData }) {
                   ) : null}
                 </Field>
               ) : null}
-              <ActionRow>
-                <SmallText>
-                  {generator.loading
-                    ? copy.generateWorking
-                    : generator.preview
-                      ? copy.previewReadyBadge
-                      : copy.stageIdle}
-                </SmallText>
-                <Button disabled={generator.loading || !initialData.providerConfigs.length} type="submit">
-                  {generator.loading ? copy.generateWorking : copy.generateAction}
-                </Button>
-              </ActionRow>
+              <FormStatus>
+                {generator.loading
+                  ? copy.generateWorking
+                  : generator.preview
+                    ? copy.previewReadyBadge
+                    : copy.stageIdle}
+              </FormStatus>
             </Form>
           </Card>
           {duplicateDetected ? (

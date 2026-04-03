@@ -204,6 +204,11 @@ export const ADMIN_NAV_ITEMS = Object.freeze([
     permission: ADMIN_PERMISSIONS.MANAGE_PROMPTS,
   }),
   Object.freeze({
+    href: "/admin/providers",
+    key: "providers",
+    permission: ADMIN_PERMISSIONS.MANAGE_PROVIDER_CONFIG,
+  }),
+  Object.freeze({
     href: "/admin/sources",
     key: "sources",
     permission: ADMIN_PERMISSIONS.MANAGE_SOURCE_CONFIG,
@@ -275,6 +280,11 @@ const adminPageRules = Object.freeze([
     label: "Prompts",
     matches: (pathname) => pathname === "/admin/prompts",
     permission: ADMIN_PERMISSIONS.MANAGE_PROMPTS,
+  }),
+  Object.freeze({
+    label: "Providers",
+    matches: (pathname) => pathname === "/admin/providers",
+    permission: ADMIN_PERMISSIONS.MANAGE_PROVIDER_CONFIG,
   }),
   Object.freeze({
     label: "Sources",

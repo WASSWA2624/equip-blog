@@ -1,5 +1,6 @@
 import { defaultLocale } from "@/features/i18n/config";
 import { ADMIN_PERMISSIONS, hasAdminPermission } from "@/lib/auth/rbac";
+import { createProviderConfigSummary } from "@/lib/ai/provider-configs";
 import { generationStageOrder } from "@/lib/generation/stages";
 
 import { createAdminGenerationFormState } from "./admin-input";
@@ -23,22 +24,15 @@ function createLocaleOption() {
   };
 }
 
-function createProviderConfigSummary(config) {
-  return {
-    id: config.id,
-    isDefault: Boolean(config.isDefault),
-    model: config.model,
-    provider: config.provider,
-    purpose: config.purpose,
-    updatedAt: config.updatedAt instanceof Date ? config.updatedAt.toISOString() : null,
-  };
-}
-
 export async function getAdminGeneratePostSnapshot(user, prisma) {
   const db = await resolvePrismaClient(prisma);
   const providerConfigs = await db.modelProviderConfig.findMany({
     orderBy: [{ isDefault: "desc" }, { provider: "asc" }, { model: "asc" }, { updatedAt: "desc" }],
     select: {
+      apiKeyEncrypted: true,
+      apiKeyEnvName: true,
+      apiKeyLast4: true,
+      apiKeyUpdatedAt: true,
       id: true,
       isDefault: true,
       model: true,
@@ -60,6 +54,7 @@ export async function getAdminGeneratePostSnapshot(user, prisma) {
     localeOptions: [createLocaleOption()],
     permissions: {
       canEditDrafts: hasAdminPermission(user, ADMIN_PERMISSIONS.EDIT_POSTS),
+      canManageProviders: hasAdminPermission(user, ADMIN_PERMISSIONS.MANAGE_PROVIDER_CONFIG),
       canPublish: hasAdminPermission(user, ADMIN_PERMISSIONS.PUBLISH_POSTS),
       canSchedule: hasAdminPermission(user, ADMIN_PERMISSIONS.SCHEDULE_POSTS),
     },

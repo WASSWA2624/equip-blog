@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styled from "styled-components";
 
 import EquipLogo from "@/components/common/equip-logo";
+import PublicEquipmentSearch from "@/components/layout/public-equipment-search";
 import { buildLocalizedPath, publicRouteSegments } from "@/features/i18n/routing";
 
 function normalizePathname(pathname) {
@@ -60,37 +61,67 @@ const Shell = styled.div`
 
 const Header = styled.header`
   background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(18px);
   border-bottom: 1px solid rgba(16, 32, 51, 0.07);
   box-shadow: 0 14px 42px rgba(16, 32, 51, 0.04);
-  position: relative;
-  z-index: 20;
+  position: sticky;
+  top: 0;
+  z-index: 30;
 `;
 
 const HeaderInner = styled.div`
   align-items: center;
   display: flex;
-  gap: 1rem;
-  justify-content: space-between;
+  gap: 0.7rem;
+  justify-content: flex-start;
   margin: 0 auto;
   max-width: 1280px;
-  min-height: 72px;
-  padding: 0 1rem;
+  min-height: 58px;
+  padding: 0 0.7rem;
   width: 100%;
 
   @media (min-width: 720px) {
-    min-height: 78px;
-    padding: 0 1.25rem;
+    min-height: 62px;
+    padding: 0 0.95rem;
   }
 
   @media (min-width: 1100px) {
-    padding: 0 1.5rem;
+    padding: 0 1.15rem;
+  }
+`;
+
+const HeaderSearchDesktop = styled.div`
+  display: none;
+
+  @media (min-width: 980px) {
+    display: block;
+    flex: 1 1 28rem;
+    margin-left: 0.4rem;
+    max-width: 34rem;
+    min-width: 14rem;
+  }
+`;
+
+const HeaderSearchMobile = styled.div`
+  margin: 0 auto;
+  max-width: 1280px;
+  padding: 0 0.7rem 0.65rem;
+  width: 100%;
+
+  @media (min-width: 720px) {
+    padding: 0 0.95rem 0.7rem;
+  }
+
+  @media (min-width: 980px) {
+    display: none;
   }
 `;
 
 const HeaderLeft = styled.div`
   align-items: center;
   display: flex;
-  gap: 0.9rem;
+  flex: 0 1 auto;
+  gap: 0.65rem;
   min-width: 0;
 `;
 
@@ -98,13 +129,13 @@ const BrandLink = styled(Link)`
   align-items: center;
   color: ${({ theme }) => theme.colors.text};
   display: inline-flex;
-  gap: 0.75rem;
+  gap: 0.55rem;
   min-width: 0;
 `;
 
 const BrandTitle = styled.span`
   color: #182742;
-  font-size: clamp(1.9rem, 5vw, 2.4rem);
+  font-size: clamp(1.55rem, 4vw, 2.1rem);
   font-weight: 800;
   letter-spacing: -0.05em;
   line-height: 1;
@@ -114,7 +145,7 @@ const BrandTitle = styled.span`
 const ContextLabel = styled.span`
   color: #182742;
   display: none;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 700;
   letter-spacing: -0.02em;
   white-space: nowrap;
@@ -131,13 +162,15 @@ const ContextLabel = styled.span`
 const HeaderRight = styled.div`
   align-items: center;
   display: flex;
-  gap: 0.9rem;
+  flex: 0 0 auto;
+  gap: 0.55rem;
+  margin-left: auto;
 `;
 
 const PrimaryNav = styled.nav`
   align-items: center;
   display: none;
-  gap: 2rem;
+  gap: 1.45rem;
 
   @media (min-width: 720px) {
     display: inline-flex;
@@ -146,7 +179,7 @@ const PrimaryNav = styled.nav`
 
 const PrimaryNavLink = styled(Link)`
   color: ${({ $active }) => ($active ? "#182742" : "rgba(24, 39, 66, 0.96)")};
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: ${({ $active }) => ($active ? 800 : 700)};
   letter-spacing: -0.02em;
   position: relative;
@@ -184,75 +217,143 @@ const MenuWrap = styled.div`
 
 const MoreButton = styled.button`
   align-items: center;
-  background: transparent;
-  border: none;
+  background: ${({ $open }) => ($open ? "rgba(36, 75, 115, 0.12)" : "rgba(36, 75, 115, 0.06)")};
+  border: 1px solid ${({ $open }) => ($open ? "rgba(36, 75, 115, 0.22)" : "rgba(36, 75, 115, 0.12)")};
+  border-radius: 999px;
   color: #182742;
   cursor: pointer;
-  display: inline-flex;
-  font-size: 1.5rem;
-  font-weight: 800;
-  height: 44px;
+  display: inline-grid;
+  height: 34px;
   justify-content: center;
-  letter-spacing: 0.12em;
   padding: 0;
-  transition: opacity 160ms ease, transform 160ms ease;
-  width: 44px;
+  place-items: center;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    opacity 160ms ease,
+    transform 160ms ease;
+  width: 34px;
 
   &:hover {
-    opacity: 0.78;
+    background: rgba(36, 75, 115, 0.12);
+    border-color: rgba(36, 75, 115, 0.22);
     transform: translateY(-1px);
   }
 `;
 
-const DesktopMenu = styled.div`
-  display: none;
+const MoreButtonDots = styled.span`
+  align-items: center;
+  display: inline-grid;
+  gap: 0.16rem;
+  justify-items: center;
+`;
+
+const MoreButtonDot = styled.span`
+  background: currentColor;
+  border-radius: 999px;
+  display: block;
+  height: 4px;
+  width: 4px;
+`;
+
+const MoreMenuPanel = styled.div`
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(247, 250, 255, 0.98)),
+    radial-gradient(circle at top right, rgba(36, 75, 115, 0.08), transparent 48%);
+  border: 1px solid rgba(16, 32, 51, 0.08);
+  border-radius: 18px;
+  box-shadow:
+    0 22px 52px rgba(16, 32, 51, 0.14),
+    0 2px 8px rgba(16, 32, 51, 0.05);
+  display: ${({ $open }) => ($open ? "grid" : "none")};
+  gap: 0.8rem;
+  min-width: min(320px, calc(100vw - 1.4rem));
+  padding: 0.7rem;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.45rem);
+  width: min(320px, calc(100vw - 1.4rem));
+  z-index: 40;
 
   @media (min-width: 720px) {
-    background: rgba(255, 255, 255, 0.98);
-    border: 1px solid rgba(16, 32, 51, 0.08);
-    border-radius: 18px;
-    box-shadow: 0 24px 48px rgba(16, 32, 51, 0.12);
-    display: ${({ $open }) => ($open ? "grid" : "none")};
-    gap: 0.2rem;
-    min-width: 220px;
-    padding: 0.55rem;
-    position: absolute;
-    right: 0;
-    top: calc(100% + 0.75rem);
+    min-width: 290px;
+    width: 320px;
   }
 `;
 
-const DesktopMenuLink = styled(Link)`
-  border-radius: 12px;
+const MoreMenuHeader = styled.div`
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.15rem 0.15rem 0;
+`;
+
+const MoreMenuTitle = styled.span`
   color: #182742;
   font-size: 0.95rem;
-  font-weight: 600;
-  padding: 0.8rem 0.9rem;
-  transition: background 160ms ease, color 160ms ease;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+`;
+
+const MoreMenuDescription = styled.span`
+  color: rgba(75, 90, 115, 0.92);
+  font-size: 0.78rem;
+  line-height: 1.4;
+`;
+
+const MoreMenuSections = styled.div`
+  display: grid;
+  gap: 0.55rem;
+`;
+
+const MoreMenuSection = styled.div`
+  display: grid;
+  gap: 0.4rem;
+`;
+
+const MoreMenuSectionLabel = styled.span`
+  color: rgba(79, 93, 119, 0.9);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  padding: 0 0.3rem;
+  text-transform: uppercase;
+`;
+
+const MoreMenuList = styled.div`
+  display: grid;
+  gap: 0.22rem;
+`;
+
+const MoreMenuLink = styled(Link)`
+  align-items: center;
+  background: ${({ $active }) => ($active ? "rgba(36, 75, 115, 0.1)" : "transparent")};
+  border: 1px solid ${({ $active }) => ($active ? "rgba(36, 75, 115, 0.18)" : "transparent")};
+  border-radius: 12px;
+  color: ${({ $active }) => ($active ? "#244b73" : "#182742")};
+  display: flex;
+  font-size: 0.93rem;
+  font-weight: ${({ $active }) => ($active ? 800 : 700)};
+  justify-content: space-between;
+  min-height: 42px;
+  padding: 0.68rem 0.8rem;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
 
   &:hover {
-    background: rgba(36, 75, 115, 0.06);
+    background: rgba(36, 75, 115, 0.07);
+    border-color: rgba(36, 75, 115, 0.14);
     color: #244b73;
+    transform: translateY(-1px);
   }
 `;
 
-const MobileMenu = styled.div`
-  border-top: 1px solid rgba(16, 32, 51, 0.07);
-  display: ${({ $open }) => ($open ? "grid" : "none")};
-  gap: 0.3rem;
-  padding: 0.7rem 1rem 1rem;
-
-  @media (min-width: 720px) {
-    display: none;
-  }
-`;
-
-const MobileMenuLink = styled(Link)`
-  border-bottom: 1px solid rgba(16, 32, 51, 0.07);
-  color: ${({ $active }) => ($active ? "#244b73" : "#182742")};
-  font-size: 0.98rem;
-  font-weight: ${({ $active }) => ($active ? 800 : 700)};
-  padding: 0.82rem 0;
+const MoreMenuItemMeta = styled.span`
+  color: rgba(79, 93, 119, 0.78);
+  font-size: 0.78rem;
+  font-weight: 700;
 `;
 
 const Content = styled.div`
@@ -419,9 +520,13 @@ const FooterLocaleArrow = styled.span`
 export default function SiteShell({ children, locale, messages }) {
   const pathname = usePathname();
   const [menuOpenedForPath, setMenuOpenedForPath] = useState(null);
+  const [isDesktopPrimaryNavVisible, setIsDesktopPrimaryNavVisible] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia("(min-width: 720px)").matches : true,
+  );
   const legalNavigation = messages.site.legalNavigation || {};
   const languageLabel = messages.meta?.language || locale.toUpperCase();
   const currentYear = new Date().getFullYear();
+  const searchBarCopy = messages.site.searchBar || {};
 
   const homeHref = buildLocalizedPath(locale, publicRouteSegments.home);
   const blogHref = buildLocalizedPath(locale, publicRouteSegments.blog);
@@ -432,21 +537,63 @@ export default function SiteShell({ children, locale, messages }) {
   const privacyHref = buildLocalizedPath(locale, publicRouteSegments.privacy);
 
   const primaryLinks = [
-    { href: homeHref, label: messages.site.navigation.home },
-    { href: blogHref, label: messages.site.navigation.blog },
-    { href: aboutHref, label: messages.site.navigation.about },
-    { href: contactHref, label: messages.site.navigation.contact },
+    { href: homeHref, key: "home", label: messages.site.navigation.home },
+    { href: blogHref, key: "blog", label: messages.site.navigation.blog },
+    { href: aboutHref, key: "about", label: messages.site.navigation.about },
+    { href: contactHref, key: "contact", label: messages.site.navigation.contact },
   ];
-  const secondaryLinks = [
-    { href: searchHref, label: messages.site.navigation.search },
-    { href: disclaimerHref, label: legalNavigation.disclaimer || "Disclaimer" },
-    { href: privacyHref, label: legalNavigation.privacy || "Privacy" },
+  const browseLinks = [
+    { href: homeHref, key: "home", label: messages.site.navigation.home },
+    { href: blogHref, key: "blog", label: messages.site.navigation.blog },
+    { href: searchHref, key: "search", label: messages.site.navigation.search },
+  ];
+  const companyLinks = [
+    { href: aboutHref, key: "about", label: messages.site.navigation.about },
+    { href: contactHref, key: "contact", label: messages.site.navigation.contact },
+    { href: disclaimerHref, key: "disclaimer", label: legalNavigation.disclaimer || "Disclaimer" },
+    { href: privacyHref, key: "privacy", label: legalNavigation.privacy || "Privacy" },
   ];
   const matchedContext =
-    [...primaryLinks, ...secondaryLinks].find((item) => isNavigationActive(pathname, item.href)) || null;
+    [...browseLinks, ...companyLinks].find((item) => isNavigationActive(pathname, item.href)) || null;
   const contextLabel =
     matchedContext?.label || getEntityContextLabel(pathname) || messages.site.navigation.home;
   const isMenuOpen = menuOpenedForPath === pathname;
+  const visibleHeaderKeys = new Set(
+    isDesktopPrimaryNavVisible ? primaryLinks.map((item) => item.key) : [],
+  );
+  const menuSections = [
+    {
+      items: browseLinks.filter((item) => !visibleHeaderKeys.has(item.key)),
+      key: "browse",
+      title: "Browse",
+    },
+    {
+      items: companyLinks.filter((item) => !visibleHeaderKeys.has(item.key)),
+      key: "company",
+      title: "Company",
+    },
+  ].filter((section) => section.items.length);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+
+    const mediaQueryList = window.matchMedia("(min-width: 720px)");
+    const handleChange = (event) => {
+      setIsDesktopPrimaryNavVisible(event.matches);
+    };
+
+    if (typeof mediaQueryList.addEventListener === "function") {
+      mediaQueryList.addEventListener("change", handleChange);
+
+      return () => mediaQueryList.removeEventListener("change", handleChange);
+    }
+
+    mediaQueryList.addListener(handleChange);
+
+    return () => mediaQueryList.removeListener(handleChange);
+  }, []);
 
   return (
     <Shell>
@@ -454,11 +601,19 @@ export default function SiteShell({ children, locale, messages }) {
         <HeaderInner>
           <HeaderLeft>
             <BrandLink href={homeHref}>
-              <EquipLogo size={48} />
+              <EquipLogo size={40} />
               <BrandTitle>{messages.site.title}</BrandTitle>
             </BrandLink>
             <ContextLabel>{contextLabel}</ContextLabel>
           </HeaderLeft>
+
+          <HeaderSearchDesktop>
+            <PublicEquipmentSearch
+              locale={locale}
+              searchCopy={searchBarCopy}
+              searchHref={searchHref}
+            />
+          </HeaderSearchDesktop>
 
           <HeaderRight>
             <PrimaryNav aria-label="Public navigation">
@@ -486,38 +641,61 @@ export default function SiteShell({ children, locale, messages }) {
                 onClick={() =>
                   setMenuOpenedForPath((currentValue) => (currentValue === pathname ? null : pathname))
                 }
+                $open={isMenuOpen}
                 type="button"
               >
-                ...
+                <MoreButtonDots aria-hidden="true">
+                  <MoreButtonDot />
+                  <MoreButtonDot />
+                  <MoreButtonDot />
+                </MoreButtonDots>
               </MoreButton>
 
-              <DesktopMenu $open={isMenuOpen} id="public-navigation-overflow">
-                {secondaryLinks.map((item) => (
-                  <DesktopMenuLink href={item.href} key={item.href}>
-                    {item.label}
-                  </DesktopMenuLink>
-                ))}
-              </DesktopMenu>
+              <MoreMenuPanel $open={isMenuOpen} id="public-navigation-overflow">
+                <MoreMenuHeader>
+                  <MoreMenuTitle>More</MoreMenuTitle>
+                  <MoreMenuDescription>
+                    Only links hidden from the header are listed here.
+                  </MoreMenuDescription>
+                </MoreMenuHeader>
+
+                <MoreMenuSections>
+                  {menuSections.map((section) => (
+                    <MoreMenuSection key={section.key}>
+                      <MoreMenuSectionLabel>{section.title}</MoreMenuSectionLabel>
+                      <MoreMenuList>
+                        {section.items.map((item) => {
+                          const isActive = isNavigationActive(pathname, item.href);
+
+                          return (
+                            <MoreMenuLink
+                              aria-current={isActive ? "page" : undefined}
+                              href={item.href}
+                              key={item.href}
+                              onClick={() => setMenuOpenedForPath(null)}
+                              $active={isActive}
+                            >
+                              <span>{item.label}</span>
+                              <MoreMenuItemMeta>{isActive ? "Current" : "Open"}</MoreMenuItemMeta>
+                            </MoreMenuLink>
+                          );
+                        })}
+                      </MoreMenuList>
+                    </MoreMenuSection>
+                  ))}
+                </MoreMenuSections>
+              </MoreMenuPanel>
             </MenuWrap>
           </HeaderRight>
         </HeaderInner>
 
-        <MobileMenu $open={isMenuOpen}>
-          {[...primaryLinks, ...secondaryLinks].map((item) => {
-            const isActive = isNavigationActive(pathname, item.href);
-
-            return (
-              <MobileMenuLink
-                aria-current={isActive ? "page" : undefined}
-                href={item.href}
-                key={item.href}
-                $active={isActive}
-              >
-                {item.label}
-              </MobileMenuLink>
-            );
-          })}
-        </MobileMenu>
+        <HeaderSearchMobile>
+          <PublicEquipmentSearch
+            locale={locale}
+            searchCopy={searchBarCopy}
+            searchHref={searchHref}
+          />
+        </HeaderSearchMobile>
       </Header>
 
       <Content>{children}</Content>

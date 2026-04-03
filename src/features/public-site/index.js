@@ -11,6 +11,7 @@ import { normalizeDisplayText, normalizeEquipmentName } from "@/lib/normalizatio
 export const publicDataRevalidateSeconds = 300;
 export const publicListingPageSize = 12;
 export const publicCommentsPageSize = 10;
+export const publicEquipmentSuggestionLimit = 8;
 
 const articleSectionOrderIndex = new Map(
   generatedArticleSectionOrder.map((sectionId, index) => [sectionId, index]),
@@ -884,6 +885,163 @@ function createEntitySummary(entity, entityKind, locale) {
   };
 }
 
+function truncateSummary(value, maxLength = 120) {
+  const normalizedValue = normalizeDisplayText(value);
+
+  if (!normalizedValue) {
+    return "";
+  }
+
+  if (normalizedValue.length <= maxLength) {
+    return normalizedValue;
+  }
+
+  return `${normalizedValue.slice(0, Math.max(0, maxLength - 1)).trimEnd()}...`;
+}
+
+function buildPublishedEquipmentSuggestionWhere({ locale, search }) {
+  const normalizedSearch = normalizeDisplayText(search);
+  const normalizedEquipmentSearch = normalizeSearchValue(normalizedSearch);
+
+  return {
+    posts: {
+      some: {
+        publishedAt: {
+          not: null,
+        },
+        status: PostStatus.PUBLISHED,
+        translations: {
+          some: {
+            locale,
+          },
+        },
+      },
+    },
+    OR: [
+      {
+        name: {
+          contains: normalizedSearch,
+        },
+      },
+      {
+        normalizedName: {
+          contains: normalizedEquipmentSearch,
+        },
+      },
+      {
+        description: {
+          contains: normalizedSearch,
+        },
+      },
+      {
+        aliases: {
+          some: {
+            OR: [
+              {
+                alias: {
+                  contains: normalizedSearch,
+                },
+              },
+              {
+                normalizedAlias: {
+                  contains: normalizedEquipmentSearch,
+                },
+              },
+            ],
+          },
+        },
+      },
+    ],
+  };
+}
+
+function findMatchedEquipmentAlias(aliases, normalizedSearch) {
+  if (!normalizedSearch) {
+    return null;
+  }
+
+  return (
+    (aliases || []).find((alias) => {
+      const normalizedAlias = normalizeSearchValue(alias.alias);
+
+      if (!normalizedAlias) {
+        return false;
+      }
+
+      return (
+        normalizedAlias === normalizedSearch ||
+        normalizedAlias.startsWith(normalizedSearch) ||
+        normalizedAlias.includes(normalizedSearch)
+      );
+    })?.alias || null
+  );
+}
+
+function getEquipmentSuggestionTier(equipment, matchedAlias, normalizedSearch) {
+  const normalizedName = normalizeSearchValue(equipment.name);
+  const normalizedAlias = normalizeSearchValue(matchedAlias);
+
+  if (normalizedName && normalizedName === normalizedSearch) {
+    return 4;
+  }
+
+  if (normalizedAlias && normalizedAlias === normalizedSearch) {
+    return 3;
+  }
+
+  if (normalizedName && normalizedName.startsWith(normalizedSearch)) {
+    return 2;
+  }
+
+  if (normalizedAlias && normalizedAlias.startsWith(normalizedSearch)) {
+    return 1;
+  }
+
+  return 0;
+}
+
+function buildEquipmentSuggestionScore(equipment, normalizedSearch, searchTokens) {
+  return (
+    sumSearchFieldScores([equipment.name], normalizedSearch, searchTokens, {
+      contains: 8,
+      exact: 12,
+      prefix: 10,
+      token: 1,
+    }) +
+    sumSearchFieldScores(
+      (equipment.aliases || []).map((alias) => alias.alias),
+      normalizedSearch,
+      searchTokens,
+      {
+        contains: 7,
+        exact: 10,
+        prefix: 8,
+        token: 1,
+      },
+    ) +
+    sumSearchFieldScores([equipment.description], normalizedSearch, searchTokens, {
+      contains: 2,
+      exact: 3,
+      prefix: 2,
+      token: 0,
+    })
+  );
+}
+
+function createPublishedEquipmentSuggestion(equipment, locale, matchedAlias) {
+  return {
+    description: truncateSummary(
+      matchedAlias
+        ? `Alias match: ${matchedAlias}${equipment.description ? ` - ${equipment.description}` : ""}`
+        : equipment.description || "Published equipment page",
+    ),
+    matchedAlias: matchedAlias || null,
+    name: equipment.name,
+    path: buildLocalizedPath(locale, publicRouteSegments.equipment(equipment.slug)),
+    slug: equipment.slug,
+  };
+}
+
 function tallyDiscoveryEntries(posts, entityKind, locale) {
   const tallies = new Map();
 
@@ -1061,6 +1219,76 @@ async function searchPublishedPostsInternal(
     ),
     search: normalizedSearch,
   };
+}
+
+async function searchPublishedEquipmentSuggestionsInternal(
+  { limit = publicEquipmentSuggestionLimit, locale = defaultLocale, search } = {},
+  prisma,
+) {
+  const resolvedLocale = normalizePublicLocale(locale);
+  const resolvedLimit = normalizePositiveInteger(limit, publicEquipmentSuggestionLimit);
+  const normalizedSearch = normalizeDisplayText(search) || "";
+
+  if (normalizedSearch.length < 2) {
+    return [];
+  }
+
+  const normalizedSearchValue = normalizeSearchValue(normalizedSearch);
+
+  if (!normalizedSearchValue) {
+    return [];
+  }
+
+  const db = await resolvePrismaClient(prisma);
+  const matchingEquipment = await db.equipment.findMany({
+    orderBy: [{ name: "asc" }, { slug: "asc" }],
+    select: {
+      aliases: {
+        orderBy: {
+          alias: "asc",
+        },
+        select: {
+          alias: true,
+        },
+        take: 5,
+      },
+      description: true,
+      name: true,
+      slug: true,
+    },
+    take: Math.max(resolvedLimit * 4, 16),
+    where: buildPublishedEquipmentSuggestionWhere({
+      locale: resolvedLocale,
+      search: normalizedSearch,
+    }),
+  });
+  const searchTokens = dedupeStrings(normalizedSearchValue.split(" "));
+
+  return matchingEquipment
+    .map((equipment) => {
+      const matchedAlias = findMatchedEquipmentAlias(equipment.aliases, normalizedSearchValue);
+
+      return {
+        score: buildEquipmentSuggestionScore(equipment, normalizedSearchValue, searchTokens),
+        suggestion: createPublishedEquipmentSuggestion(equipment, resolvedLocale, matchedAlias),
+        tier: getEquipmentSuggestionTier(equipment, matchedAlias, normalizedSearchValue),
+      };
+    })
+    .sort((left, right) => {
+      if (left.tier !== right.tier) {
+        return right.tier - left.tier;
+      }
+
+      if (left.score !== right.score) {
+        return right.score - left.score;
+      }
+
+      return left.suggestion.name.localeCompare(right.suggestion.name, undefined, {
+        sensitivity: "base",
+      });
+    })
+    .slice(0, resolvedLimit)
+    .map((entry) => entry.suggestion);
 }
 
 async function getPublishedHomePageDataInternal({ locale = defaultLocale } = {}, prisma) {
@@ -1670,6 +1898,15 @@ const getCachedPublishedSearchResults = unstable_cache(
   },
 );
 
+const getCachedPublishedEquipmentSuggestions = unstable_cache(
+  async (limit, locale, search) =>
+    searchPublishedEquipmentSuggestionsInternal({ limit, locale, search }),
+  ["public-equipment-suggestion-data"],
+  {
+    revalidate: publicDataRevalidateSeconds,
+  },
+);
+
 export async function listPublishedPosts(options = {}, prisma) {
   if (normalizeDisplayText(options.search)) {
     return searchPublishedPosts(options, prisma);
@@ -1696,6 +1933,18 @@ export async function searchPublishedPosts(options = {}, prisma) {
     normalizePublicLocale(options.locale),
     normalizePositiveInteger(options.page),
     normalizePositiveInteger(options.pageSize, publicListingPageSize),
+    normalizeDisplayText(options.search) || "",
+  );
+}
+
+export async function searchPublishedEquipmentSuggestions(options = {}, prisma) {
+  if (prisma) {
+    return searchPublishedEquipmentSuggestionsInternal(options, prisma);
+  }
+
+  return getCachedPublishedEquipmentSuggestions(
+    normalizePositiveInteger(options.limit, publicEquipmentSuggestionLimit),
+    normalizePublicLocale(options.locale),
     normalizeDisplayText(options.search) || "",
   );
 }

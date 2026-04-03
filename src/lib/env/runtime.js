@@ -138,10 +138,11 @@ const serverEnvSchema = sharedEnvSchema
     }),
     SESSION_SECRET: requiredString("SESSION_SECRET"),
     SESSION_MAX_AGE_SECONDS: integerString("SESSION_MAX_AGE_SECONDS"),
-    AI_PROVIDER_DEFAULT: requiredString("AI_PROVIDER_DEFAULT"),
-    AI_MODEL_DEFAULT: requiredString("AI_MODEL_DEFAULT"),
-    AI_PROVIDER_FALLBACK: requiredString("AI_PROVIDER_FALLBACK"),
-    AI_MODEL_FALLBACK: requiredString("AI_MODEL_FALLBACK"),
+    AI_PROVIDER_DEFAULT: optionalString(),
+    AI_MODEL_DEFAULT: optionalString(),
+    AI_PROVIDER_FALLBACK: optionalString(),
+    AI_MODEL_FALLBACK: optionalString(),
+    AI_PROVIDER_CONFIG_SECRET: optionalString(),
     OPENAI_API_KEY: optionalString(),
     MEDIA_DRIVER: requiredString("MEDIA_DRIVER"),
     LOCAL_MEDIA_BASE_PATH: optionalString(),
@@ -167,7 +168,27 @@ const serverEnvSchema = sharedEnvSchema
     const supportedProviders = ["openai"];
     const supportedMediaDrivers = ["local", "s3"];
 
-    if (!supportedProviders.includes(env.AI_PROVIDER_DEFAULT)) {
+    if ((env.AI_PROVIDER_DEFAULT && !env.AI_MODEL_DEFAULT) || (!env.AI_PROVIDER_DEFAULT && env.AI_MODEL_DEFAULT)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["AI_PROVIDER_DEFAULT"],
+        message: "AI_PROVIDER_DEFAULT and AI_MODEL_DEFAULT must be set together when bootstrapping provider defaults.",
+      });
+    }
+
+    if (
+      (env.AI_PROVIDER_FALLBACK && !env.AI_MODEL_FALLBACK) ||
+      (!env.AI_PROVIDER_FALLBACK && env.AI_MODEL_FALLBACK)
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["AI_PROVIDER_FALLBACK"],
+        message:
+          "AI_PROVIDER_FALLBACK and AI_MODEL_FALLBACK must be set together when bootstrapping fallback providers.",
+      });
+    }
+
+    if (env.AI_PROVIDER_DEFAULT && !supportedProviders.includes(env.AI_PROVIDER_DEFAULT)) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["AI_PROVIDER_DEFAULT"],
@@ -175,7 +196,7 @@ const serverEnvSchema = sharedEnvSchema
       });
     }
 
-    if (!supportedProviders.includes(env.AI_PROVIDER_FALLBACK)) {
+    if (env.AI_PROVIDER_FALLBACK && !supportedProviders.includes(env.AI_PROVIDER_FALLBACK)) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["AI_PROVIDER_FALLBACK"],
@@ -188,17 +209,6 @@ const serverEnvSchema = sharedEnvSchema
         code: z.ZodIssueCode.custom,
         path: ["MEDIA_DRIVER"],
         message: `MEDIA_DRIVER must be one of: ${supportedMediaDrivers.join(", ")}.`,
-      });
-    }
-
-    if (
-      (env.AI_PROVIDER_DEFAULT === "openai" || env.AI_PROVIDER_FALLBACK === "openai") &&
-      !env.OPENAI_API_KEY
-    ) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["OPENAI_API_KEY"],
-        message: "OPENAI_API_KEY is required when any configured AI provider is openai.",
       });
     }
 
@@ -277,15 +287,22 @@ function mapServerEnv(parsedEnv) {
   return {
     ...mapSharedEnv(parsedEnv),
     ai: {
-      default: {
-        provider: parsedEnv.AI_PROVIDER_DEFAULT,
-        model: parsedEnv.AI_MODEL_DEFAULT,
-      },
-      fallback: {
-        provider: parsedEnv.AI_PROVIDER_FALLBACK,
-        model: parsedEnv.AI_MODEL_FALLBACK,
-      },
+      default:
+        parsedEnv.AI_PROVIDER_DEFAULT && parsedEnv.AI_MODEL_DEFAULT
+          ? {
+              provider: parsedEnv.AI_PROVIDER_DEFAULT,
+              model: parsedEnv.AI_MODEL_DEFAULT,
+            }
+          : null,
+      fallback:
+        parsedEnv.AI_PROVIDER_FALLBACK && parsedEnv.AI_MODEL_FALLBACK
+          ? {
+              provider: parsedEnv.AI_PROVIDER_FALLBACK,
+              model: parsedEnv.AI_MODEL_FALLBACK,
+            }
+          : null,
       openaiApiKey: parsedEnv.OPENAI_API_KEY || null,
+      providerConfigSecret: parsedEnv.AI_PROVIDER_CONFIG_SECRET || parsedEnv.SESSION_SECRET,
     },
     auth: {
       session: {
