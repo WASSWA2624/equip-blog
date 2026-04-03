@@ -1,6 +1,7 @@
 import { CommentStatus, PostStatus } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 
+import { getCommentSubmissionFormSnapshot } from "@/features/comments";
 import { defaultLocale, isSupportedLocale } from "@/features/i18n/config";
 import { buildLocalizedPath, publicRouteSegments } from "@/features/i18n/routing";
 import { env } from "@/lib/env/server";
@@ -1119,6 +1120,10 @@ async function getPublishedPostPageDataInternal(
         slug: category.slug,
       })),
       comments: {
+        form: {
+          ...getCommentSubmissionFormSnapshot(),
+          postId: post.id,
+        },
         items: buildCommentTree(approvedComments),
         pagination: commentsPagination,
       },

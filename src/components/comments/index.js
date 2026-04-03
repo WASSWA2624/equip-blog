@@ -1,1 +1,1 @@
-export const commentComponentsReady = true;
+export { default as PublicCommentSection } from "./public-comment-section";

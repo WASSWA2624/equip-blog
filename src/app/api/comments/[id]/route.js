@@ -1,9 +1,18 @@
+import { NextResponse } from "next/server";
+
+import {
+  createCommentWorkflowErrorPayload,
+  moderateCommentRecord,
+  removeCommentRecord,
+} from "@/features/comments";
 import { requireAdminApiPermission } from "@/lib/auth/api";
 import { ADMIN_PERMISSIONS } from "@/lib/auth/rbac";
-import { commentModerationUpdateSchema } from "@/lib/validation";
+import {
+  commentDeletionSchema,
+  commentModerationUpdateSchema,
+} from "@/lib/validation";
 import {
   idParamSchema,
-  scaffoldRouteResponse,
   validateJsonRequest,
   validateParams,
 } from "@/lib/validation/api-placeholders";
@@ -32,13 +41,20 @@ export async function PATCH(request, { params }) {
     return validatedBody.response;
   }
 
-  return scaffoldRouteResponse({
-    access: "admin",
-    body: validatedBody.data,
-    method: "PATCH",
-    params: validatedParams.data,
-    route: "/api/comments/:id",
-  });
+  try {
+    const result = await moderateCommentRecord(validatedParams.data.id, validatedBody.data, {
+      actorId: auth.user.id,
+    });
+
+    return NextResponse.json({
+      data: result,
+      success: true,
+    });
+  } catch (error) {
+    const payload = createCommentWorkflowErrorPayload(error);
+
+    return NextResponse.json(payload.body, { status: payload.statusCode });
+  }
 }
 
 export async function DELETE(request, { params }) {
@@ -54,10 +70,24 @@ export async function DELETE(request, { params }) {
     return validatedParams.response;
   }
 
-  return scaffoldRouteResponse({
-    access: "admin",
-    method: "DELETE",
-    params: validatedParams.data,
-    route: "/api/comments/:id",
-  });
+  const validatedBody = await validateJsonRequest(request, commentDeletionSchema);
+
+  if (validatedBody.response) {
+    return validatedBody.response;
+  }
+
+  try {
+    const result = await removeCommentRecord(validatedParams.data.id, validatedBody.data, {
+      actorId: auth.user.id,
+    });
+
+    return NextResponse.json({
+      data: result,
+      success: true,
+    });
+  } catch (error) {
+    const payload = createCommentWorkflowErrorPayload(error);
+
+    return NextResponse.json(payload.body, { status: payload.statusCode });
+  }
 }

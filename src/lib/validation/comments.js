@@ -8,6 +8,9 @@ export const commentModerationStatusValues = Object.freeze([
 ]);
 
 export const commentBodyMaxLength = 3000;
+export const commentNameMaxLength = 191;
+export const commentEmailMaxLength = 191;
+export const commentModerationNotesMaxLength = 1000;
 
 function createRequiredStringSchema(fieldName) {
   return z.string().trim().min(1, {
@@ -31,6 +34,14 @@ function createOptionalStringSchema() {
   }, z.string().trim().optional());
 }
 
+function createOptionalLengthLimitedStringSchema(maxLength, fieldName) {
+  return createOptionalStringSchema().pipe(
+    z.string().trim().max(maxLength, {
+      message: `${fieldName} must be at most ${maxLength} characters.`,
+    }).optional(),
+  );
+}
+
 function createEnumStringSchema(fieldName, values) {
   const allowedValues = new Set(values);
 
@@ -44,6 +55,8 @@ export const commentSubmissionSchema = z
     body: createRequiredStringSchema("body").max(commentBodyMaxLength, {
       message: `body must be at most ${commentBodyMaxLength} characters.`,
     }),
+    captchaAnswer: createOptionalStringSchema(),
+    captchaToken: createOptionalStringSchema(),
     email: z.preprocess((value) => {
       if (value === undefined || value === null) {
         return undefined;
@@ -56,8 +69,12 @@ export const commentSubmissionSchema = z
       }
 
       return value;
-    }, z.string().trim().email({ message: "email must be a valid email address." }).optional()),
-    name: createRequiredStringSchema("name"),
+    }, z.string().trim().max(commentEmailMaxLength, {
+      message: `email must be at most ${commentEmailMaxLength} characters.`,
+    }).email({ message: "email must be a valid email address." }).optional()),
+    name: createRequiredStringSchema("name").max(commentNameMaxLength, {
+      message: `name must be at most ${commentNameMaxLength} characters.`,
+    }),
     parentId: createOptionalStringSchema(),
     postId: createRequiredStringSchema("postId"),
   })
@@ -68,6 +85,19 @@ export const commentModerationUpdateSchema = z
     moderationStatus: createEnumStringSchema(
       "moderationStatus",
       commentModerationStatusValues,
+    ),
+    notes: createOptionalLengthLimitedStringSchema(
+      commentModerationNotesMaxLength,
+      "notes",
+    ),
+  })
+  .strict();
+
+export const commentDeletionSchema = z
+  .object({
+    notes: createOptionalLengthLimitedStringSchema(
+      commentModerationNotesMaxLength,
+      "notes",
     ),
   })
   .strict();

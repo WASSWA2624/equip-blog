@@ -1,17 +1,23 @@
-import PlaceholderPage from "@/components/common/placeholder-page";
+import CommentModerationScreen from "@/components/admin/comment-moderation-screen";
+import { getCommentModerationSnapshot } from "@/features/comments";
+import { defaultLocale } from "@/features/i18n/config";
+import { getMessages } from "@/features/i18n/get-messages";
 
-export default function CommentsPage() {
+export default async function CommentsPage({ searchParams }) {
+  const resolvedSearchParams = await searchParams;
+  const [messages, snapshot] = await Promise.all([
+    getMessages(defaultLocale),
+    getCommentModerationSnapshot({
+      commentId: resolvedSearchParams.commentId,
+      query: resolvedSearchParams.query,
+      status: resolvedSearchParams.status,
+    }),
+  ]);
+
   return (
-    <PlaceholderPage
-      badges={["/admin/comments", "Moderation"]}
-      description="This comments moderation route is scaffolded for the guest comment review workflow."
-      eyebrow="Comments moderation"
-      notes={[
-        "Review pending guest comments.",
-        "Add moderation filters and bulk actions.",
-        "Connect rate-limited submission and moderation APIs.",
-      ]}
-      title="Moderate comments"
+    <CommentModerationScreen
+      copy={messages.admin.commentsModeration}
+      initialData={snapshot}
     />
   );
 }

@@ -143,11 +143,17 @@ describe("validation contracts", () => {
   });
 
   it("validates shared comment submission and moderation payloads", async () => {
-    const { commentModerationUpdateSchema, commentSubmissionSchema } = await import("./index");
+    const {
+      commentDeletionSchema,
+      commentModerationUpdateSchema,
+      commentSubmissionSchema,
+    } = await import("./index");
 
     expect(
       commentSubmissionSchema.parse({
         body: " Helpful note ",
+        captchaAnswer: " 7 ",
+        captchaToken: " token ",
         email: "  ",
         name: " Alice ",
         parentId: "  ",
@@ -155,6 +161,8 @@ describe("validation contracts", () => {
       }),
     ).toEqual({
       body: "Helpful note",
+      captchaAnswer: "7",
+      captchaToken: "token",
       email: undefined,
       name: "Alice",
       parentId: undefined,
@@ -164,9 +172,19 @@ describe("validation contracts", () => {
     expect(
       commentModerationUpdateSchema.parse({
         moderationStatus: "APPROVED",
+        notes: " Looks good ",
       }),
     ).toEqual({
       moderationStatus: "APPROVED",
+      notes: "Looks good",
+    });
+
+    expect(
+      commentDeletionSchema.parse({
+        notes: " Remove from public view ",
+      }),
+    ).toEqual({
+      notes: "Remove from public view",
     });
   });
 

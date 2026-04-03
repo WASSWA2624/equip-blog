@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import styled, { css } from "styled-components";
 
+import { PublicCommentSection } from "@/components/comments";
+
 function formatDateLabel(locale, value) {
   if (!value) {
     return null;
@@ -40,18 +42,37 @@ function getCommonCopy(publicMessages = {}) {
     browseEquipment: common.browseEquipment || "Browse equipment",
     browseManufacturer: common.browseManufacturer || "Browse manufacturer",
     clearAction: common.clearAction || "Clear",
+    commentBodyLabel: common.commentBodyLabel || "Comment",
+    commentBodyPlaceholder:
+      common.commentBodyPlaceholder || "Share your question or experience.",
+    commentCancelReplyAction: common.commentCancelReplyAction || "Cancel reply",
+    commentCaptchaLabel: common.commentCaptchaLabel || "Captcha challenge",
+    commentCaptchaPlaceholder:
+      common.commentCaptchaPlaceholder || "Enter the answer",
+    commentEmailLabel: common.commentEmailLabel || "Email (optional)",
+    commentEmailPlaceholder: common.commentEmailPlaceholder || "name@example.com",
+    commentNameLabel: common.commentNameLabel || "Name",
+    commentNamePlaceholder: common.commentNamePlaceholder || "Your name",
     commentReplyLabel: common.commentReplyLabel || "Reply",
+    commentReplyAction: common.commentReplyAction || "Reply",
+    commentReplyingToLabel: common.commentReplyingToLabel || "Replying to",
+    commentsPaginationLabel: common.commentsPaginationLabel || "Comments",
     commentsDescription:
       common.commentsDescription ||
-      "Approved comments are shown here. Public submission wiring stays in placeholder mode for this step.",
+      "Approved comments and editor-approved replies appear here.",
     commentsEmpty: common.commentsEmpty || "No approved comments are published yet.",
     commentsFormDescription:
       common.commentsFormDescription ||
-      "Comment submission connects in a later step. This placeholder keeps the release layout and moderation messaging visible.",
-    commentsFormTitle: common.commentsFormTitle || "Comment form",
+      "Share a question or correction. Every submission is reviewed before it appears publicly.",
+    commentsFormTitle: common.commentsFormTitle || "Leave a comment",
     commentsModerationNotice:
       common.commentsModerationNotice || "Comments are moderated before appearing publicly.",
     commentsTitle: common.commentsTitle || "Comments",
+    commentSubmitAction: common.commentSubmitAction || "Submit comment",
+    commentSubmitWorking: common.commentSubmitWorking || "Submitting...",
+    commentSuccess:
+      common.commentSuccess ||
+      "Comment submitted. It will appear once an editor approves it.",
     copiedLink: common.copiedLink || "Link copied",
     copyLink: common.copyLink || "Copy link",
     emptyStateDescription:
@@ -847,50 +868,6 @@ const ShareButton = styled.button`
   padding: 0.55rem 0.9rem;
 `;
 
-const CommentThread = styled.div`
-  display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
-`;
-
-const CommentCard = styled.div`
-  background: rgba(255, 255, 255, 0.86);
-  border: 1px solid rgba(16, 32, 51, 0.08);
-  border-radius: ${({ theme }) => theme.radius.md};
-  display: grid;
-  gap: ${({ theme }) => theme.spacing.sm};
-  padding: ${({ theme }) => theme.spacing.md};
-`;
-
-const ReplyThread = styled.div`
-  border-left: 2px solid rgba(0, 95, 115, 0.12);
-  display: grid;
-  gap: ${({ theme }) => theme.spacing.sm};
-  margin-left: ${({ theme }) => theme.spacing.md};
-  padding-left: ${({ theme }) => theme.spacing.md};
-`;
-
-const PlaceholderForm = styled.form`
-  display: grid;
-  gap: ${({ theme }) => theme.spacing.sm};
-`;
-
-const PlaceholderField = styled.input`
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid rgba(16, 32, 51, 0.14);
-  border-radius: ${({ theme }) => theme.radius.md};
-  min-height: 48px;
-  padding: 0.8rem 0.95rem;
-`;
-
-const PlaceholderArea = styled.textarea`
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid rgba(16, 32, 51, 0.14);
-  border-radius: ${({ theme }) => theme.radius.md};
-  min-height: 140px;
-  padding: 0.8rem 0.95rem;
-  resize: vertical;
-`;
-
 function renderArticleSection(section, copy) {
   if (section.kind === "text") {
     return (
@@ -1169,59 +1146,7 @@ export function PublicPostPage({ locale, messages, pageData }) {
             )}
           </Panel>
 
-          <Panel>
-            <SectionHeader>
-              <SectionTitle>{copy.commentsTitle}</SectionTitle>
-              <SectionDescription>{copy.commentsDescription}</SectionDescription>
-            </SectionHeader>
-            <PlaceholderForm>
-              <PlaceholderField disabled placeholder="Name" type="text" />
-              <PlaceholderField disabled placeholder="Email (optional)" type="email" />
-              <PlaceholderArea disabled placeholder="Comment" />
-              <SearchButton disabled type="button">
-                {copy.commentsFormTitle}
-              </SearchButton>
-            </PlaceholderForm>
-            <SectionDescription>{copy.commentsModerationNotice}</SectionDescription>
-            {article.comments.items.length ? (
-              <CommentThread>
-                {article.comments.items.map((comment) => (
-                  <CommentCard key={comment.id}>
-                    <MetaRow>
-                      <strong>{comment.name}</strong>
-                      {comment.createdAt ? <span>{formatDateLabel(locale, comment.createdAt)}</span> : null}
-                    </MetaRow>
-                    <PostCardText>{comment.body}</PostCardText>
-                    {comment.replies.length ? (
-                      <ReplyThread>
-                        {comment.replies.map((reply) => (
-                          <CommentCard key={reply.id}>
-                            <MetaRow>
-                              <strong>{reply.name}</strong>
-                              <span>{copy.commentReplyLabel}</span>
-                              {reply.createdAt ? (
-                                <span>{formatDateLabel(locale, reply.createdAt)}</span>
-                              ) : null}
-                            </MetaRow>
-                            <PostCardText>{reply.body}</PostCardText>
-                          </CommentCard>
-                        ))}
-                      </ReplyThread>
-                    ) : null}
-                  </CommentCard>
-                ))}
-              </CommentThread>
-            ) : (
-              <SectionDescription>{copy.commentsEmpty}</SectionDescription>
-            )}
-            <Pagination
-              copy={copy}
-              pageParam="commentsPage"
-              pagination={article.comments.pagination}
-              pathname={article.path}
-              query={{}}
-            />
-          </Panel>
+          <PublicCommentSection article={article} copy={copy} locale={locale} />
         </ArticleColumn>
 
         <SidebarColumn>
