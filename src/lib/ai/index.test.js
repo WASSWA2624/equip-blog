@@ -316,6 +316,231 @@ describe("AI composition pipeline", () => {
     );
   });
 
+  it("decodes provider authentication failures with provider and model context", async () => {
+    const prisma = {
+      modelProviderConfig: {
+        findFirst: vi.fn().mockResolvedValue(null),
+      },
+      sourceConfig: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
+    };
+    const { composeDraftPackage } = await import("./index");
+
+    await expect(
+      composeDraftPackage(
+        createGenerationRequest(),
+        {
+          disclaimer: "English disclaimer",
+          promptLayers: createPromptLayers(),
+          providerConfig: {
+            id: "provider_cfg_default_generation",
+            model: "gpt-5.4",
+            provider: "openai",
+          },
+          providerOptions: {
+            composeStructuredArticle: vi.fn(async () => {
+              throw Object.assign(new Error("Incorrect API key provided."), {
+                code: "invalid_api_key",
+                error: {
+                  code: "invalid_api_key",
+                  message: "Incorrect API key provided.",
+                  type: "invalid_request_error",
+                },
+                status: 401,
+              });
+            }),
+          },
+        },
+        prisma,
+      ),
+    ).rejects.toMatchObject({
+      details: {
+        model: "gpt-5.4",
+        provider: "openai",
+        providerCode: "invalid_api_key",
+        providerLabel: "OpenAI",
+        providerStatusCode: 401,
+      },
+      message: expect.stringContaining(
+        "OpenAI / gpt-5.4 rejected the request because the credentials were not accepted.",
+      ),
+      status: "provider_authentication_failed",
+      statusCode: 401,
+    });
+  });
+
+  it("decodes unavailable model failures with provider and model context", async () => {
+    const prisma = {
+      modelProviderConfig: {
+        findFirst: vi.fn().mockResolvedValue(null),
+      },
+      sourceConfig: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
+    };
+    const { composeDraftPackage } = await import("./index");
+
+    await expect(
+      composeDraftPackage(
+        createGenerationRequest(),
+        {
+          disclaimer: "English disclaimer",
+          promptLayers: createPromptLayers(),
+          providerConfig: {
+            id: "provider_cfg_anthropic_generation",
+            model: "claude-sonnet-4-5-20250929",
+            provider: "anthropic",
+          },
+          providerOptions: {
+            composeStructuredArticle: vi.fn(async () => {
+              throw Object.assign(new Error('Model "claude-sonnet-4-5-20250929" was not found.'), {
+                error: {
+                  code: "model_not_found",
+                  message: 'Model "claude-sonnet-4-5-20250929" was not found.',
+                  type: "invalid_request_error",
+                },
+                status: 404,
+              });
+            }),
+          },
+        },
+        prisma,
+      ),
+    ).rejects.toMatchObject({
+      details: {
+        model: "claude-sonnet-4-5-20250929",
+        provider: "anthropic",
+        providerCode: "model_not_found",
+        providerLabel: "Anthropic",
+        providerStatusCode: 404,
+      },
+      message: expect.stringContaining(
+        "Anthropic / claude-sonnet-4-5-20250929 is not available for the configured account or endpoint.",
+      ),
+      status: "provider_model_unavailable",
+      statusCode: 404,
+    });
+  });
+
+  it("decodes provider rate limits with provider and model context", async () => {
+    const prisma = {
+      modelProviderConfig: {
+        findFirst: vi.fn().mockResolvedValue(null),
+      },
+      sourceConfig: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
+    };
+    const { composeDraftPackage } = await import("./index");
+
+    await expect(
+      composeDraftPackage(
+        createGenerationRequest(),
+        {
+          disclaimer: "English disclaimer",
+          promptLayers: createPromptLayers(),
+          providerConfig: {
+            id: "provider_cfg_anthropic_generation",
+            model: "claude-sonnet-4-5-20250929",
+            provider: "anthropic",
+          },
+          providerOptions: {
+            composeStructuredArticle: vi.fn(async () => {
+              throw Object.assign(new Error("Quota exceeded for this model."), {
+                error: {
+                  code: "resource_exhausted",
+                  message: "Quota exceeded for this model.",
+                  type: "rate_limit_error",
+                },
+                status: 429,
+              });
+            }),
+          },
+        },
+        prisma,
+      ),
+    ).rejects.toMatchObject({
+      details: {
+        failureKind: "rate_limited",
+        model: "claude-sonnet-4-5-20250929",
+        provider: "anthropic",
+        providerCode: "resource_exhausted",
+        providerLabel: "Anthropic",
+        providerStatusCode: 429,
+      },
+      message: expect.stringContaining(
+        "Anthropic / claude-sonnet-4-5-20250929 temporarily rejected the request because the provider rate limit or quota was reached.",
+      ),
+      status: "provider_rate_limited",
+      statusCode: 429,
+    });
+  });
+
+  it("wraps invalid provider output with provider and model context", async () => {
+    const prisma = {
+      modelProviderConfig: {
+        findFirst: vi.fn().mockResolvedValue(null),
+      },
+      sourceConfig: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
+    };
+    const { composeDraftPackage } = await import("./index");
+    const baselineDraft = await composeDraftPackage(
+      createGenerationRequest(),
+      {
+        disclaimer: "English disclaimer",
+        promptLayers: createPromptLayers(),
+        providerConfig: {
+          id: "provider_cfg_default_generation",
+          model: "gpt-5.4",
+          provider: "openai",
+        },
+      },
+      {
+        sourceConfig: {
+          findMany: vi.fn().mockResolvedValue([]),
+        },
+      },
+    );
+
+    await expect(
+      composeDraftPackage(
+        createGenerationRequest(),
+        {
+          disclaimer: "English disclaimer",
+          promptLayers: createPromptLayers(),
+          providerConfig: {
+            id: "provider_cfg_default_generation",
+            model: "gpt-5.4",
+            provider: "openai",
+          },
+          providerOptions: {
+            composeStructuredArticle: vi.fn(async () => ({
+              executionMode: "sdk_response",
+              structuredArticle: {
+                ...baselineDraft.article,
+                title: "",
+              },
+            })),
+          },
+        },
+        prisma,
+      ),
+    ).rejects.toMatchObject({
+      details: {
+        model: "gpt-5.4",
+        provider: "openai",
+        providerLabel: "OpenAI",
+        providerMessage: "Generated draft title is required.",
+      },
+      message: "OpenAI / gpt-5.4 returned an invalid draft payload: Generated draft title is required.",
+      status: "provider_response_invalid",
+      statusCode: 502,
+    });
+  });
+
   it("persists the microscope acceptance draft, seo payload, structured blocks, and generation job", async () => {
     const generationJobCreate = vi.fn().mockResolvedValue({
       id: "job_1",

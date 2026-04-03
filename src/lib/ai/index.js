@@ -61,6 +61,10 @@ function dedupeStrings(values) {
   return [...new Set((values || []).map((value) => `${value}`.trim()).filter(Boolean))];
 }
 
+function collapseWhitespace(value) {
+  return `${value || ""}`.trim().replace(/\s+/g, " ");
+}
+
 function compareAlphabetical(left, right) {
   return left.localeCompare(right, undefined, {
     sensitivity: "base",
@@ -71,8 +75,446 @@ function toSerializableJson(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+function truncateErrorMessage(value, maxLength = 280) {
+  const normalizedValue = collapseWhitespace(value);
+
+  if (!normalizedValue || normalizedValue.length <= maxLength) {
+    return normalizedValue;
+  }
+
+  return `${normalizedValue.slice(0, maxLength - 3).trimEnd()}...`;
+}
+
 function chunkList(values, count) {
   return values.slice(0, count);
+}
+
+function isRecord(value) {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function tryParseErrorRecord(value) {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue.startsWith("{")) {
+    return null;
+  }
+
+  try {
+    const parsedValue = JSON.parse(trimmedValue);
+
+    return isRecord(parsedValue) ? parsedValue : null;
+  } catch {
+    return null;
+  }
+}
+
+function getNestedValue(record, path) {
+  return path.split(".").reduce((currentValue, segment) => {
+    if (!isRecord(currentValue)) {
+      return undefined;
+    }
+
+    return currentValue[segment];
+  }, record);
+}
+
+function getFirstMatchingValue(records, paths) {
+  for (const record of records) {
+    for (const path of paths) {
+      const value = getNestedValue(record, path);
+
+      if (value !== undefined && value !== null && value !== "") {
+        return value;
+      }
+    }
+  }
+
+  return null;
+}
+
+function normalizeStatusCode(value) {
+  if (typeof value === "number" && Number.isInteger(value) && value >= 100 && value <= 599) {
+    return value;
+  }
+
+  if (typeof value === "string" && /^\d{3}$/.test(value.trim())) {
+    return Number(value);
+  }
+
+  return null;
+}
+
+function buildProviderErrorContext(providerConfig) {
+  const providerMetadata = getAiProviderByValue(providerConfig?.provider);
+
+  return {
+    model: providerConfig?.model || null,
+    provider: providerConfig?.provider || null,
+    providerConfigId: providerConfig?.id || null,
+    providerLabel: providerMetadata?.label || providerConfig?.provider || null,
+  };
+}
+
+function collectErrorRecords(error) {
+  const records = [];
+  const seenRecords = new Set();
+
+  function addRecord(value) {
+    if (!isRecord(value) || seenRecords.has(value)) {
+      return;
+    }
+
+    seenRecords.add(value);
+    records.push(value);
+  }
+
+  addRecord(error);
+
+  if (!isRecord(error)) {
+    return records;
+  }
+
+  addRecord(error.error);
+  addRecord(error.details);
+  addRecord(error.body);
+  addRecord(tryParseErrorRecord(error.body));
+  addRecord(error.response);
+  addRecord(error.response?.data);
+  addRecord(error.response?.body);
+  addRecord(tryParseErrorRecord(error.response?.body));
+  addRecord(error.response?.error);
+  addRecord(tryParseErrorRecord(error.responseBody));
+  addRecord(error.cause);
+  addRecord(error.cause?.error);
+  addRecord(error.cause?.details);
+  addRecord(error.cause?.body);
+  addRecord(tryParseErrorRecord(error.cause?.body));
+  addRecord(error.cause?.response);
+  addRecord(error.cause?.response?.data);
+  addRecord(error.cause?.response?.body);
+  addRecord(tryParseErrorRecord(error.cause?.response?.body));
+  addRecord(error.cause?.response?.error);
+  addRecord(tryParseErrorRecord(error.cause?.responseBody));
+
+  return records;
+}
+
+function extractProviderFailureMetadata(error, providerConfig) {
+  const records = collectErrorRecords(error);
+  const fallbackMessage = error instanceof Error ? error.message : `${error}`;
+  const rawMessage = truncateErrorMessage(
+    getFirstMatchingValue(records, ["message", "error.message", "details.message"]) || fallbackMessage,
+  );
+  const providerMessage = truncateErrorMessage(
+    getFirstMatchingValue(records, [
+      "error.message",
+      "message",
+      "details.message",
+      "data.error.message",
+      "data.message",
+    ]) || rawMessage,
+  );
+  const providerStatusCode =
+    normalizeStatusCode(getFirstMatchingValue(records, ["statusCode", "status", "response.status"])) ||
+    normalizeStatusCode(isRecord(error) ? error.response?.status : null);
+  const providerCodeValue = getFirstMatchingValue(records, [
+    "error.code",
+    "code",
+    "details.code",
+    "data.error.code",
+    "data.code",
+  ]);
+  const providerTypeValue = getFirstMatchingValue(records, [
+    "error.type",
+    "type",
+    "details.type",
+    "data.error.type",
+    "data.type",
+  ]);
+  const providerParamValue = getFirstMatchingValue(records, [
+    "error.param",
+    "param",
+    "details.param",
+    "data.error.param",
+    "data.param",
+  ]);
+  const requestIdValue = getFirstMatchingValue(records, [
+    "request_id",
+    "requestId",
+    "headers.x-request-id",
+    "headers.request-id",
+  ]);
+
+  return {
+    ...buildProviderErrorContext(providerConfig),
+    providerCode: providerCodeValue === null ? null : collapseWhitespace(providerCodeValue),
+    providerMessage,
+    providerParam: providerParamValue === null ? null : collapseWhitespace(providerParamValue),
+    providerStatusCode,
+    providerType: providerTypeValue === null ? null : collapseWhitespace(providerTypeValue),
+    rawMessage,
+    requestId: requestIdValue === null ? null : collapseWhitespace(requestIdValue),
+  };
+}
+
+function classifyProviderFailure(metadata) {
+  const combinedMessage = collapseWhitespace(
+    [
+      metadata.providerMessage,
+      metadata.rawMessage,
+      metadata.providerCode,
+      metadata.providerType,
+      metadata.providerParam,
+    ]
+      .filter(Boolean)
+      .join(" "),
+  ).toLowerCase();
+  const normalizedCode = `${metadata.providerCode || ""}`.trim().toLowerCase();
+  const timeoutCodes = ["ABORT_ERR", "ECONNABORTED", "ESOCKETTIMEDOUT", "ETIMEDOUT", "UND_ERR_CONNECT_TIMEOUT"];
+
+  if (
+    (/\bmodel\b/.test(combinedMessage) &&
+      /(not found|unknown|unavailable|not available|unsupported|does not exist|deprecated|decommissioned|not enabled|access denied|permission)/.test(
+        combinedMessage,
+      )) ||
+    /(invalid_model|model_not_found|model_not_available|unknown_model|unsupported_model)/.test(
+      normalizedCode,
+    )
+  ) {
+    return "model_unavailable";
+  }
+
+  if (
+    metadata.providerStatusCode === 429 ||
+    /(rate limit|too many requests|quota|insufficient_quota|resource exhausted|requests per minute|tokens per minute)/.test(
+      combinedMessage,
+    ) ||
+    /(insufficient_quota|quota_exceeded|rate_limit|resource_exhausted|too_many_requests)/.test(
+      normalizedCode,
+    )
+  ) {
+    return "rate_limited";
+  }
+
+  if (
+    timeoutCodes.includes(`${metadata.providerCode || ""}`.trim().toUpperCase()) ||
+    /(deadline exceeded|timed out|timeout|connect timeout|read timeout|request aborted|request timed out)/.test(
+      combinedMessage,
+    )
+  ) {
+    return "timeout";
+  }
+
+  if (
+    /(fetch failed|network|socket hang up|connection reset|connection refused|getaddrinfo|dns|econnrefused|econnreset|enotfound|ehostunreach)/.test(
+      combinedMessage,
+    )
+  ) {
+    return "network_error";
+  }
+
+  if (
+    metadata.providerStatusCode === 401 ||
+    metadata.providerStatusCode === 403 ||
+    /(invalid api key|incorrect api key|authentication|unauthorized|forbidden|permission denied|invalid x-api-key|api key not valid)/.test(
+      combinedMessage,
+    ) ||
+    /(authentication_error|invalid_api_key|permission_denied|unauthorized|forbidden)/.test(
+      normalizedCode,
+    )
+  ) {
+    return "authentication_failed";
+  }
+
+  if (
+    (metadata.providerStatusCode && metadata.providerStatusCode >= 500) ||
+    /(internal server error|service unavailable|bad gateway|gateway timeout|temporarily unavailable|overloaded|server error|try again later)/.test(
+      combinedMessage,
+    )
+  ) {
+    return "server_error";
+  }
+
+  if (
+    metadata.providerStatusCode === 400 ||
+    metadata.providerStatusCode === 404 ||
+    metadata.providerStatusCode === 422 ||
+    /(invalid request|bad request|unsupported parameter|maximum context length|context length|prompt too long|input too long|malformed|unprocessable|content policy|invalid schema|too many tokens|max tokens)/.test(
+      combinedMessage,
+    )
+  ) {
+    return "request_rejected";
+  }
+
+  return "request_failed";
+}
+
+function getProviderFailureStatus(kind, providerStatusCode) {
+  const safeStatusCode =
+    providerStatusCode && providerStatusCode >= 400 && providerStatusCode <= 599
+      ? providerStatusCode
+      : null;
+
+  if (kind === "authentication_failed") {
+    return {
+      status: "provider_authentication_failed",
+      statusCode: safeStatusCode || 401,
+    };
+  }
+
+  if (kind === "model_unavailable") {
+    return {
+      status: "provider_model_unavailable",
+      statusCode: safeStatusCode || 400,
+    };
+  }
+
+  if (kind === "rate_limited") {
+    return {
+      status: "provider_rate_limited",
+      statusCode: safeStatusCode || 429,
+    };
+  }
+
+  if (kind === "timeout") {
+    return {
+      status: "provider_timeout",
+      statusCode: safeStatusCode || 504,
+    };
+  }
+
+  if (kind === "network_error") {
+    return {
+      status: "provider_network_error",
+      statusCode: safeStatusCode || 503,
+    };
+  }
+
+  if (kind === "server_error") {
+    return {
+      status: "provider_server_error",
+      statusCode: safeStatusCode || 502,
+    };
+  }
+
+  if (kind === "request_rejected") {
+    return {
+      status: "provider_request_rejected",
+      statusCode: safeStatusCode || 400,
+    };
+  }
+
+  return {
+    status: "provider_request_failed",
+    statusCode: safeStatusCode || 502,
+  };
+}
+
+function hasMeaningfulProviderMessage(message) {
+  const normalizedMessage = collapseWhitespace(message).toLowerCase();
+
+  if (!normalizedMessage) {
+    return false;
+  }
+
+  return !["error", "fetch failed", "request failed", "unexpected error", "unknown error"].includes(
+    normalizedMessage,
+  );
+}
+
+function createProviderFailureMessage(providerConfig, metadata, failureKind) {
+  const providerConfigLabel = formatProviderConfigLabel(providerConfig);
+  let message = `${providerConfigLabel} failed during draft generation.`;
+
+  if (failureKind === "authentication_failed") {
+    message = `${providerConfigLabel} rejected the request because the credentials were not accepted.`;
+  } else if (failureKind === "model_unavailable") {
+    message = `${providerConfigLabel} is not available for the configured account or endpoint.`;
+  } else if (failureKind === "rate_limited") {
+    message = `${providerConfigLabel} temporarily rejected the request because the provider rate limit or quota was reached.`;
+  } else if (failureKind === "timeout") {
+    message = `${providerConfigLabel} did not respond in time.`;
+  } else if (failureKind === "network_error") {
+    message = `The request to ${providerConfigLabel} could not reach the provider service.`;
+  } else if (failureKind === "server_error") {
+    message = `${providerConfigLabel} returned a provider-side error.`;
+  } else if (failureKind === "request_rejected") {
+    message = `${providerConfigLabel} rejected the generation request.`;
+  }
+
+  if (hasMeaningfulProviderMessage(metadata.providerMessage)) {
+    const normalizedMessage = collapseWhitespace(message).toLowerCase();
+    const normalizedProviderMessage = collapseWhitespace(metadata.providerMessage).toLowerCase();
+
+    if (!normalizedMessage.includes(normalizedProviderMessage)) {
+      return `${message} Provider message: ${metadata.providerMessage}`;
+    }
+  }
+
+  return message;
+}
+
+function ensureProviderScopedMessage(message, providerConfig) {
+  const providerConfigLabel = formatProviderConfigLabel(providerConfig);
+  const normalizedMessage = collapseWhitespace(message);
+
+  if (!providerConfigLabel || !normalizedMessage) {
+    return normalizedMessage;
+  }
+
+  if (normalizedMessage.toLowerCase().startsWith(providerConfigLabel.toLowerCase())) {
+    return normalizedMessage;
+  }
+
+  return `${providerConfigLabel}: ${normalizedMessage}`;
+}
+
+function normalizeProviderCompositionError(error, providerConfig) {
+  const providerContext = buildProviderErrorContext(providerConfig);
+
+  if (error instanceof AiCompositionError) {
+    if (error.status === "invalid_provider_credentials" || error.status.startsWith("provider_")) {
+      return new AiCompositionError(ensureProviderScopedMessage(error.message, providerConfig), {
+        details: {
+          ...providerContext,
+          ...(error.details || {}),
+        },
+        status: error.status,
+        statusCode: error.statusCode,
+      });
+    }
+
+    return new AiCompositionError(
+      `${formatProviderConfigLabel(providerConfig)} returned an invalid draft payload: ${error.message}`,
+      {
+        details: {
+          ...providerContext,
+          ...(error.details || {}),
+          providerMessage: truncateErrorMessage(error.message),
+        },
+        status: "provider_response_invalid",
+        statusCode: 502,
+      },
+    );
+  }
+
+  const metadata = extractProviderFailureMetadata(error, providerConfig);
+  const failureKind = classifyProviderFailure(metadata);
+  const failureStatus = getProviderFailureStatus(failureKind, metadata.providerStatusCode);
+
+  return new AiCompositionError(createProviderFailureMessage(providerConfig, metadata, failureKind), {
+    details: {
+      ...metadata,
+      failureKind,
+    },
+    status: failureStatus.status,
+    statusCode: failureStatus.statusCode,
+  });
 }
 
 function renderTemplate(template, variables) {
@@ -1444,25 +1886,29 @@ export async function composeDraftPackage(input, options = {}, prisma) {
   let structuredArticle;
 
   async function composeWithProviderConfig(activeProviderConfig) {
-    const activeProvider = createProvider(activeProviderConfig, options.providerOptions);
-    const activeProviderResult = await activeProvider.composeStructuredArticle({
-      disclaimer,
-      fixture: fixtureResolution.fixture,
-      promptBundle: preCompositionPromptBundle,
-      providerConfig: activeProviderConfig,
-      request: input,
-      researchPayload: fixtureResolution.researchPayload,
-    });
-    const structuredArticle = activeProviderResult.structuredArticle;
+    try {
+      const activeProvider = createProvider(activeProviderConfig, options.providerOptions);
+      const activeProviderResult = await activeProvider.composeStructuredArticle({
+        disclaimer,
+        fixture: fixtureResolution.fixture,
+        promptBundle: preCompositionPromptBundle,
+        providerConfig: activeProviderConfig,
+        request: input,
+        researchPayload: fixtureResolution.researchPayload,
+      });
+      const structuredArticle = activeProviderResult.structuredArticle;
 
-    validateStructuredArticle(structuredArticle);
+      validateStructuredArticle(structuredArticle);
 
-    return {
-      provider: activeProvider,
-      providerConfig: activeProviderConfig,
-      providerResult: activeProviderResult,
-      structuredArticle,
-    };
+      return {
+        provider: activeProvider,
+        providerConfig: activeProviderConfig,
+        providerResult: activeProviderResult,
+        structuredArticle,
+      };
+    } catch (error) {
+      throw normalizeProviderCompositionError(error, activeProviderConfig);
+    }
   }
 
   let fallbackWarning = null;
@@ -1719,26 +2165,31 @@ export async function generateDraftFromRequest(input, options = {}, prisma) {
 }
 
 export function createAiCompositionErrorPayload(error) {
-  if (error instanceof AiCompositionError) {
-    return {
-      body: {
-        details: error.details || undefined,
-        message: error.message,
-        status: error.status,
-        success: false,
-      },
-      statusCode: error.statusCode,
-    };
+  if (!(error instanceof AiCompositionError)) {
+    console.error(error);
   }
 
-  console.error(error);
+  const normalizedError =
+    error instanceof AiCompositionError
+      ? error
+      : new AiCompositionError("An unexpected draft generation error occurred.", {
+          details:
+            error instanceof Error
+              ? {
+                  errorName: error.name,
+                }
+              : undefined,
+          status: "internal_error",
+          statusCode: 500,
+        });
 
   return {
     body: {
-      message: "An unexpected draft generation error occurred.",
-      status: "internal_error",
+      details: normalizedError.details || undefined,
+      message: normalizedError.message,
+      status: normalizedError.status,
       success: false,
     },
-    statusCode: 500,
+    statusCode: normalizedError.statusCode,
   };
 }
