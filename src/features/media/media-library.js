@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { env } from "@/lib/env/server";
 import { createSlug, normalizeDisplayText } from "@/lib/normalization";
+import { sanitizeExternalUrl } from "@/lib/security";
 import { createStorageAdapter } from "@/lib/storage";
 
 const supportedImageMimeTypes = Object.freeze({
@@ -67,10 +68,10 @@ const mediaUploadMetadataSchema = z
   .superRefine((value, context) => {
     const sourceUrl = normalizeOptionalText(value.sourceUrl);
 
-    if (sourceUrl && !URL.canParse(sourceUrl)) {
+    if (sourceUrl && !sanitizeExternalUrl(sourceUrl)) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "sourceUrl must be a valid URL when provided.",
+        message: "sourceUrl must be a valid http or https URL when provided.",
         path: ["sourceUrl"],
       });
     }
@@ -486,17 +487,28 @@ function buildMediaLibraryWhere(db, query) {
 }
 
 function normalizeMediaUploadInput(input) {
-  return mediaUploadMetadataSchema.parse({
-    alt: input.alt,
-    attributionText: input.attributionText,
-    caption: input.caption,
-    fileName: path.basename(`${input.fileName || "upload"}`),
-    isAiGenerated: normalizeBoolean(input.isAiGenerated),
-    licenseType: input.licenseType,
-    mimeType: input.mimeType,
-    sourceUrl: input.sourceUrl,
-    usageNotes: input.usageNotes,
-  });
+  try {
+    return mediaUploadMetadataSchema.parse({
+      alt: input.alt,
+      attributionText: input.attributionText,
+      caption: input.caption,
+      fileName: path.basename(`${input.fileName || "upload"}`),
+      isAiGenerated: normalizeBoolean(input.isAiGenerated),
+      licenseType: input.licenseType,
+      mimeType: input.mimeType,
+      sourceUrl: input.sourceUrl,
+      usageNotes: input.usageNotes,
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new MediaLibraryError(error.issues[0]?.message || "Invalid media metadata.", {
+        status: "invalid_media_metadata",
+        statusCode: 400,
+      });
+    }
+
+    throw error;
+  }
 }
 
 export async function getMediaLibrarySnapshot({ assetId, query } = {}, prisma) {
@@ -598,7 +610,7 @@ export async function uploadMediaAsset(input, options = {}, prisma) {
 
   const responsiveVariants = await createResponsiveVariants(primaryAsset.buffer, primaryAsset.width);
   const storagePrefix = createStoragePrefix(parsedInput.fileName, options.now);
-  const sourceUrl = normalizeOptionalText(parsedInput.sourceUrl);
+  const sourceUrl = sanitizeExternalUrl(parsedInput.sourceUrl);
   const altText = normalizeOptionalText(parsedInput.alt) || createGeneratedAltText(parsedInput.fileName, parsedInput.isAiGenerated);
   const storedObjects = [];
 

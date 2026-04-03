@@ -318,4 +318,44 @@ describe("research payload builder", () => {
     });
     expect(payload.mediaCandidates[0].sourceReferenceIds).toContain(mediaReference.id);
   });
+
+  it("skips unsafe source URLs before they can enter references or manuals", () => {
+    const payload = buildVerifiedResearchPayload({
+      definition: {
+        sources: [
+          {
+            sourceType: SourceType.TRUSTED_BIOMEDICAL_REFERENCE,
+            title: "Unsafe definition source",
+            url: "javascript:alert(1)",
+          },
+        ],
+        summary: "Microscope definition.",
+      },
+      equipment: {
+        name: "Microscope",
+      },
+      manuals: [
+        {
+          title: "Unsafe manual",
+          url: "javascript:alert(1)",
+        },
+      ],
+      operatingPrinciple: {
+        sources: [
+          {
+            sourceType: SourceType.TRUSTED_BIOMEDICAL_REFERENCE,
+            title: "Principle",
+            url: "https://nih.gov/principle",
+          },
+        ],
+        summary: "Light and lenses produce magnification.",
+      },
+    });
+
+    expect(payload.sourceReferences.some((reference) => reference.url.startsWith("javascript:"))).toBe(false);
+    expect(payload.manuals).toEqual([]);
+    expect(payload.reliabilityWarnings).toEqual(
+      expect.arrayContaining([expect.stringContaining("must use an http or https URL")]),
+    );
+  });
 });

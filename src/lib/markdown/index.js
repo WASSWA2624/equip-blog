@@ -1,4 +1,5 @@
 import { getRenderableImageUrl } from "@/lib/media";
+import { sanitizeExternalUrl } from "@/lib/security";
 
 function escapeHtml(value) {
   return `${value}`
@@ -15,6 +16,19 @@ function renderMarkdownList(items, formatter) {
 
 function renderHtmlList(items, formatter) {
   return `<ul>${items.map((item) => `<li>${formatter(item)}</li>`).join("")}</ul>`;
+}
+
+function renderMarkdownLink(label, url) {
+  const safeUrl = sanitizeExternalUrl(url);
+
+  return safeUrl ? `[${label}](${safeUrl})` : label;
+}
+
+function renderHtmlExternalLink(label, url) {
+  const safeUrl = sanitizeExternalUrl(url);
+  const safeLabel = escapeHtml(label);
+
+  return safeUrl ? `<a href="${escapeHtml(safeUrl)}">${safeLabel}</a>` : safeLabel;
 }
 
 function renderMarkdownSection(section) {
@@ -94,7 +108,7 @@ function renderMarkdownSection(section) {
           details.push(item.language);
         }
 
-        return `[${details.join(" | ")}](${item.url})`;
+        return renderMarkdownLink(details.join(" | "), item.url);
       }),
     );
   } else if (section.kind === "faq") {
@@ -104,7 +118,7 @@ function renderMarkdownSection(section) {
     }
   } else if (section.kind === "references") {
     lines.push(
-      renderMarkdownList(section.items || [], (item) => `[${item.title}](${item.url})`),
+      renderMarkdownList(section.items || [], (item) => renderMarkdownLink(item.title, item.url)),
     );
   }
 
@@ -209,7 +223,7 @@ function renderHtmlSection(section) {
     return `<section>${title}${renderHtmlList(
       section.items || [],
       (item) =>
-        `<a href="${escapeHtml(item.url)}">${escapeHtml(item.title)}</a>${
+        `${renderHtmlExternalLink(item.title, item.url)}${
           item.fileType || item.language
             ? ` (${escapeHtml([item.fileType, item.language].filter(Boolean).join(" | "))})`
             : ""
@@ -231,8 +245,7 @@ function renderHtmlSection(section) {
   if (section.kind === "references") {
     return `<section>${title}${renderHtmlList(
       section.items || [],
-      (item) =>
-        `<a href="${escapeHtml(item.url)}">${escapeHtml(item.title)}</a>`,
+      (item) => renderHtmlExternalLink(item.title, item.url),
     )}</section>`;
   }
 

@@ -1,6 +1,8 @@
 import { SourceType } from "@prisma/client";
 import { z } from "zod";
 
+import { sanitizeExternalUrl, sanitizeMediaUrl } from "@/lib/security";
+
 const RELEASE_1_LOCALE = "en";
 
 export const researchSourcePriority = Object.freeze([
@@ -574,15 +576,23 @@ function normalizeInlineSourceCandidate(
     return null;
   }
 
-  const url = trimToUndefined(candidate.url || candidate.sourceUrl);
-  const sourceDomain = normalizeDomain(candidate.sourceDomain || url);
+  const rawUrl = trimToUndefined(candidate.url || candidate.sourceUrl);
+  const url = sanitizeExternalUrl(rawUrl);
+  const sourceDomain = normalizeDomain(candidate.sourceDomain || url || rawUrl);
   const allowedDomains = normalizeAllowedDomainPatterns(
     sourceConfig.allowedDomainsJson || sourceConfig.allowedDomains || [],
   );
 
-  if (!url) {
+  if (!rawUrl) {
     warnings.push(
       `Skipped source "${candidate?.title || sourceDomain || sourceType}" because a canonical URL is required.`,
+    );
+    return null;
+  }
+
+  if (!url) {
+    warnings.push(
+      `Skipped source "${candidate?.title || sourceDomain || sourceType}" because it must use an http or https URL.`,
     );
     return null;
   }
@@ -1188,7 +1198,7 @@ function normalizeManualCandidate(
     sourceDomain: normalizeDomain(candidate?.sourceDomain || sourceReference.sourceDomain || candidate?.url),
     sourceReferenceIds,
     title: collapseWhitespace(candidate?.title) || sourceReference.title,
-    url: trimToUndefined(candidate?.url) || sourceReference.url || undefined,
+    url: sanitizeExternalUrl(candidate?.url) || sourceReference.url || undefined,
   };
 }
 
@@ -1217,13 +1227,16 @@ function normalizeMediaCandidate(
     isAiGenerated: Boolean(candidate?.isAiGenerated),
     licenseType: collapseWhitespace(candidate?.licenseType) || undefined,
     localPath: collapseWhitespace(candidate?.localPath) || undefined,
-    publicUrl: trimToUndefined(candidate?.publicUrl) || undefined,
+    publicUrl: sanitizeMediaUrl(candidate?.publicUrl),
     sourceDomain:
       normalizeDomain(candidate?.sourceDomain || candidate?.sourceUrl || candidate?.url) ||
       sourceReference?.sourceDomain ||
       undefined,
     sourceReferenceIds,
-    sourceUrl: trimToUndefined(candidate?.sourceUrl || candidate?.url) || sourceReference?.url || undefined,
+    sourceUrl:
+      sanitizeExternalUrl(candidate?.sourceUrl || candidate?.url) ||
+      sourceReference?.url ||
+      undefined,
     storageDriver: collapseWhitespace(candidate?.storageDriver) || undefined,
     storageKey: collapseWhitespace(candidate?.storageKey) || undefined,
     usageNotes: collapseWhitespace(candidate?.usageNotes) || undefined,

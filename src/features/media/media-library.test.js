@@ -362,6 +362,43 @@ describe("media library pipeline", () => {
     ).rejects.toBeInstanceOf(MediaLibraryError);
   });
 
+  it("rejects non-http source URLs before storing upload metadata", async () => {
+    const imageBuffer = await sharp({
+      create: {
+        background: {
+          b: 190,
+          g: 120,
+          r: 25,
+        },
+        channels: 3,
+        height: 300,
+        width: 300,
+      },
+    })
+      .png()
+      .toBuffer();
+    const { MediaLibraryError, uploadMediaAsset } = await import("./index");
+
+    await expect(
+      uploadMediaAsset(
+        {
+          fileBuffer: imageBuffer,
+          fileName: "microscope.png",
+          mimeType: "image/png",
+          sourceUrl: "javascript:alert(1)",
+        },
+        {
+          allowedMimeTypes: ["image/png"],
+          storageAdapter: {
+            deleteObject: vi.fn(),
+            driver: "local",
+            writeObject: vi.fn(),
+          },
+        },
+      ),
+    ).rejects.toBeInstanceOf(MediaLibraryError);
+  });
+
   it("builds the media snapshot even when the prisma surface does not expose mediaVariant directly", async () => {
     const prisma = createSnapshotOnlyPrisma();
     const { getMediaLibrarySnapshot } = await import("./index");

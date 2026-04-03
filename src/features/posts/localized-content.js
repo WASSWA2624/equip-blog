@@ -4,6 +4,7 @@ import { syncLocaleRegistryToDatabase } from "@/features/i18n/activation";
 import { defaultLocale, isSupportedLocale, supportedLocales } from "@/features/i18n/config";
 import { getMessages } from "@/features/i18n/get-messages";
 import { buildLocalizedPath, publicRouteSegments } from "@/features/i18n/routing";
+import { sanitizeHtmlFragment, sanitizeStructuredContentJson } from "@/lib/security";
 
 import { loadPostPublicRevalidationSnapshot, revalidatePostPublicSnapshots } from "./public-revalidation";
 
@@ -156,7 +157,7 @@ function createPersistedTranslationRecord(input, existingTranslation, fallbackTr
       : buildBlankTranslationState(input.locale, disclaimer);
 
   const record = {
-    contentHtml: input.contentHtml ?? baseTranslation.contentHtml,
+    contentHtml: sanitizeHtmlFragment(input.contentHtml ?? baseTranslation.contentHtml),
     contentMd: input.contentMd ?? baseTranslation.contentMd,
     disclaimer: input.disclaimer ?? baseTranslation.disclaimer,
     excerpt: input.excerpt ?? baseTranslation.excerpt,
@@ -167,8 +168,8 @@ function createPersistedTranslationRecord(input, existingTranslation, fallbackTr
     locale: input.locale,
     structuredContentJson:
       input.structuredContentJson === undefined
-        ? cloneJsonValue(baseTranslation.structuredContentJson)
-        : cloneJsonValue(input.structuredContentJson),
+        ? sanitizeStructuredContentJson(baseTranslation.structuredContentJson)
+        : sanitizeStructuredContentJson(input.structuredContentJson),
     title: input.title ?? baseTranslation.title,
   };
 

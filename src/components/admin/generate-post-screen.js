@@ -8,6 +8,7 @@ import styled, { css } from "styled-components";
 import SearchableSelect from "@/components/common/searchable-select";
 import { createAdminGenerationFormState, validateAdminGenerationInput } from "@/features/generator/admin-input";
 import { generationStageOrder, generationTerminalStageIds } from "@/lib/generation/stages";
+import { sanitizeHtmlFragment } from "@/lib/security";
 import {
   generationArticleDepthValues,
   generationRequestDefaults,
@@ -1836,7 +1837,7 @@ export default function GeneratePostScreen({ copy, initialData }) {
                     </MetaGrid>
                     <PreviewArticle
                       aria-label={copy.contentPreviewTitle}
-                      dangerouslySetInnerHTML={{ __html: reviewDraft.contentHtml }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtmlFragment(reviewDraft.contentHtml) }}
                     />
                     <MetaCard>
                       <MetaLabel>{copy.reviewDisclaimerLabel}</MetaLabel>

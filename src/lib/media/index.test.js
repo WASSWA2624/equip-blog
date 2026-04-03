@@ -37,4 +37,8 @@ describe("media placeholder helpers", () => {
       }),
     ).toBe("https://media.equipblog.com/images/microscope-bench.jpg");
   });
+
+  it("drops unsafe image urls instead of rendering them", () => {
+    expect(getRenderableImageUrl("javascript:alert(1)")).toBe("");
+  });
 });

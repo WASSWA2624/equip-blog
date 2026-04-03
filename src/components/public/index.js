@@ -8,6 +8,7 @@ import PublicViewTracker from "@/components/analytics/public-view-tracker";
 import { PublicCommentSection } from "@/components/comments";
 import ShareActions from "@/components/public/share-actions";
 import { createImagePlaceholderDataUrl } from "@/lib/media";
+import { sanitizeExternalUrl } from "@/lib/security";
 
 function formatDateLabel(locale, value) {
   if (!value) {
@@ -1164,16 +1165,24 @@ function renderArticleSection(section, copy) {
   if (section.kind === "manuals" || section.kind === "references") {
     return (
       <BulletList>
-        {(section.items || []).map((item) => (
-          <li key={`${item.title}-${item.url}`}>
-            <a href={item.url} rel="noreferrer" target="_blank">
-              {item.title}
-            </a>
-            {item.fileType || item.language
-              ? ` (${[item.fileType, item.language].filter(Boolean).join(" | ")})`
-              : ""}
-          </li>
-        ))}
+        {(section.items || []).map((item) => {
+          const safeUrl = sanitizeExternalUrl(item.url);
+
+          return (
+            <li key={`${item.title}-${item.url || "no-url"}`}>
+              {safeUrl ? (
+                <a href={safeUrl} rel="noreferrer" target="_blank">
+                  {item.title}
+                </a>
+              ) : (
+                item.title
+              )}
+              {item.fileType || item.language
+                ? ` (${[item.fileType, item.language].filter(Boolean).join(" | ")})`
+                : ""}
+            </li>
+          );
+        })}
       </BulletList>
     );
   }

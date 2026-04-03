@@ -209,4 +209,157 @@ describe("localized content persistence", () => {
     });
     expect(result.snapshot.editor.translationSource).toBe("stored");
   });
+
+  it("sanitizes saved HTML previews and structured-content URLs", async () => {
+    vi.doMock("@/features/i18n/get-messages", () => ({
+      getMessages: vi.fn(async () => ({
+        post: {
+          defaultDisclaimer: "English disclaimer",
+        },
+      })),
+    }));
+
+    let persistedRecord = null;
+    const localeRecord = {
+      code: "en",
+      isActive: true,
+      isDefault: true,
+      name: "English",
+    };
+    const prisma = {
+      $transaction: vi.fn(async (callback) =>
+        callback({
+          auditEvent: {
+            create: vi.fn().mockResolvedValue(null),
+          },
+          post: {
+            update: vi.fn().mockResolvedValue(null),
+          },
+          postTranslation: {
+            upsert: vi.fn(async ({ create, update }) => {
+              persistedRecord = create || update;
+
+              return {
+                ...persistedRecord,
+                id: "translation_1",
+                isAutoTranslated: false,
+                locale: "en",
+                updatedAt: new Date("2026-04-03T09:00:00.000Z"),
+              };
+            }),
+          },
+        }),
+      ),
+      locale: {
+        findMany: vi.fn().mockResolvedValue([localeRecord]),
+        upsert: vi.fn().mockResolvedValue(null),
+      },
+      post: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            equipment: {
+              name: "Microscope",
+            },
+            id: "post_1",
+            slug: "microscope",
+            status: "DRAFT",
+            translations: [
+              {
+                locale: "en",
+                title: "Microscope",
+                updatedAt: new Date("2026-04-03T09:00:00.000Z"),
+              },
+            ],
+            updatedAt: new Date("2026-04-03T09:00:00.000Z"),
+          },
+        ]),
+        findUnique: vi
+          .fn()
+          .mockResolvedValueOnce({
+            equipment: {
+              name: "Microscope",
+            },
+            id: "post_1",
+            publishedAt: null,
+            slug: "microscope",
+            status: "DRAFT",
+            translations: [],
+            updatedAt: new Date("2026-04-03T08:00:00.000Z"),
+          })
+          .mockResolvedValueOnce({
+            equipment: {
+              name: "Microscope",
+              slug: "microscope",
+            },
+            id: "post_1",
+            publishedAt: null,
+            slug: "microscope",
+            status: "DRAFT",
+            translations: [
+              {
+                ...persistedRecord,
+                id: "translation_1",
+                isAutoTranslated: false,
+                locale: "en",
+                updatedAt: new Date("2026-04-03T09:00:00.000Z"),
+              },
+            ],
+            updatedAt: new Date("2026-04-03T09:00:00.000Z"),
+          })
+          .mockResolvedValueOnce({
+            equipment: {
+              name: "Microscope",
+            },
+            id: "post_1",
+            publishedAt: null,
+            slug: "microscope",
+            status: "DRAFT",
+            translations: [
+              {
+                ...persistedRecord,
+                id: "translation_1",
+                isAutoTranslated: false,
+                locale: "en",
+                updatedAt: new Date("2026-04-03T09:00:00.000Z"),
+              },
+            ],
+            updatedAt: new Date("2026-04-03T09:00:00.000Z"),
+          }),
+      },
+    };
+    const { savePostLocaleContent } = await import("./localized-content");
+
+    const result = await savePostLocaleContent(
+      {
+        contentHtml:
+          '<article><p>Safe body</p><script>alert("xss")</script><a href="javascript:alert(1)">Bad</a></article>',
+        contentMd: "# Updated markdown",
+        excerpt: "Updated excerpt",
+        locale: "en",
+        postId: "post_1",
+        structuredContentJson: {
+          sections: [
+            {
+              id: "references",
+              items: [
+                {
+                  title: "Unsafe reference",
+                  url: "javascript:alert(1)",
+                },
+              ],
+              kind: "references",
+              title: "References",
+            },
+          ],
+        },
+        title: "Updated microscope",
+      },
+      {},
+      prisma,
+    );
+
+    expect(result.translation.contentHtml).not.toContain("<script");
+    expect(result.translation.contentHtml).not.toContain("javascript:");
+    expect(result.translation.structuredContentJson.sections[0].items[0].url).toBeNull();
+  });
 });

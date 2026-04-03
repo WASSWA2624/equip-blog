@@ -1,3 +1,5 @@
+import { sanitizeMediaUrl } from "@/lib/security";
+
 function trimText(value) {
   return typeof value === "string" ? value.trim() : "";
 }
@@ -99,7 +101,7 @@ export function createImagePlaceholderDataUrl(options = {}) {
 }
 
 export function getRenderableImageUrl(url, options = {}) {
-  const normalizedUrl = trimText(url);
+  const normalizedUrl = sanitizeMediaUrl(url);
 
   if (!normalizedUrl) {
     return "";

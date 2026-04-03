@@ -6,7 +6,7 @@ The app is designed to let an authenticated admin enter an equipment name, gener
 
 ## Current Repo State
 
-This repository currently contains the product definition and implementation plan, not the finished application code.
+This repository contains the Release 1 application implementation, the source-of-truth write-up, and the execution evidence gathered while building against the numbered dev plan.
 
 The two most important files are:
 
@@ -77,6 +77,6 @@ Implementation is only complete when step 24 proves full traceability to all man
 - Release 1 ships English-only content, but the locale architecture must stay ready for future locale files and configuration-driven expansion.
 - Media usage, attribution, and copyright rules must be enforced.
 
-## Next Step
+## Release Evidence
 
-Begin with [`dev-plan/01_architecture_decisions.md`](./dev-plan/01_architecture_decisions.md) after reviewing [`app-write-up.md`](./app-write-up.md).
+Release evidence is stored under [`docs/evidence`](./docs/evidence), with the final Release 1 sign-off pack captured in the step 24 evidence set.

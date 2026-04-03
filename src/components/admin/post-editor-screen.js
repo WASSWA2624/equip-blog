@@ -4,6 +4,8 @@ import Link from "next/link";
 import { startTransition, useEffect, useState } from "react";
 import styled from "styled-components";
 
+import { sanitizeHtmlFragment } from "@/lib/security";
+
 function formatDateTime(value) {
   if (!value) {
     return null;
@@ -1134,7 +1136,9 @@ export default function PostEditorScreen({ copy, initialData, permissions }) {
                     <SmallText>{data.seo.metaDescription || copy.notAvailable}</SmallText>
                   </MetaCard>
                 </MetaGrid>
-                <PreviewArticle dangerouslySetInnerHTML={{ __html: draft.contentHtml }} />
+                <PreviewArticle
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtmlFragment(draft.contentHtml) }}
+                />
               </PreviewBody>
             </PreviewFrame>
           </Card>
