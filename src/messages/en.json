@@ -117,9 +117,9 @@
       "about": {
         "eyebrow": "About",
         "title": "About Equip Blog",
-        "description": "Equip Blog turns verified medical equipment research into source-grounded learning pages that stay explicit about limits, safety boundaries, and references.",
+        "description": "Equip Blog publishes medical equipment guides built from verified references, editorial review, and clearly stated safety limits.",
         "metaTitle": "About Equip Blog",
-        "metaDescription": "Learn how Equip Blog publishes source-grounded medical equipment content for Release 1.",
+        "metaDescription": "Learn how Equip Blog publishes medical equipment guidance with visible references and safety boundaries.",
         "sections": [
           {
             "title": "What the public site is for",
@@ -131,7 +131,7 @@
           {
             "title": "Editorial approach",
             "paragraphs": [
-              "The research layer remains the source of truth. The writing layer organizes supported information into a stable learning sequence without presenting generated content as clinical instruction.",
+              "Each public page is built from checked references, editorial review, and clearly stated limits on what can and cannot be relied on operationally.",
               "References, disclaimers, and uncertainty stay visible so readers can move from overview reading into official manuals and source documents."
             ]
           },

@@ -33,7 +33,7 @@ export default function OpenGraphImage() {
             Source-grounded medical equipment publishing
           </div>
           <div style={{ fontSize: 28, maxWidth: 900, opacity: 0.9 }}>
-            Locale-ready public routes, admin workflows, and AI-assisted editorial tools.
+            Locale-ready public routes, editorial workflows, and reliable equipment reference pages.
           </div>
         </div>
       </div>

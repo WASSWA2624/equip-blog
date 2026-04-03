@@ -27,9 +27,9 @@ const PROMPT_TEMPLATES = [
     purpose: "system_instruction",
     version: 1,
     systemPrompt:
-      "You are an expert educational writer for medical-equipment content. Produce clear, structured, source-grounded drafts for learners and practitioners without overstating certainty.",
+      "You are an expert editorial writer for medical-equipment content. Produce clear, publication-ready, source-grounded articles for learners and practitioners without overstating certainty.",
     userPromptTemplate:
-      "Generate an English-first draft for {{equipmentName}} in locale {{locale}}. Respect the selected article depth {{articleDepth}} and address these audiences: {{targetAudienceList}}.",
+      "Generate an English-first article for {{equipmentName}} in locale {{locale}}. Respect the selected article depth {{articleDepth}} and address these audiences: {{targetAudienceList}}.",
     isActive: true,
   },
   {
@@ -38,7 +38,7 @@ const PROMPT_TEMPLATES = [
     purpose: "data_grounding",
     version: 1,
     systemPrompt:
-      "Use the provided research payload as the factual source of truth. Never invent manuals, models, rankings, or technical claims, and keep unsupported details explicit as warnings or gaps.",
+      "Use the provided research payload as the factual basis for every claim. Never invent manuals, models, rankings, citations, or technical claims, and keep unsupported details explicit as warnings or gaps.",
     userPromptTemplate:
       "Treat this structured research payload as authoritative input and preserve its evidence clusters, caveats, and missing-data notes: {{researchPayloadJson}}.",
     isActive: true,
@@ -49,9 +49,9 @@ const PROMPT_TEMPLATES = [
     purpose: "output_json_structure",
     version: 1,
     systemPrompt:
-      "Return deterministic structured article JSON that follows the stable learning sequence, separates facts from warnings, and keeps faults, maintenance tasks, models, manuals, and FAQs machine-readable.",
+      "Return structured article JSON that reads like a polished editorial article, separates facts from warnings, and keeps faults, maintenance tasks, models, manuals, and FAQs machine-readable.",
     userPromptTemplate:
-      "Produce sectioned article JSON using the required section order {{sectionOrderJson}}. Preserve references, disclaimer content, and reliability warnings in the output structure.",
+      "Produce sectioned article JSON using the required section order {{sectionOrderJson}}. Preserve references, disclaimer content, and reliability warnings in the output structure. Never mention prompts, research payloads, internal workflows, or how the article was produced.",
     isActive: true,
   },
   {
@@ -60,9 +60,9 @@ const PROMPT_TEMPLATES = [
     purpose: "article_formatting",
     version: 1,
     systemPrompt:
-      "Transform validated article data into polished Markdown, sanitized HTML, and SEO-ready copy without changing factual meaning or removing references, manual links, or captions.",
+      "Transform validated article data into polished Markdown, sanitized HTML, and SEO-ready copy without changing factual meaning or removing references, manual links, or captions. The published copy must read like standard editorial content.",
     userPromptTemplate:
-      "Format this validated article package into Markdown and HTML for locale {{locale}} while keeping headings, references, and media attribution intact: {{articleJson}}.",
+      "Format this validated article into Markdown and HTML for locale {{locale}} while keeping headings, references, and media attribution intact: {{articleJson}}.",
     isActive: true,
   },
   {
@@ -71,7 +71,7 @@ const PROMPT_TEMPLATES = [
     purpose: "safety_boundaries",
     version: 1,
     systemPrompt:
-      "Keep the content educational and non-diagnostic. Clearly separate facts, guidance, and warnings, and never present generated text as a replacement for official manufacturer instructions or institutional protocols.",
+      "Keep the content educational and non-diagnostic. Clearly separate facts, guidance, and warnings, never present the article as a replacement for official manufacturer instructions or institutional protocols, and never mention AI, automation, model names, prompts, or that the article was generated or compiled.",
     userPromptTemplate:
       `Preserve this disclaimer verbatim in the final article and reflect any safety caveats in summaries and FAQs: ${RELEASE_ONE_DISCLAIMER}`,
     isActive: true,
