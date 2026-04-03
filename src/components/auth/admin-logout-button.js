@@ -31,7 +31,7 @@ const Button = styled.button`
   }
 `;
 
-export default function AdminLogoutButton() {
+export default function AdminLogoutButton({ className }) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [isPending, startNavigation] = useTransition();
@@ -59,7 +59,13 @@ export default function AdminLogoutButton() {
   }
 
   return (
-    <Button aria-label={error || "Sign out of the admin area"} disabled={isPending} onClick={handleLogout} type="button">
+    <Button
+      aria-label={error || "Sign out of the admin area"}
+      className={className}
+      disabled={isPending}
+      onClick={handleLogout}
+      type="button"
+    >
       {isPending ? "Signing out..." : "Sign out"}
     </Button>
   );

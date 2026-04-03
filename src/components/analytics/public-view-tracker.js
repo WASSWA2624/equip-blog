@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 const recentViewTtlMs = 3000;
 
@@ -26,14 +26,14 @@ function shouldSkipRecentDuplicate(key, now) {
 
 export default function PublicViewTracker({ eventType, locale, postId = null }) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const search = searchParams?.toString();
-  const path = `${pathname || `/${locale}`}${search ? `?${search}` : ""}`;
 
   useEffect(() => {
     if (!pathname) {
       return;
     }
+
+    const search = typeof window !== "undefined" ? window.location.search : "";
+    const path = `${pathname || `/${locale}`}${search || ""}`;
 
     const now = Date.now();
     const trackingKey = buildTrackingKey({
@@ -61,7 +61,7 @@ export default function PublicViewTracker({ eventType, locale, postId = null }) 
       keepalive: true,
       method: "POST",
     }).catch(() => {});
-  }, [eventType, locale, path, pathname, postId]);
+  }, [eventType, locale, pathname, postId]);
 
   return null;
 }

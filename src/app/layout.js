@@ -34,13 +34,16 @@ export const metadata = {
     follow: true,
     index: true,
   },
-  themeColor: "#102033",
   twitter: {
     card: "summary_large_image",
     description: "Locale-ready scaffold for the Equip Blog public site and admin workspace.",
     images: [buildAbsoluteUrl("/twitter-image")],
     title: "Equip Blog",
   },
+};
+
+export const viewport = {
+  themeColor: "#102033",
 };
 
 export default function RootLayout({ children }) {

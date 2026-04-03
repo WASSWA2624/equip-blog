@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 
 import AdminLogoutButton from "@/components/auth/admin-logout-button";
@@ -10,6 +10,22 @@ import EquipLogo from "@/components/common/equip-logo";
 import { defaultLocale } from "@/features/i18n/config";
 import { buildLocaleRootPath } from "@/features/i18n/routing";
 import { getAdminNavigation } from "@/lib/auth/rbac";
+
+const MOBILE_BREAKPOINT = 720;
+const DESKTOP_BREAKPOINT = 1220;
+const DESKTOP_SIGN_OUT_BREAKPOINT = 1340;
+
+const MOBILE_PRIMARY_KEYS = Object.freeze([
+  "dashboard",
+  "generate",
+  "drafts",
+  "published",
+  "comments",
+]);
+
+const TABLET_PRIMARY_KEYS = Object.freeze([...MOBILE_PRIMARY_KEYS, "media"]);
+
+const DESKTOP_PRIMARY_KEYS = Object.freeze([...TABLET_PRIMARY_KEYS, "jobs", "categories"]);
 
 function normalizePathname(pathname) {
   if (typeof pathname !== "string" || !pathname.trim()) {
@@ -36,214 +52,206 @@ function isNavigationActive(pathname, href) {
   return currentPath === targetPath || currentPath.startsWith(`${targetPath}/`);
 }
 
+function getViewportWidth() {
+  if (typeof window === "undefined") {
+    return DESKTOP_BREAKPOINT;
+  }
+
+  return window.innerWidth;
+}
+
+function getPrimaryKeysForViewport(viewportWidth) {
+  if (viewportWidth < MOBILE_BREAKPOINT) {
+    return MOBILE_PRIMARY_KEYS;
+  }
+
+  if (viewportWidth < DESKTOP_BREAKPOINT) {
+    return TABLET_PRIMARY_KEYS;
+  }
+
+  return DESKTOP_PRIMARY_KEYS;
+}
+
+function distributeNavigationItems(items, pathname, primaryKeys) {
+  const primaryLookup = new Set(primaryKeys);
+  let primaryItems = items.filter((item) => primaryLookup.has(item.key));
+  const activeItem = items.find((item) => isNavigationActive(pathname, item.href)) || null;
+  const maxPrimaryItems = primaryKeys.filter((key) => items.some((item) => item.key === key)).length;
+
+  if (activeItem && !primaryItems.some((item) => item.key === activeItem.key)) {
+    primaryItems = [...primaryItems, activeItem];
+
+    while (primaryItems.length > maxPrimaryItems) {
+      let removableIndex = -1;
+
+      for (let index = primaryItems.length - 1; index >= 0; index -= 1) {
+        if (primaryItems[index].key !== activeItem.key) {
+          removableIndex = index;
+          break;
+        }
+      }
+
+      if (removableIndex === -1) {
+        break;
+      }
+
+      primaryItems = primaryItems.filter((_, index) => index !== removableIndex);
+    }
+  }
+
+  const primaryItemKeys = new Set(primaryItems.map((item) => item.key));
+  const overflowItems = items.filter((item) => !primaryItemKeys.has(item.key));
+
+  return {
+    overflowItems,
+    primaryItems,
+  };
+}
+
 const Shell = styled.div`
-  display: grid;
-  gap: ${({ theme }) => theme.spacing.sm};
+  background:
+    radial-gradient(circle at top left, rgba(152, 176, 205, 0.24), transparent 24%),
+    radial-gradient(circle at 88% 22%, rgba(255, 255, 255, 0.84), transparent 26%),
+    linear-gradient(180deg, #f7f8fc 0%, #eef2f9 55%, #edf1f8 100%);
+  color: ${({ theme }) => theme.colors.text};
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
 `;
 
 const Header = styled.header`
-  padding: 0.65rem 0.75rem 0;
   position: sticky;
   top: 0;
   z-index: 40;
+`;
 
-  @media (min-width: 900px) {
-    padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg} 0;
+const HeaderSurface = styled.div`
+  background:
+    radial-gradient(circle at top right, rgba(38, 138, 164, 0.36), transparent 24%),
+    radial-gradient(circle at 8% 12%, rgba(255, 255, 255, 0.08), transparent 20%),
+    linear-gradient(135deg, #11273d 0%, #17374d 44%, #0f6177 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 22px 48px rgba(16, 32, 51, 0.16);
+  overflow: visible;
+  position: relative;
+
+  &::before {
+    background:
+      radial-gradient(circle at center, rgba(255, 255, 255, 0.03) 0, transparent 56%),
+      repeating-linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.02) 0,
+        rgba(255, 255, 255, 0.02) 1px,
+        transparent 1px,
+        transparent 7px
+      );
+    content: "";
+    inset: 0;
+    pointer-events: none;
+    position: absolute;
   }
 `;
 
 const HeaderInner = styled.div`
-  backdrop-filter: blur(22px);
-  background:
-    linear-gradient(135deg, rgba(16, 32, 51, 0.96), rgba(0, 95, 115, 0.94)),
-    radial-gradient(circle at top right, rgba(242, 179, 90, 0.18), transparent 44%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: ${({ theme }) => theme.radius.lg};
-  box-shadow: 0 18px 54px rgba(16, 32, 51, 0.22);
   display: grid;
-  gap: 0.6rem;
+  gap: 0.9rem;
   margin: 0 auto;
-  max-width: 1280px;
-  padding: 0.72rem 0.8rem;
+  max-width: 1560px;
+  padding:
+    clamp(0.85rem, 2vw, 1.1rem)
+    clamp(0.7rem, 2.2vw, 1.4rem)
+    clamp(0.8rem, 1.8vw, 1rem);
+  position: relative;
+  width: 100%;
 
-  @media (min-width: 900px) {
-    padding: 0.82rem 0.95rem;
+  @media (max-width: 479px) {
+    padding:
+      0.85rem
+      0.5rem
+      0.8rem;
   }
 `;
 
 const TopRow = styled.div`
   align-items: start;
   display: grid;
-  gap: 0.58rem;
+  gap: 0.85rem;
   grid-template-columns: minmax(0, 1fr) auto;
 
-  @media (min-width: 980px) {
+  @media (min-width: ${DESKTOP_SIGN_OUT_BREAKPOINT}px) {
     align-items: center;
+    grid-template-columns: minmax(0, 1fr) auto auto;
   }
 `;
 
 const BrandLink = styled(Link)`
-  align-items: flex-start;
+  align-items: start;
   color: white;
   display: inline-flex;
-  gap: 0.62rem;
+  gap: 0.75rem;
   min-width: 0;
-
-  @media (min-width: 540px) {
-    align-items: center;
-  }
-`;
-
-const TopControls = styled.div`
-  align-items: center;
-  display: flex;
-  gap: 0.5rem;
-  justify-content: flex-end;
 `;
 
 const BrandCopy = styled.span`
   display: grid;
-  gap: 0.12rem;
+  gap: 0.16rem;
   min-width: 0;
 `;
 
-const Title = styled.span`
-  font-size: 0.98rem;
+const BrandTitle = styled.span`
+  font-size: clamp(1.02rem, 2vw, 1.18rem);
   font-weight: 800;
-  letter-spacing: 0.01em;
-  line-height: 1;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
 `;
 
-const Description = styled.p`
-  color: rgba(255, 255, 255, 0.72);
-  display: -webkit-box;
-  font-size: 0.82rem;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  line-height: 1.38;
+const BrandDescription = styled.p`
+  color: rgba(242, 247, 252, 0.82);
+  font-size: clamp(0.84rem, 1.4vw, 0.92rem);
+  line-height: 1.48;
   margin: 0;
-  overflow: hidden;
-`;
+  max-width: 30ch;
 
-const HeaderActions = styled.div`
-  align-items: center;
-  display: none;
-  flex-wrap: wrap;
-  gap: 0.55rem;
-  justify-content: flex-end;
-
-  @media (min-width: 980px) {
-    display: flex;
+  @media (max-width: 479px) {
+    max-width: 22ch;
   }
-`;
-
-const MenuButton = styled.button`
-  align-items: center;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 999px;
-  color: white;
-  cursor: pointer;
-  display: inline-flex;
-  gap: 0.5rem;
-  padding: 0.42rem 0.72rem;
-  transition:
-    transform 160ms ease,
-    background 160ms ease,
-    border-color 160ms ease;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.22);
-    transform: translateY(-1px);
-  }
-
-  @media (min-width: 980px) {
-    display: none;
-  }
-`;
-
-const MenuButtonText = styled.span`
-  font-size: 0.78rem;
-  font-weight: 700;
-`;
-
-const MenuIcon = styled.span`
-  display: inline-grid;
-  height: 0.82rem;
-  place-items: center;
-  position: relative;
-  width: 0.95rem;
-
-  &::before,
-  &::after {
-    background: currentColor;
-    border-radius: 999px;
-    content: "";
-    height: 2px;
-    left: 0;
-    position: absolute;
-    transition:
-      top 160ms ease,
-      transform 160ms ease;
-    width: 100%;
-  }
-
-  &::before {
-    top: ${({ $open }) => ($open ? "0.35rem" : "0.08rem")};
-    transform: ${({ $open }) => ($open ? "rotate(45deg)" : "none")};
-  }
-
-  &::after {
-    top: ${({ $open }) => ($open ? "0.35rem" : "0.62rem")};
-    transform: ${({ $open }) => ($open ? "rotate(-45deg)" : "none")};
-  }
-`;
-
-const MenuIconBar = styled.span`
-  background: currentColor;
-  border-radius: 999px;
-  height: 2px;
-  opacity: ${({ $open }) => ($open ? 0 : 1)};
-  transition: opacity 120ms ease;
-  width: 100%;
 `;
 
 const UserBadge = styled.div`
   align-items: center;
-  background: rgba(255, 255, 255, 0.09);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: ${({ theme }) => theme.radius.md};
+  backdrop-filter: blur(14px);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 18px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
   display: grid;
   gap: 0.55rem;
-  grid-template-columns: minmax(0, 1fr) auto;
-  justify-self: start;
-  max-width: 100%;
-  padding: 0.36rem 0.5rem;
-  width: fit-content;
+  grid-template-columns: minmax(0, 1fr);
+  max-width: min(100%, 340px);
+  min-width: min(100%, 156px);
+  padding: 0.62rem 0.8rem;
 
-  @media (min-width: 980px) {
-    justify-self: end;
+  @media (min-width: 480px) {
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 `;
 
 const UserCopy = styled.div`
   display: grid;
-  gap: 0.12rem;
+  gap: 0.14rem;
   min-width: 0;
 `;
 
 const UserName = styled.strong`
   color: white;
-  font-size: 0.88rem;
-  line-height: 1.1;
+  font-size: clamp(0.88rem, 1.6vw, 1rem);
+  line-height: 1.12;
 `;
 
 const UserMeta = styled.span`
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 0.75rem;
-  line-height: 1.35;
+  color: rgba(242, 247, 252, 0.84);
+  font-size: clamp(0.74rem, 1.4vw, 0.82rem);
+  line-height: 1.4;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -251,23 +259,47 @@ const UserMeta = styled.span`
 
 const RolePill = styled.span`
   align-items: center;
-  background: rgba(242, 179, 90, 0.18);
-  border: 1px solid rgba(242, 179, 90, 0.24);
+  background: rgba(185, 205, 192, 0.18);
+  border: 1px solid rgba(215, 228, 217, 0.22);
   border-radius: 999px;
-  color: #ffe3b7;
-  display: inline-flex;
-  font-size: 0.68rem;
+  color: rgba(246, 250, 247, 0.92);
+  display: none;
+  font-size: 0.7rem;
   font-weight: 800;
-  letter-spacing: 0.08em;
-  padding: 0.3rem 0.56rem;
+  letter-spacing: 0.14em;
+  padding: 0.45rem 0.74rem;
   text-transform: uppercase;
   white-space: nowrap;
+
+  @media (min-width: 640px) {
+    display: inline-flex;
+  }
 `;
 
-const NavScroller = styled.div`
+const DesktopLogoutButton = styled(AdminLogoutButton)`
+  align-items: center;
+  background: rgba(14, 40, 62, 0.42);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  display: none;
+  min-height: 58px;
+  padding: 0.9rem 1.45rem;
+
+  @media (min-width: ${DESKTOP_SIGN_OUT_BREAKPOINT}px) {
+    display: inline-flex;
+  }
+`;
+
+const NavRow = styled.div`
+  align-items: center;
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+`;
+
+const PrimaryNavScroller = styled.div`
   overflow-x: auto;
-  padding-bottom: 0.12rem;
-  scroll-snap-type: x proximity;
+  padding-bottom: 0.1rem;
   scrollbar-width: none;
 
   &::-webkit-scrollbar {
@@ -275,401 +307,301 @@ const NavScroller = styled.div`
   }
 `;
 
-const DesktopNavScroller = styled(NavScroller)`
-  display: none;
+const PrimaryNav = styled.nav`
+  display: inline-flex;
+  gap: 0.28rem;
+  min-width: max-content;
 
-  @media (min-width: 980px) {
-    display: block;
+  @media (max-width: 479px) {
+    gap: 0.12rem;
   }
 `;
 
-const Nav = styled.nav`
+const PrimaryNavLink = styled(Link)`
   align-items: center;
+  background: ${({ $active }) => ($active ? "rgba(31, 49, 76, 0.58)" : "transparent")};
+  border: 1px solid ${({ $active }) => ($active ? "rgba(255, 255, 255, 0.08)" : "transparent")};
+  border-radius: 14px;
+  color: ${({ $active }) => ($active ? "white" : "rgba(244, 248, 252, 0.94)")};
   display: inline-flex;
-  gap: 0.82rem;
-  min-width: max-content;
-`;
-
-const NavLink = styled(Link)`
-  color: ${({ $active }) => ($active ? "#fff5df" : "rgba(255, 255, 255, 0.86)")};
-  font-size: 0.82rem;
-  font-weight: 700;
-  padding: 0.18rem 0;
-  position: relative;
+  font-size: clamp(0.88rem, 1.6vw, 0.98rem);
+  font-weight: ${({ $active }) => ($active ? 800 : 700)};
+  letter-spacing: -0.02em;
+  min-height: 46px;
+  padding: 0 1rem;
   transition:
-    transform 160ms ease,
-    color 160ms ease;
+    background 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
   white-space: nowrap;
 
-  &::after {
-    background: #ffe3b7;
-    border-radius: 999px;
-    bottom: -0.22rem;
-    content: "";
-    height: 2px;
-    left: 0;
-    opacity: ${({ $active }) => ($active ? 1 : 0)};
-    position: absolute;
-    transform: scaleX(${({ $active }) => ($active ? 1 : 0.45)});
-    transform-origin: left;
-    transition:
-      transform 160ms ease,
-      opacity 160ms ease;
-    width: 100%;
+  @media (max-width: 479px) {
+    font-size: 0.8rem;
+    min-height: 42px;
+    padding: 0 0.55rem;
   }
 
   &:hover {
+    background: ${({ $active }) =>
+      $active ? "rgba(31, 49, 76, 0.64)" : "rgba(255, 255, 255, 0.08)"};
     color: white;
     transform: translateY(-1px);
   }
-
-  &:hover::after {
-    opacity: 1;
-    transform: scaleX(1);
-  }
 `;
 
-const MobileMenu = styled.div`
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  display: ${({ $open }) => ($open ? "grid" : "none")};
-  gap: 0.72rem;
-  padding-top: 0.84rem;
-
-  @media (min-width: 980px) {
-    display: none;
-  }
-`;
-
-const MobileUtilityRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-`;
-
-const MobileUtilityLink = styled(Link)`
-  align-items: center;
-  color: #fff5df;
-  display: inline-flex;
-  font-size: 0.82rem;
-  font-weight: 700;
-  min-height: 34px;
-  padding: 0.2rem 0;
+const MenuWrap = styled.div`
   position: relative;
-
-  &::after {
-    background: currentColor;
-    border-radius: 999px;
-    bottom: 0;
-    content: "";
-    height: 2px;
-    left: 0;
-    opacity: 0.9;
-    position: absolute;
-    width: 100%;
-  }
 `;
 
-const MobileNav = styled.nav`
-  display: grid;
-  column-gap: 0.9rem;
-  gap: 0.18rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-`;
-
-const MobileNavLink = styled(Link)`
+const OverflowButton = styled.button`
   align-items: center;
-  border-bottom: 1px solid ${({ $active }) => ($active ? "rgba(255, 227, 183, 0.28)" : "rgba(255, 255, 255, 0.12)")};
-  color: ${({ $active }) => ($active ? "#fff5df" : "rgba(255, 255, 255, 0.88)")};
+  backdrop-filter: blur(14px);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  color: white;
+  cursor: pointer;
   display: inline-flex;
-  font-size: 0.82rem;
-  font-weight: 700;
-  min-height: 42px;
-  padding: 0.38rem 0 0.56rem;
-  transition: color 160ms ease, border-color 160ms ease;
+  font-size: 1.6rem;
+  font-weight: 800;
+  height: 46px;
+  justify-content: center;
+  letter-spacing: 0.16em;
+  transition:
+    background 160ms ease,
+    transform 160ms ease;
+  width: 46px;
+
+  @media (max-width: 479px) {
+    font-size: 1.45rem;
+    height: 42px;
+    width: 42px;
+  }
 
   &:hover {
-    border-bottom-color: rgba(255, 227, 183, 0.24);
-    color: white;
+    background: rgba(255, 255, 255, 0.14);
+    transform: translateY(-1px);
   }
 `;
 
-const Footer = styled.footer`
-  margin: 0 auto;
-  max-width: 1280px;
-  padding: 0 ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
+const OverflowMenu = styled.div`
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(16, 32, 51, 0.08);
+  border-radius: 20px;
+  box-shadow: 0 24px 48px rgba(16, 32, 51, 0.16);
+  display: ${({ $open }) => ($open ? "grid" : "none")};
+  min-width: min(calc(100vw - 1.4rem), 280px);
+  overflow: hidden;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.7rem);
+  width: min(calc(100vw - 1.4rem), 280px);
+  z-index: 50;
+`;
+
+const OverflowList = styled.div`
+  display: grid;
+`;
+
+const OverflowLink = styled(Link)`
+  border-top: 1px solid rgba(16, 32, 51, 0.08);
+  color: ${({ $active }) => ($active ? "#244b73" : "#182742")};
+  font-size: 0.96rem;
+  font-weight: ${({ $active }) => ($active ? 800 : 600)};
+  letter-spacing: -0.02em;
+  padding: 1rem 1.2rem;
+  transition: background 160ms ease, color 160ms ease;
+
+  &:first-child {
+    border-top: none;
+  }
+
+  &:hover {
+    background: rgba(36, 75, 115, 0.05);
+    color: #244b73;
+  }
+`;
+
+const OverflowActions = styled.div`
+  border-top: 1px solid rgba(16, 32, 51, 0.08);
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem 1rem;
+`;
+
+const OverflowActionLink = styled(Link)`
+  align-items: center;
+  background: rgba(36, 75, 115, 0.05);
+  border: 1px solid rgba(36, 75, 115, 0.08);
+  border-radius: 999px;
+  color: #244b73;
+  display: inline-flex;
+  font-size: 0.9rem;
+  font-weight: 700;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 1rem;
+`;
+
+const OverflowLogoutButton = styled(AdminLogoutButton)`
+  background: linear-gradient(180deg, #244b73, #1d3d5e);
+  border-color: transparent;
+  display: inline-flex;
+  justify-content: center;
+  min-height: 44px;
   width: 100%;
 `;
 
-const FooterInner = styled.div`
-  background:
-    linear-gradient(145deg, rgba(16, 32, 51, 0.96), rgba(0, 95, 115, 0.92)),
-    radial-gradient(circle at top right, rgba(242, 179, 90, 0.16), transparent 42%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: ${({ theme }) => theme.radius.lg};
-  box-shadow: 0 24px 70px rgba(16, 32, 51, 0.18);
-  color: rgba(255, 255, 255, 0.82);
-  display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
-  padding: 0.95rem 1rem;
-`;
-
-const FooterGrid = styled.div`
-  display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
-
-  @media (min-width: 980px) {
-    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
-  }
-`;
-
-const FooterBrand = styled.div`
-  display: grid;
-  gap: ${({ theme }) => theme.spacing.sm};
-`;
-
-const FooterBrandLink = styled(Link)`
-  align-items: center;
-  color: white;
-  display: inline-flex;
-  gap: 0.82rem;
-  justify-self: start;
-`;
-
-const FooterBrandTitle = styled.strong`
-  display: block;
-  font-size: 1rem;
-  letter-spacing: 0.01em;
-`;
-
-const FooterDescription = styled.p`
-  color: rgba(255, 255, 255, 0.72);
-  line-height: 1.56;
-  margin: 0;
-  max-width: 60ch;
-`;
-
-const FooterNavGroup = styled.div`
-  display: grid;
-  gap: ${({ theme }) => theme.spacing.sm};
-`;
-
-const FooterSectionTitle = styled.strong`
-  color: #ffe3b7;
-  font-size: 0.76rem;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-`;
-
-const FooterNav = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.55rem 0.82rem;
-`;
-
-const FooterLink = styled(Link)`
-  color: white;
-  display: inline-flex;
-  font-size: 0.88rem;
-  font-weight: 700;
-  padding: 0.18rem 0;
-  position: relative;
-
-  &::after {
-    background: rgba(255, 227, 183, 0.92);
-    border-radius: 999px;
-    bottom: -0.16rem;
-    content: "";
-    height: 2px;
-    left: 0;
-    opacity: 0;
-    position: absolute;
-    transform: scaleX(0.45);
-    transform-origin: left;
-    transition:
-      transform 160ms ease,
-      opacity 160ms ease;
-    width: 100%;
-  }
-
-  &:hover::after {
-    opacity: 1;
-    transform: scaleX(1);
-  }
-`;
-
-const FooterBottom = styled.div`
-  align-items: center;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.7);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  justify-content: space-between;
-  padding-top: 0.75rem;
-`;
-
-const FooterMetaRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.sm};
-`;
-
-const FooterMetaPill = styled.span`
-  align-items: center;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 999px;
-  color: rgba(255, 255, 255, 0.78);
-  display: inline-flex;
-  font-size: 0.82rem;
-  padding: 0.36rem 0.64rem;
-  white-space: nowrap;
+const Main = styled.div`
+  flex: 1;
 `;
 
 export default function AdminShell({ children, messages, user }) {
   const pathname = usePathname();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const adminNav = getAdminNavigation(user);
+  const menuRef = useRef(null);
+  const [openMenuContext, setOpenMenuContext] = useState(null);
+  const [viewportWidth, setViewportWidth] = useState(DESKTOP_BREAKPOINT);
   const publicSiteHref = buildLocaleRootPath(defaultLocale);
-  const navigationItems = adminNav.map((item) => ({
-    ...item,
-    label: messages.admin.navigation[item.key] || item.key,
-  }));
+
+  useEffect(() => {
+    function handleResize() {
+      setViewportWidth(getViewportWidth());
+    }
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  useEffect(() => {
+    function handlePointerDown(event) {
+      if (!menuRef.current?.contains(event.target)) {
+        setOpenMenuContext(null);
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, []);
+
+  const navigationItems = useMemo(() => {
+    return getAdminNavigation(user).map((item) => ({
+      ...item,
+      label: messages.admin.navigation[item.key] || item.key,
+    }));
+  }, [messages.admin.navigation, user]);
+
+  const primaryKeys = getPrimaryKeysForViewport(viewportWidth);
+  const { overflowItems, primaryItems } = useMemo(() => {
+    return distributeNavigationItems(navigationItems, pathname, primaryKeys);
+  }, [navigationItems, pathname, primaryKeys]);
+
+  const shouldShowCompactActions = viewportWidth < DESKTOP_SIGN_OUT_BREAKPOINT;
+  const menuContext = `${pathname}:${primaryKeys.join("|")}`;
+  const isOverflowOpen = openMenuContext === menuContext;
 
   return (
     <Shell>
       <Header>
-        <HeaderInner>
-          <TopRow>
-            <BrandLink href="/admin">
-              <EquipLogo size={38} />
-              <BrandCopy>
-                <Title>{messages.admin.title}</Title>
-                <Description>{messages.admin.description}</Description>
-              </BrandCopy>
-            </BrandLink>
+        <HeaderSurface>
+          <HeaderInner>
+            <TopRow>
+              <BrandLink href="/admin">
+                <EquipLogo size={44} />
+                <BrandCopy>
+                  <BrandTitle>{messages.admin.title}</BrandTitle>
+                  <BrandDescription>{messages.admin.description}</BrandDescription>
+                </BrandCopy>
+              </BrandLink>
 
-            <TopControls>
-              <HeaderActions>
-                <UserBadge aria-label="Authenticated admin">
-                  <UserCopy>
-                    <UserName>{user.name}</UserName>
-                    <UserMeta>{user.email}</UserMeta>
-                  </UserCopy>
-                  <RolePill>{user.role.replace(/_/g, " ")}</RolePill>
-                </UserBadge>
-                <AdminLogoutButton />
-              </HeaderActions>
-              <MenuButton
-                aria-controls="mobile-admin-navigation"
-                aria-expanded={isMenuOpen}
-                aria-label={isMenuOpen ? "Close admin navigation" : "Open admin navigation"}
-                onClick={() => setIsMenuOpen((currentValue) => !currentValue)}
-                type="button"
-              >
-                <MenuButtonText>{isMenuOpen ? "Close" : "Menu"}</MenuButtonText>
-                <MenuIcon $open={isMenuOpen}>
-                  <MenuIconBar $open={isMenuOpen} />
-                </MenuIcon>
-              </MenuButton>
-            </TopControls>
-          </TopRow>
+              <UserBadge aria-label="Authenticated admin">
+                <UserCopy>
+                  <UserName>{user.name}</UserName>
+                  <UserMeta>{user.email}</UserMeta>
+                </UserCopy>
+                <RolePill>{user.role.replace(/_/g, " ")}</RolePill>
+              </UserBadge>
 
-          <DesktopNavScroller>
-            <Nav aria-label="Admin navigation">
-              {navigationItems.map((item) => {
-                const isActive = isNavigationActive(pathname, item.href);
+              <DesktopLogoutButton />
+            </TopRow>
 
-                return (
-                  <NavLink
-                    aria-current={isActive ? "page" : undefined}
-                    href={item.href}
-                    key={item.key}
-                    $active={isActive}
-                  >
-                    {item.label}
-                  </NavLink>
-                );
-              })}
-            </Nav>
-          </DesktopNavScroller>
+            <NavRow>
+              <PrimaryNavScroller>
+                <PrimaryNav aria-label="Admin navigation">
+                  {primaryItems.map((item) => {
+                    const isActive = isNavigationActive(pathname, item.href);
 
-          <MobileMenu $open={isMenuOpen} id="mobile-admin-navigation">
-            <UserBadge aria-label="Authenticated admin">
-              <UserCopy>
-                <UserName>{user.name}</UserName>
-                <UserMeta>{user.email}</UserMeta>
-              </UserCopy>
-              <RolePill>{user.role.replace(/_/g, " ")}</RolePill>
-            </UserBadge>
+                    return (
+                      <PrimaryNavLink
+                        aria-current={isActive ? "page" : undefined}
+                        href={item.href}
+                        key={item.key}
+                        onClick={() => setOpenMenuContext(null)}
+                        $active={isActive}
+                      >
+                        {item.label}
+                      </PrimaryNavLink>
+                    );
+                  })}
+                </PrimaryNav>
+              </PrimaryNavScroller>
 
-            <MobileUtilityRow>
-              <MobileUtilityLink href={publicSiteHref} onClick={() => setIsMenuOpen(false)}>
-                Open public site
-              </MobileUtilityLink>
-              <AdminLogoutButton />
-            </MobileUtilityRow>
+              <MenuWrap ref={menuRef}>
+                <OverflowButton
+                  aria-controls="admin-overflow-navigation"
+                  aria-expanded={isOverflowOpen}
+                  aria-label={isOverflowOpen ? "Close admin menu" : "Open admin menu"}
+                  onClick={() =>
+                    setOpenMenuContext((currentValue) =>
+                      currentValue === menuContext ? null : menuContext,
+                    )
+                  }
+                  type="button"
+                >
+                  ...
+                </OverflowButton>
 
-            <MobileNav aria-label="Mobile admin navigation">
-              {navigationItems.map((item) => {
-                const isActive = isNavigationActive(pathname, item.href);
+                <OverflowMenu $open={isOverflowOpen} id="admin-overflow-navigation">
+                  {overflowItems.length ? (
+                    <OverflowList>
+                      {overflowItems.map((item) => {
+                        const isActive = isNavigationActive(pathname, item.href);
 
-                return (
-                  <MobileNavLink
-                    aria-current={isActive ? "page" : undefined}
-                    href={item.href}
-                    key={item.key}
-                    onClick={() => setIsMenuOpen(false)}
-                    $active={isActive}
-                  >
-                    {item.label}
-                  </MobileNavLink>
-                );
-              })}
-            </MobileNav>
-          </MobileMenu>
-        </HeaderInner>
+                        return (
+                          <OverflowLink
+                            aria-current={isActive ? "page" : undefined}
+                            href={item.href}
+                            key={item.key}
+                            onClick={() => setOpenMenuContext(null)}
+                            $active={isActive}
+                          >
+                            {item.label}
+                          </OverflowLink>
+                        );
+                      })}
+                    </OverflowList>
+                  ) : null}
+
+                  <OverflowActions>
+                    <OverflowActionLink href={publicSiteHref} onClick={() => setOpenMenuContext(null)}>
+                      Open public site
+                    </OverflowActionLink>
+                    {shouldShowCompactActions ? <OverflowLogoutButton /> : null}
+                  </OverflowActions>
+                </OverflowMenu>
+              </MenuWrap>
+            </NavRow>
+          </HeaderInner>
+        </HeaderSurface>
       </Header>
 
-      {children}
-
-      <Footer>
-        <FooterInner>
-          <FooterGrid>
-            <FooterBrand>
-              <FooterBrandLink href="/admin">
-                <EquipLogo size={38} />
-                <div>
-                  <FooterBrandTitle>{messages.admin.title}</FooterBrandTitle>
-                  <span>{messages.admin.footer}</span>
-                </div>
-              </FooterBrandLink>
-              <FooterDescription>{messages.admin.description}</FooterDescription>
-            </FooterBrand>
-
-            <FooterNavGroup>
-              <FooterSectionTitle>Quick Access</FooterSectionTitle>
-              <FooterNav>
-                <FooterLink href={publicSiteHref}>Open public site</FooterLink>
-                {adminNav.slice(0, 5).map((item) => (
-                  <FooterLink href={item.href} key={item.href}>
-                    {messages.admin.navigation[item.key] || item.key}
-                  </FooterLink>
-                ))}
-              </FooterNav>
-            </FooterNavGroup>
-          </FooterGrid>
-
-          <FooterBottom>
-            <span>{messages.admin.footer}</span>
-            <FooterMetaRow>
-              <FooterMetaPill>{user.role.replace(/_/g, " ")}</FooterMetaPill>
-              <FooterMetaPill>{user.email}</FooterMetaPill>
-            </FooterMetaRow>
-          </FooterBottom>
-        </FooterInner>
-      </Footer>
+      <Main>{children}</Main>
     </Shell>
   );
 }

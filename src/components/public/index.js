@@ -17,6 +17,18 @@ function formatDateLabel(locale, value) {
   }).format(new Date(value));
 }
 
+function getLocaleLabel(locale) {
+  if (locale === "en") {
+    return "English";
+  }
+
+  if (typeof locale !== "string" || !locale.trim()) {
+    return "English";
+  }
+
+  return locale.toUpperCase();
+}
+
 function buildHref(pathname, searchParams = {}) {
   const params = new URLSearchParams();
 
@@ -108,111 +120,200 @@ function getCommonCopy(publicMessages = {}) {
 
 const PageMain = styled.main`
   display: grid;
-  gap: clamp(1rem, 2.3vw, 1.5rem);
+  gap: clamp(1.2rem, 2.8vw, 1.75rem);
   margin: 0 auto;
-  max-width: 1180px;
-  padding: clamp(0.95rem, 2vw, 1.25rem);
+  max-width: 1280px;
+  padding: clamp(1.35rem, 3vw, 2.2rem) clamp(1rem, 3vw, 1.6rem) clamp(2rem, 4vw, 3rem);
   width: 100%;
 `;
 
 const Panel = styled.section`
-  background:
-    linear-gradient(160deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.9)),
-    ${({ $tinted, theme }) =>
-      $tinted
-        ? `radial-gradient(circle at top right, rgba(0, 95, 115, 0.16), transparent 40%)`
-        : theme.colors.surface};
-  border: 1px solid rgba(16, 32, 51, 0.08);
-  border-radius: ${({ theme }) => theme.radius.lg};
-  box-shadow: 0 22px 80px rgba(16, 32, 51, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 255, 0.92));
+  border: 1px solid rgba(16, 32, 51, 0.07);
+  border-radius: 22px;
+  box-shadow:
+    0 18px 40px rgba(22, 40, 64, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
   display: grid;
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: ${({ theme }) => theme.spacing.md};
   overflow: hidden;
-  padding: clamp(0.95rem, 2.2vw, 1.25rem);
+  padding: clamp(1rem, 2.6vw, 1.55rem);
 `;
 
-const HeroPanel = styled(Panel)`
-  gap: ${({ theme }) => theme.spacing.md};
-`;
-
-const SplitHero = styled.div`
+const HeroPanel = styled.section`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: clamp(0.9rem, 2vw, 1.3rem);
+  padding: clamp(0.35rem, 1vw, 0.65rem) 0 clamp(0.2rem, 0.8vw, 0.45rem);
+`;
 
-  @media (min-width: 960px) {
+const LandingGrid = styled.div`
+  display: grid;
+  gap: clamp(1rem, 2.6vw, 1.5rem);
+
+  @media (min-width: 760px) and (max-width: 1099px) {
     align-items: start;
-    grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.85fr);
+    grid-template-areas:
+      "hero hero"
+      "content rail";
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 272px);
+  }
+
+  @media (min-width: 1100px) {
+    align-items: start;
+    grid-template-areas:
+      "hero rail"
+      "content rail";
+    grid-template-columns: minmax(0, 1fr) minmax(285px, 336px);
+  }
+`;
+
+const LandingHero = styled(HeroPanel)`
+  grid-area: hero;
+`;
+
+const LandingContent = styled(Panel)`
+  grid-area: content;
+`;
+
+const LandingRail = styled.aside`
+  display: none;
+
+  @media (min-width: 760px) {
+    align-content: start;
+    display: grid;
+    gap: clamp(1rem, 2vw, 1.25rem);
+    grid-area: rail;
   }
 `;
 
 const Eyebrow = styled.p`
-  color: ${({ theme }) => theme.colors.primary};
-  font-size: 0.8rem;
-  font-weight: 700;
+  color: rgba(27, 59, 93, 0.74);
+  font-size: 0.78rem;
+  font-weight: 800;
   letter-spacing: 0.18em;
   margin: 0;
   text-transform: uppercase;
 `;
 
 const Title = styled.h1`
-  font-size: clamp(2rem, 8vw, 4.2rem);
-  line-height: 0.98;
+  color: #182742;
+  font-size: clamp(2.7rem, 8vw, 5rem);
+  font-weight: 800;
+  letter-spacing: -0.055em;
+  line-height: 0.95;
   margin: 0;
-  max-width: 12ch;
+  max-width: 14ch;
 `;
 
 const Lead = styled.p`
-  color: ${({ theme }) => theme.colors.muted};
-  font-size: 0.98rem;
-  line-height: 1.62;
+  color: rgba(72, 84, 108, 0.96);
+  font-size: clamp(1.05rem, 2.3vw, 1.2rem);
+  line-height: 1.72;
   margin: 0;
-  max-width: 66ch;
+  max-width: 40ch;
 `;
 
-const StatGrid = styled.div`
+const RailCard = styled(Panel)`
+  gap: clamp(0.85rem, 1.5vw, 1rem);
+  padding: clamp(0.95rem, 1.8vw, 1.1rem);
+`;
+
+const RailTitle = styled.p`
+  color: rgba(53, 66, 91, 0.76);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  margin: 0;
+  text-align: center;
+  text-transform: uppercase;
+`;
+
+const AdFrame = styled.div`
+  align-items: center;
+  aspect-ratio: 1 / 0.86;
+  background: linear-gradient(180deg, rgba(246, 248, 252, 0.98), rgba(237, 241, 247, 0.98));
+  border: 1px solid rgba(16, 32, 51, 0.06);
+  border-radius: 12px;
   display: grid;
-  gap: ${({ theme }) => theme.spacing.sm};
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-
-  @media (min-width: 800px) {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
+  justify-items: center;
 `;
 
-const StatCard = styled.div`
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(16, 32, 51, 0.08);
-  border-radius: ${({ theme }) => theme.radius.md};
-  display: grid;
-  gap: ${({ theme }) => theme.spacing.xs};
-  padding: 0.82rem 0.88rem;
+const AdText = styled.span`
+  color: rgba(99, 108, 127, 0.82);
+  font-size: clamp(2rem, 5vw, 3rem);
+  letter-spacing: -0.04em;
 `;
 
-const StatValue = styled.strong`
-  font-size: 1.6rem;
+const RailUtilityCard = styled(Panel)`
+  gap: 0;
+  padding: 0;
+`;
+
+const RailLocaleRow = styled.div`
+  align-items: center;
+  display: flex;
+  gap: 0.4rem;
+  justify-content: space-between;
+  padding: 1rem 1.1rem;
+`;
+
+const RailLocaleText = styled.div`
+  align-items: baseline;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.28rem;
+`;
+
+const RailLocaleLabel = styled.span`
+  color: rgba(80, 92, 115, 0.9);
+  font-size: 0.92rem;
+`;
+
+const RailLocaleValue = styled.span`
+  color: #44506a;
+  font-size: 0.92rem;
+  font-weight: 600;
+`;
+
+const RailChevron = styled.span`
+  color: rgba(80, 92, 115, 0.82);
+  font-size: 1rem;
   line-height: 1;
 `;
 
-const StatLabel = styled.span`
-  color: ${({ theme }) => theme.colors.muted};
-  font-size: 0.9rem;
+const RailActionButton = styled.button`
+  background: transparent;
+  border: none;
+  border-top: 1px solid rgba(16, 32, 51, 0.08);
+  color: rgba(84, 93, 112, 0.92);
+  cursor: pointer;
+  font-size: 0.95rem;
+  padding: 0.95rem 1.1rem;
+  transition: background 160ms ease, color 160ms ease;
+
+  &:hover {
+    background: rgba(16, 32, 51, 0.03);
+    color: #182742;
+  }
 `;
 
 const SectionHeader = styled.div`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.xs};
+  gap: 0.35rem;
 `;
 
 const SectionTitle = styled.h2`
-  font-size: clamp(1.45rem, 4vw, 2rem);
+  color: #182742;
+  font-size: clamp(1.35rem, 3vw, 1.9rem);
+  letter-spacing: -0.03em;
   margin: 0;
 `;
 
 const SectionDescription = styled.p`
-  color: ${({ theme }) => theme.colors.muted};
-  line-height: 1.58;
+  color: rgba(72, 84, 108, 0.94);
+  line-height: 1.68;
   margin: 0;
-  max-width: 60ch;
+  max-width: 62ch;
 `;
 
 const Grid = styled.div`
@@ -245,16 +346,18 @@ const Grid = styled.div`
 `;
 
 const Card = styled.article`
-  background: rgba(255, 255, 255, 0.86);
-  border: 1px solid rgba(16, 32, 51, 0.08);
-  border-radius: ${({ theme }) => theme.radius.md};
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 255, 0.92));
+  border: 1px solid rgba(16, 32, 51, 0.07);
+  border-radius: 18px;
+  box-shadow: 0 10px 24px rgba(22, 40, 64, 0.04);
   display: grid;
   gap: ${({ theme }) => theme.spacing.sm};
-  padding: ${({ theme }) => theme.spacing.md};
+  min-height: 100%;
+  padding: clamp(1rem, 2.2vw, 1.35rem);
 `;
 
 const MetaRow = styled.div`
-  color: ${({ theme }) => theme.colors.muted};
+  color: rgba(80, 92, 115, 0.92);
   display: flex;
   flex-wrap: wrap;
   gap: ${({ theme }) => theme.spacing.sm};
@@ -268,10 +371,10 @@ const ChipRow = styled.div`
 `;
 
 const Chip = styled(Link)`
-  background: rgba(0, 95, 115, 0.06);
-  border: 1px solid rgba(0, 95, 115, 0.14);
+  background: rgba(32, 74, 113, 0.05);
+  border: 1px solid rgba(32, 74, 113, 0.1);
   border-radius: 999px;
-  color: ${({ theme }) => theme.colors.primary};
+  color: #244b73;
   display: inline-flex;
   font-size: 0.85rem;
   font-weight: 600;
@@ -279,8 +382,10 @@ const Chip = styled(Link)`
 `;
 
 const PostCardTitle = styled.h3`
-  font-size: 1.25rem;
-  line-height: 1.2;
+  color: #182742;
+  font-size: 1.28rem;
+  letter-spacing: -0.03em;
+  line-height: 1.18;
   margin: 0;
 `;
 
@@ -289,13 +394,13 @@ const TitleLink = styled(Link)`
 `;
 
 const PostCardText = styled.p`
-  color: ${({ theme }) => theme.colors.muted};
-  line-height: 1.6;
+  color: rgba(72, 84, 108, 0.94);
+  line-height: 1.68;
   margin: 0;
 `;
 
 const ActionLink = styled(Link)`
-  color: ${({ theme }) => theme.colors.primary};
+  color: #244b73;
   font-weight: 700;
 `;
 
@@ -308,14 +413,14 @@ const Figure = styled.figure`
 const FigureImage = styled.img`
   aspect-ratio: 16 / 9;
   background: rgba(16, 32, 51, 0.04);
-  border-radius: ${({ theme }) => theme.radius.md};
+  border-radius: 14px;
   display: block;
   object-fit: cover;
   width: 100%;
 `;
 
 const FigureCaption = styled.figcaption`
-  color: ${({ theme }) => theme.colors.muted};
+  color: rgba(80, 92, 115, 0.92);
   font-size: 0.9rem;
   line-height: 1.6;
 `;
@@ -373,10 +478,14 @@ const SpotlightMeta = styled.p`
 `;
 
 const EmptyState = styled(Card)`
+  align-content: center;
+  min-height: 100%;
+  padding: clamp(1.2rem, 2.8vw, 1.75rem);
   justify-items: start;
 `;
 
 const EmptyTitle = styled.h3`
+  color: #182742;
   margin: 0;
 `;
 
@@ -399,14 +508,14 @@ const PagerActions = styled.div`
 `;
 
 const PagerButton = styled(Link)`
+  align-items: center;
+  background: rgba(255, 255, 255, 0.86);
   border: 1px solid rgba(16, 32, 51, 0.12);
   border-radius: 999px;
+  display: inline-flex;
   font-weight: 700;
+  justify-content: center;
   padding: 0.55rem 0.95rem;
-`;
-
-const SearchCard = styled(Panel)`
-  gap: ${({ theme }) => theme.spacing.md};
 `;
 
 const SearchForm = styled.form`
@@ -428,7 +537,7 @@ const SearchInput = styled.input`
 `;
 
 const SearchButton = styled.button`
-  background: ${({ theme }) => theme.colors.primary};
+  background: linear-gradient(180deg, #2a537d, #203f61);
   border: none;
   border-radius: 999px;
   color: #fff;
@@ -439,10 +548,14 @@ const SearchButton = styled.button`
 `;
 
 const SearchLink = styled(Link)`
+  align-items: center;
+  background: rgba(255, 255, 255, 0.86);
   border: 1px solid rgba(16, 32, 51, 0.12);
   border-radius: 999px;
   color: ${({ theme }) => theme.colors.text};
+  display: inline-flex;
   font-weight: 700;
+  justify-content: center;
   min-height: 48px;
   padding: 0.75rem 1.05rem;
 `;
@@ -529,115 +642,114 @@ function getDiscoverySectionActionLabel(copy, kind) {
   return copy.browseEquipment;
 }
 
+function PublicUtilityRail({ locale }) {
+  return (
+    <>
+      <RailCard>
+        <RailTitle>Advertisement</RailTitle>
+        <AdFrame>
+          <AdText>Ad</AdText>
+        </AdFrame>
+      </RailCard>
+
+      <RailUtilityCard>
+        <RailLocaleRow>
+          <RailLocaleText>
+            <RailLocaleLabel>Locale:</RailLocaleLabel>
+            <RailLocaleValue>{getLocaleLabel(locale)}</RailLocaleValue>
+          </RailLocaleText>
+          <RailChevron aria-hidden="true">v</RailChevron>
+        </RailLocaleRow>
+        <RailActionButton type="button">Advertise Here</RailActionButton>
+      </RailUtilityCard>
+    </>
+  );
+}
+
 export function PublicHomePage({ locale, messages, pageContent, pageData }) {
   const copy = getCommonCopy(messages);
+  const featuredAndLatestPosts = [pageData.featuredPost, ...(pageData.latestPosts || [])].filter(Boolean);
+  const hasDiscoverySections =
+    pageData.spotlights.categories.length ||
+    pageData.spotlights.manufacturers.length ||
+    pageData.spotlights.equipment.length;
 
   return (
     <PageMain>
       <PublicViewTracker eventType="WEBSITE_VIEW" locale={locale} />
-      <HeroPanel $tinted>
-        <SplitHero>
-          <div>
-            <Eyebrow>{pageContent.eyebrow}</Eyebrow>
-            <Title>{pageContent.title}</Title>
-            <Lead>{pageContent.description}</Lead>
-          </div>
-          {pageData.featuredPost ? (
-            <Card>
+      <LandingGrid>
+        <LandingHero>
+          <Title>{pageContent.title}</Title>
+          <Lead>{pageContent.description}</Lead>
+        </LandingHero>
+
+        <LandingContent>
+          {featuredAndLatestPosts.length ? (
+            <>
               <SectionHeader>
-                <SectionTitle>{pageContent.featuredTitle || "Featured post"}</SectionTitle>
+                <SectionTitle>{pageContent.latestTitle || copy.latestPostsTitle}</SectionTitle>
                 <SectionDescription>
-                  {pageContent.featuredDescription ||
-                    "Start with the newest published guide and use the discovery sections below to branch out."}
+                  {pageContent.latestDescription ||
+                    "Browse the newest published equipment guides in a layout tuned for phone, tablet, and desktop reading."}
                 </SectionDescription>
               </SectionHeader>
-              <PostCard copy={copy} locale={locale} post={pageData.featuredPost} />
-            </Card>
+              <Grid $columns="three">
+                {featuredAndLatestPosts.slice(0, 3).map((post) => (
+                  <PostCard copy={copy} key={post.slug} locale={locale} post={post} />
+                ))}
+              </Grid>
+            </>
           ) : (
             <EmptyState>
               <EmptyTitle>{copy.emptyStateTitle}</EmptyTitle>
               <SectionDescription>{copy.emptyStateDescription}</SectionDescription>
             </EmptyState>
           )}
-        </SplitHero>
-        <StatGrid>
-          <StatCard>
-            <StatValue>{pageData.stats.postCount}</StatValue>
-            <StatLabel>{copy.resultsLabel}</StatLabel>
-          </StatCard>
-          <StatCard>
-            <StatValue>{pageData.stats.categoryCount}</StatValue>
-            <StatLabel>{copy.topCategoriesTitle}</StatLabel>
-          </StatCard>
-          <StatCard>
-            <StatValue>{pageData.stats.manufacturerCount}</StatValue>
-            <StatLabel>{copy.topManufacturersTitle}</StatLabel>
-          </StatCard>
-          <StatCard>
-            <StatValue>{pageData.stats.equipmentCount}</StatValue>
-            <StatLabel>{copy.topEquipmentTitle}</StatLabel>
-          </StatCard>
-        </StatGrid>
-      </HeroPanel>
+        </LandingContent>
 
-      <Panel>
-        <SectionHeader>
-          <SectionTitle>{pageContent.latestTitle || copy.latestPostsTitle}</SectionTitle>
-          <SectionDescription>
-            {pageContent.latestDescription ||
-              "Published guides are rendered server-side and stay organized for quick scanning on mobile first."}
-          </SectionDescription>
-        </SectionHeader>
-        {pageData.latestPosts.length ? (
-          <Grid $columns="three">
-            {pageData.latestPosts.map((post) => (
-              <PostCard copy={copy} key={post.slug} locale={locale} post={post} />
-            ))}
-          </Grid>
-        ) : (
-          <EmptyState>
-            <EmptyTitle>{copy.emptyStateTitle}</EmptyTitle>
-            <SectionDescription>{copy.emptyStateDescription}</SectionDescription>
-          </EmptyState>
-        )}
-      </Panel>
+        <LandingRail aria-label="Public utilities">
+          <PublicUtilityRail locale={locale} />
+        </LandingRail>
+      </LandingGrid>
 
-      <Panel>
-        <SectionHeader>
-          <SectionTitle>{pageContent.discoveryTitle || "Discovery routes"}</SectionTitle>
-          <SectionDescription>
-            {pageContent.discoveryDescription ||
-              "Category, manufacturer, and equipment landing pages stay focused on published content only."}
-          </SectionDescription>
-        </SectionHeader>
-        {pageData.spotlights.categories.length ? (
-          <>
-            <SectionHeader>
-              <SectionTitle>{copy.topCategoriesTitle}</SectionTitle>
-            </SectionHeader>
-            <SpotlightGrid actionLabel={copy.browseCategory} items={pageData.spotlights.categories} />
-          </>
-        ) : null}
-        {pageData.spotlights.manufacturers.length ? (
-          <>
-            <SectionHeader>
-              <SectionTitle>{copy.topManufacturersTitle}</SectionTitle>
-            </SectionHeader>
-            <SpotlightGrid
-              actionLabel={copy.browseManufacturer}
-              items={pageData.spotlights.manufacturers}
-            />
-          </>
-        ) : null}
-        {pageData.spotlights.equipment.length ? (
-          <>
-            <SectionHeader>
-              <SectionTitle>{copy.topEquipmentTitle}</SectionTitle>
-            </SectionHeader>
-            <SpotlightGrid actionLabel={copy.browseEquipment} items={pageData.spotlights.equipment} />
-          </>
-        ) : null}
-      </Panel>
+      {hasDiscoverySections ? (
+        <Panel>
+          <SectionHeader>
+            <SectionTitle>{pageContent.discoveryTitle || "Discovery routes"}</SectionTitle>
+            <SectionDescription>
+              {pageContent.discoveryDescription ||
+                "Category, manufacturer, and equipment landing pages stay focused on published content only."}
+            </SectionDescription>
+          </SectionHeader>
+          {pageData.spotlights.categories.length ? (
+            <>
+              <SectionHeader>
+                <SectionTitle>{copy.topCategoriesTitle}</SectionTitle>
+              </SectionHeader>
+              <SpotlightGrid actionLabel={copy.browseCategory} items={pageData.spotlights.categories} />
+            </>
+          ) : null}
+          {pageData.spotlights.manufacturers.length ? (
+            <>
+              <SectionHeader>
+                <SectionTitle>{copy.topManufacturersTitle}</SectionTitle>
+              </SectionHeader>
+              <SpotlightGrid
+                actionLabel={copy.browseManufacturer}
+                items={pageData.spotlights.manufacturers}
+              />
+            </>
+          ) : null}
+          {pageData.spotlights.equipment.length ? (
+            <>
+              <SectionHeader>
+                <SectionTitle>{copy.topEquipmentTitle}</SectionTitle>
+              </SectionHeader>
+              <SpotlightGrid actionLabel={copy.browseEquipment} items={pageData.spotlights.equipment} />
+            </>
+          ) : null}
+        </Panel>
+      ) : null}
     </PageMain>
   );
 }
@@ -657,69 +769,75 @@ export function PublicCollectionPage({
   return (
     <PageMain>
       <PublicViewTracker eventType="PAGE_VIEW" locale={locale} />
-      <HeroPanel $tinted>
-        <Eyebrow>{pageContent.eyebrow}</Eyebrow>
-        <Title>{entity?.name || pageContent.title}</Title>
-        <Lead>{entity?.description || pageContent.description}</Lead>
-        {entity?.primaryDomain || entity?.headquartersCountry || entity?.branchCountries?.length ? (
-          <MetaRow>
-            {entity.primaryDomain ? <span>{entity.primaryDomain}</span> : null}
-            {entity.headquartersCountry ? <span>{entity.headquartersCountry}</span> : null}
-            {entity.branchCountries?.length ? <span>{entity.branchCountries.join(", ")}</span> : null}
-          </MetaRow>
-        ) : null}
-      </HeroPanel>
+      <LandingGrid>
+        <LandingHero>
+          {pageContent.eyebrow ? <Eyebrow>{pageContent.eyebrow}</Eyebrow> : null}
+          <Title>{entity?.name || pageContent.title}</Title>
+          <Lead>{entity?.description || pageContent.description}</Lead>
+          {entity?.primaryDomain || entity?.headquartersCountry || entity?.branchCountries?.length ? (
+            <MetaRow>
+              {entity.primaryDomain ? <span>{entity.primaryDomain}</span> : null}
+              {entity.headquartersCountry ? <span>{entity.headquartersCountry}</span> : null}
+              {entity.branchCountries?.length ? <span>{entity.branchCountries.join(", ")}</span> : null}
+            </MetaRow>
+          ) : null}
+        </LandingHero>
 
-      {showSearch ? (
-        <SearchCard>
+        <LandingContent>
+          {showSearch ? (
+            <>
+              <SectionHeader>
+                <SectionTitle>{pageContent.searchTitle || pageContent.title}</SectionTitle>
+                <SectionDescription>
+                  {pageContent.searchDescription || pageContent.description}
+                </SectionDescription>
+              </SectionHeader>
+              <SearchForm action={pathname} role="search">
+                <SearchInput
+                  defaultValue={pageData.search}
+                  name="q"
+                  placeholder={copy.searchPlaceholder}
+                  type="search"
+                />
+                <SearchButton type="submit">{copy.searchAction}</SearchButton>
+                {pageData.search ? <SearchLink href={pathname}>{copy.clearAction}</SearchLink> : null}
+              </SearchForm>
+            </>
+          ) : null}
+
           <SectionHeader>
-            <SectionTitle>{pageContent.searchTitle || pageContent.title}</SectionTitle>
-            <SectionDescription>{pageContent.searchDescription || pageContent.description}</SectionDescription>
-          </SectionHeader>
-          <SearchForm action={pathname} role="search">
-            <SearchInput
-              defaultValue={pageData.search}
-              name="q"
-              placeholder={copy.searchPlaceholder}
-              type="search"
-            />
-            <SearchButton type="submit">{copy.searchAction}</SearchButton>
-            {pageData.search ? (
-              <SearchLink href={pathname}>{copy.clearAction}</SearchLink>
-            ) : null}
-          </SearchForm>
-        </SearchCard>
-      ) : null}
-
-      <Panel>
-        <SectionHeader>
-          <SectionTitle>{pageContent.resultsTitle || copy.resultsLabel}</SectionTitle>
-          <SectionDescription>
-            {pageData.pagination.totalItems
-              ? `${pageData.pagination.totalItems} ${copy.resultsLabel.toLowerCase()}.`
-              : showSearch && pageData.search
-                ? copy.noSearchResults
-                : copy.emptyStateDescription}
-          </SectionDescription>
-        </SectionHeader>
-        {pageData.posts.length ? (
-          <Grid $columns="three">
-            {pageData.posts.map((post) => (
-              <PostCard copy={copy} key={post.slug} locale={locale} post={post} />
-            ))}
-          </Grid>
-        ) : (
-          <EmptyState>
-            <EmptyTitle>
-              {showSearch && pageData.search ? copy.noSearchResults : copy.emptyStateTitle}
-            </EmptyTitle>
+            <SectionTitle>{pageContent.resultsTitle || copy.resultsLabel}</SectionTitle>
             <SectionDescription>
-              {showSearch && pageData.search ? copy.noSearchResults : copy.emptyStateDescription}
+              {pageData.pagination.totalItems
+                ? `${pageData.pagination.totalItems} ${copy.resultsLabel.toLowerCase()}.`
+                : showSearch && pageData.search
+                  ? copy.noSearchResults
+                  : copy.emptyStateDescription}
             </SectionDescription>
-          </EmptyState>
-        )}
-        <Pagination copy={copy} pagination={pageData.pagination} pathname={pathname} query={query} />
-      </Panel>
+          </SectionHeader>
+          {pageData.posts.length ? (
+            <Grid $columns="three">
+              {pageData.posts.map((post) => (
+                <PostCard copy={copy} key={post.slug} locale={locale} post={post} />
+              ))}
+            </Grid>
+          ) : (
+            <EmptyState>
+              <EmptyTitle>
+                {showSearch && pageData.search ? copy.noSearchResults : copy.emptyStateTitle}
+              </EmptyTitle>
+              <SectionDescription>
+                {showSearch && pageData.search ? copy.noSearchResults : copy.emptyStateDescription}
+              </SectionDescription>
+            </EmptyState>
+          )}
+          <Pagination copy={copy} pagination={pageData.pagination} pathname={pathname} query={query} />
+        </LandingContent>
+
+        <LandingRail aria-label="Public utilities">
+          <PublicUtilityRail locale={locale} />
+        </LandingRail>
+      </LandingGrid>
 
       {pageData.discoverySections?.length ? (
         <Panel>
@@ -751,6 +869,15 @@ const ContentSection = styled(Panel)`
   gap: ${({ theme }) => theme.spacing.md};
 `;
 
+const StaticSectionGrid = styled.div`
+  display: grid;
+  gap: clamp(1rem, 2.4vw, 1.5rem);
+
+  @media (min-width: 980px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+`;
+
 const RichText = styled.div`
   color: ${({ theme }) => theme.colors.muted};
   display: grid;
@@ -770,40 +897,42 @@ export function PublicStaticPage({ locale, pageContent }) {
   return (
     <PageMain>
       <PublicViewTracker eventType="PAGE_VIEW" locale={locale} />
-      <HeroPanel $tinted>
-        <Eyebrow>{pageContent.eyebrow}</Eyebrow>
+      <HeroPanel>
+        {pageContent.eyebrow ? <Eyebrow>{pageContent.eyebrow}</Eyebrow> : null}
         <Title>{pageContent.title}</Title>
         <Lead>{pageContent.description}</Lead>
       </HeroPanel>
 
-      {(pageContent.sections || []).map((section) => (
-        <ContentSection key={section.title}>
-          <SectionHeader>
-            <SectionTitle>{section.title}</SectionTitle>
-          </SectionHeader>
-          <RichText>
-            {(section.paragraphs || []).map((paragraph) => (
-              <p key={paragraph}>{paragraph}</p>
-            ))}
-          </RichText>
-          {section.items?.length ? (
-            <BulletList>
-              {section.items.map((item) => (
-                <li key={item}>{item}</li>
+      <StaticSectionGrid>
+        {(pageContent.sections || []).map((section) => (
+          <ContentSection key={section.title}>
+            <SectionHeader>
+              <SectionTitle>{section.title}</SectionTitle>
+            </SectionHeader>
+            <RichText>
+              {(section.paragraphs || []).map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
               ))}
-            </BulletList>
-          ) : null}
-          {section.links?.length ? (
-            <ChipRow>
-              {section.links.map((link) => (
-                <Chip as={Link} href={link.href} key={link.href}>
-                  {link.label}
-                </Chip>
-              ))}
-            </ChipRow>
-          ) : null}
-        </ContentSection>
-      ))}
+            </RichText>
+            {section.items?.length ? (
+              <BulletList>
+                {section.items.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </BulletList>
+            ) : null}
+            {section.links?.length ? (
+              <ChipRow>
+                {section.links.map((link) => (
+                  <Chip as={Link} href={link.href} key={link.href}>
+                    {link.label}
+                  </Chip>
+                ))}
+              </ChipRow>
+            ) : null}
+          </ContentSection>
+        ))}
+      </StaticSectionGrid>
     </PageMain>
   );
 }
@@ -820,8 +949,8 @@ const BreadcrumbLink = styled(Link)`
   color: inherit;
 `;
 
-const PostHeader = styled(Panel)`
-  gap: ${({ theme }) => theme.spacing.md};
+const PostHeader = styled(HeroPanel)`
+  gap: clamp(0.9rem, 2vw, 1.25rem);
 `;
 
 const PostLayout = styled.div`
@@ -1104,7 +1233,7 @@ export function PublicPostPage({ locale, messages, pageData }) {
   return (
     <PageMain>
       <PublicViewTracker eventType="POST_VIEW" locale={locale} postId={article.id} />
-      <PostHeader $tinted>
+      <PostHeader>
         <Breadcrumbs aria-label="Breadcrumb">
           {article.breadcrumb.map((item, index) => (
             <span key={item.href}>
