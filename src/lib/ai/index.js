@@ -85,6 +85,14 @@ function truncateErrorMessage(value, maxLength = 280) {
   return `${normalizedValue.slice(0, maxLength - 3).trimEnd()}...`;
 }
 
+function redactSecrets(value) {
+  const normalizedValue = `${value || ""}`;
+
+  return normalizedValue
+    .replace(/\b(sk|rk|pk|local|sess|key)-[a-zA-Z0-9._-]{8,}\b/g, "[redacted-secret]")
+    .replace(/\b[a-zA-Z0-9]{12,}_[a-zA-Z0-9._-]{12,}\b/g, "[redacted-secret]");
+}
+
 function chunkList(values, count) {
   return values.slice(0, count);
 }
@@ -208,16 +216,20 @@ function extractProviderFailureMetadata(error, providerConfig) {
   const records = collectErrorRecords(error);
   const fallbackMessage = error instanceof Error ? error.message : `${error}`;
   const rawMessage = truncateErrorMessage(
-    getFirstMatchingValue(records, ["message", "error.message", "details.message"]) || fallbackMessage,
+    redactSecrets(
+      getFirstMatchingValue(records, ["message", "error.message", "details.message"]) || fallbackMessage,
+    ),
   );
   const providerMessage = truncateErrorMessage(
-    getFirstMatchingValue(records, [
-      "error.message",
-      "message",
-      "details.message",
-      "data.error.message",
-      "data.message",
-    ]) || rawMessage,
+    redactSecrets(
+      getFirstMatchingValue(records, [
+        "error.message",
+        "message",
+        "details.message",
+        "data.error.message",
+        "data.message",
+      ]) || rawMessage,
+    ),
   );
   const providerStatusCode =
     normalizeStatusCode(getFirstMatchingValue(records, ["statusCode", "status", "response.status"])) ||
@@ -1364,24 +1376,14 @@ function createProvider(providerConfig, options = {}) {
     );
   }
 
-  const resolvedCredential = resolveProviderApiKey(providerConfig);
-
-  if (!resolvedCredential.apiKey) {
-    throw new AiCompositionError(
-      `Provider configuration "${providerConfig.id}" is missing an API key. Add a stored key or configure ${resolvedCredential.envName}.`,
-      {
-        status: "invalid_provider_credentials",
-        statusCode: 400,
-      },
-    );
-  }
-
   return {
-    apiKeySource: resolvedCredential.source,
+    apiKeySource: "stored",
     model: providerConfig.model,
     name: providerConfig.provider,
     async composeStructuredArticle(context) {
       if (typeof options.composeStructuredArticle === "function") {
+        const resolvedCredential = resolveProviderApiKey(providerConfig);
+
         return options.composeStructuredArticle({
           ...context,
           apiKeySource: resolvedCredential.source,
@@ -1401,6 +1403,18 @@ function createProvider(providerConfig, options = {}) {
           `Provider "${providerConfig.provider}" is not yet wired to the AI SDK generation runtime.`,
           {
             status: "unsupported_provider",
+            statusCode: 400,
+          },
+        );
+      }
+
+      const resolvedCredential = resolveProviderApiKey(providerConfig);
+
+      if (!resolvedCredential.apiKey) {
+        throw new AiCompositionError(
+          `Provider configuration "${providerConfig.id}" is missing a stored API key. Save one from the Providers admin page before generating drafts.`,
+          {
+            status: "invalid_provider_credentials",
             statusCode: 400,
           },
         );

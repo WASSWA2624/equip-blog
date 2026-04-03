@@ -174,22 +174,9 @@ function buildCredentialSnapshot(config) {
     };
   }
 
-  const envName = config.apiKeyEnvName || getProviderApiKeyEnvName(config.provider);
-  const envApiKey = getProviderEnvApiKey(config.provider);
-
-  if (envApiKey) {
-    return {
-      credentialLabel: `Using ${envName} as the server fallback`,
-      credentialSourceEnvName: envName,
-      credentialState: "environment",
-      hasStoredApiKey: false,
-      hasUsableCredential: true,
-    };
-  }
-
   return {
-    credentialLabel: "No stored key or environment fallback is configured",
-    credentialSourceEnvName: envName,
+    credentialLabel: "No stored key is configured for this provider config",
+    credentialSourceEnvName: config.apiKeyEnvName || getProviderApiKeyEnvName(config.provider),
     credentialState: "missing",
     hasStoredApiKey: false,
     hasUsableCredential: false,
@@ -543,16 +530,6 @@ export function resolveProviderApiKey(providerConfig) {
       apiKey: decryptedApiKey,
       envName: providerConfig.apiKeyEnvName || getProviderApiKeyEnvName(providerConfig.provider),
       source: "stored",
-    };
-  }
-
-  const envApiKey = getProviderEnvApiKey(providerConfig.provider);
-
-  if (envApiKey) {
-    return {
-      apiKey: envApiKey,
-      envName: providerConfig.apiKeyEnvName || getProviderApiKeyEnvName(providerConfig.provider),
-      source: "environment",
     };
   }
 

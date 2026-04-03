@@ -57,7 +57,7 @@ describe("provider configuration helpers", () => {
     expect(decryptProviderApiKey(encryptedValue)).toBe("sk-test-1234567890");
   });
 
-  it("prefers stored credentials over the environment fallback", async () => {
+  it("uses stored credentials when a saved provider key is available", async () => {
     const { encryptProviderApiKey, resolveProviderApiKey } = await import("./provider-configs");
 
     const resolvedCredential = resolveProviderApiKey({
@@ -73,9 +73,7 @@ describe("provider configuration helpers", () => {
     });
   });
 
-  it("resolves generic provider env fallbacks without hard-coded runtime wiring", async () => {
-    process.env.ANTHROPIC_API_KEY = "env-claude-key";
-
+  it("does not fall back to environment credentials for provider configs", async () => {
     const { resolveProviderApiKey } = await import("./provider-configs");
     const resolvedCredential = resolveProviderApiKey({
       apiKeyEncrypted: null,
@@ -84,9 +82,9 @@ describe("provider configuration helpers", () => {
     });
 
     expect(resolvedCredential).toMatchObject({
-      apiKey: "env-claude-key",
+      apiKey: null,
       envName: "ANTHROPIC_API_KEY",
-      source: "environment",
+      source: "missing",
     });
   });
 
@@ -153,7 +151,7 @@ describe("provider configuration helpers", () => {
     expect(snapshot.summary).toMatchObject({
       configCount: 2,
       enabledCount: 2,
-      environmentFallbackCount: 1,
+      environmentFallbackCount: 0,
       storedCredentialCount: 1,
     });
     expect(snapshot.configs[0]).toMatchObject({
@@ -162,8 +160,8 @@ describe("provider configuration helpers", () => {
       hasStoredApiKey: true,
     });
     expect(snapshot.configs[1]).toMatchObject({
-      credentialLabel: "Using OPENAI_API_KEY as the server fallback",
-      credentialState: "environment",
+      credentialLabel: "No stored key is configured for this provider config",
+      credentialState: "missing",
       hasStoredApiKey: false,
     });
     expect(snapshot.configs[0].apiKey).toBeUndefined();
