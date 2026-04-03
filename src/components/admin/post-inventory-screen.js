@@ -341,6 +341,7 @@ function Pagination({ basePath, copy, pagination, search }) {
 export default function PostInventoryScreen({ copy, initialData }) {
   const basePath =
     initialData.filters.scope === "published" ? "/admin/posts/published" : "/admin/posts/drafts";
+  const isDraftScope = initialData.filters.scope === "drafts";
 
   return (
     <Page>
@@ -429,7 +430,14 @@ export default function PostInventoryScreen({ copy, initialData }) {
                   </MetaCard>
                 </MetaGrid>
                 <ActionRow>
-                  <LinkButton href={`/admin/posts/${post.id}`}>{copy.openEditorAction}</LinkButton>
+                  {isDraftScope ? (
+                    <LinkButton href={`/admin/posts/${post.id}#workflow`}>
+                      {copy.openEditorAction}
+                    </LinkButton>
+                  ) : null}
+                  <LinkButton href={`/admin/posts/${post.id}`}>
+                    {isDraftScope ? copy.editAction : copy.openEditorAction}
+                  </LinkButton>
                   <LinkButton href={`/admin/localization?postId=${post.id}&locale=${post.locale}`}>
                     {copy.localizationAction}
                   </LinkButton>

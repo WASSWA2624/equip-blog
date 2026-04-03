@@ -710,7 +710,7 @@ export default function PostEditorScreen({ copy, initialData, permissions }) {
               <LinkButton href={data.post.publicPath}>{copy.publicPreviewAction}</LinkButton>
             </ButtonRow>
           </Card>
-          <Card>
+          <Card id="workflow">
             <CardTitle>{copy.workflowTitle}</CardTitle>
             <SmallText>{copy.workflowDescription}</SmallText>
             {notice ? <StatusBanner $tone={notice.kind}>{notice.message}</StatusBanner> : null}

@@ -994,7 +994,9 @@ export default function GeneratePostScreen({ copy, initialData }) {
   }
 
   async function handlePublish(publishAt = null) {
-    if (!generator.resultPostId) {
+    const postId = reviewDraft?.postId || generator.resultPostId || generator.preview?.post?.id || null;
+
+    if (!postId) {
       return;
     }
 
@@ -1004,7 +1006,7 @@ export default function GeneratePostScreen({ copy, initialData }) {
     try {
       const response = await fetch("/api/publish-post", {
         body: JSON.stringify({
-          postId: generator.resultPostId,
+          postId,
           publishAt,
         }),
         headers: {
@@ -1043,6 +1045,7 @@ export default function GeneratePostScreen({ copy, initialData }) {
   const stageProgress = generator.progress || 0;
   const duplicateMatch = generator.duplicateMatch;
   const duplicateDetected = Boolean(duplicateMatch);
+  const resolvedPostId = reviewDraft?.postId || generator.resultPostId || generator.preview?.post?.id || null;
   const scheduleLabel =
     scheduleIntent === "schedule" && formData.schedulePublishAt
       ? `${copy.scheduleIntentPrepared}: ${formatDateTime(formData.schedulePublishAt)}`
@@ -1491,16 +1494,18 @@ export default function GeneratePostScreen({ copy, initialData }) {
                       </ButtonRow>
                     </StatusBanner>
                   ) : null}
-                  <SecondaryActions>
-                    <LinkButton
-                      href={`/admin/localization?postId=${generator.resultPostId}&locale=${reviewDraft.locale}`}
-                    >
-                      {copy.openLocalizationAction}
-                    </LinkButton>
-                    <LinkButton href={`/admin/posts/${generator.resultPostId}`}>
-                      {copy.openPostAction}
-                    </LinkButton>
-                  </SecondaryActions>
+                  {resolvedPostId ? (
+                    <SecondaryActions>
+                      <LinkButton
+                        href={`/admin/localization?postId=${resolvedPostId}&locale=${reviewDraft.locale}`}
+                      >
+                        {copy.openLocalizationAction}
+                      </LinkButton>
+                      <LinkButton href={`/admin/posts/${resolvedPostId}#workflow`}>
+                        {copy.openPostAction}
+                      </LinkButton>
+                    </SecondaryActions>
+                  ) : null}
                 </Stack>
                 <PreviewFrame>
                   <PreviewHeader>
