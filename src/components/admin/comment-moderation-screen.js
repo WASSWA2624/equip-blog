@@ -11,6 +11,27 @@ function formatDate(value) {
   return new Date(value).toLocaleString();
 }
 
+function formatShortDate(value) {
+  if (!value) {
+    return "N/A";
+  }
+
+  return new Date(value).toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function formatStatusLabel(value) {
+  return `${value || ""}`
+    .toLowerCase()
+    .split("_")
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(" ");
+}
+
 function buildSnapshotUrl({ commentId, query, status }) {
   const params = new URLSearchParams();
 
@@ -61,10 +82,10 @@ function getModerationStatusForAction(actionKind) {
 
 const Page = styled.main`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.lg};
+  gap: clamp(0.9rem, 1.8vw, 1.15rem);
   margin: 0 auto;
-  max-width: 1480px;
-  padding: clamp(1rem, 2vw, 2rem);
+  max-width: 1440px;
+  padding: clamp(0.85rem, 1.6vw, 1.25rem);
 `;
 
 const Hero = styled.section`
@@ -74,56 +95,66 @@ const Hero = styled.section`
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radius.lg};
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
-  padding: clamp(1.2rem, 2.2vw, 2rem);
+  gap: ${({ theme }) => theme.spacing.sm};
+  padding: clamp(0.9rem, 1.8vw, 1.2rem);
 `;
 
 const Eyebrow = styled.p`
   color: ${({ theme }) => theme.colors.primary};
-  font-size: 0.82rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   margin: 0;
   text-transform: uppercase;
 `;
 
 const Title = styled.h1`
-  font-size: clamp(2rem, 5vw, 3.2rem);
-  line-height: 1.05;
+  font-size: clamp(1.5rem, 3vw, 1.95rem);
+  line-height: 1.08;
   margin: 0;
 `;
 
 const Description = styled.p`
   color: ${({ theme }) => theme.colors.muted};
-  line-height: 1.7;
+  font-size: 0.95rem;
+  line-height: 1.55;
   margin: 0;
-  max-width: 860px;
+  max-width: 760px;
 `;
 
 const SummaryGrid = styled.section`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
 `;
 
 const SummaryCard = styled.section`
   background: rgba(255, 255, 255, 0.92);
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radius.md};
-  box-shadow: 0 18px 50px rgba(16, 32, 51, 0.08);
+  box-shadow: 0 14px 32px rgba(16, 32, 51, 0.07);
   display: grid;
-  gap: ${({ theme }) => theme.spacing.xs};
-  padding: ${({ theme }) => theme.spacing.lg};
+  gap: 0.18rem;
+  min-height: 0;
+  padding: 0.88rem 1rem;
 `;
 
 const SummaryValue = styled.strong`
-  font-size: 2rem;
+  font-size: clamp(1.55rem, 2.4vw, 1.9rem);
   line-height: 1;
+`;
+
+const SummaryLabel = styled.span`
+  color: ${({ theme }) => theme.colors.muted};
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 `;
 
 const SmallText = styled.p`
   color: ${({ theme }) => theme.colors.muted};
-  line-height: 1.6;
+  font-size: 0.94rem;
+  line-height: 1.5;
   margin: 0;
   overflow-wrap: anywhere;
 `;
@@ -131,17 +162,17 @@ const SmallText = styled.p`
 const Layout = styled.section`
   align-items: start;
   display: grid;
-  gap: ${({ theme }) => theme.spacing.lg};
+  gap: 1rem;
 
-  @media (min-width: 1240px) {
-    grid-template-columns: minmax(360px, 430px) minmax(0, 1fr);
+  @media (min-width: 1160px) {
+    grid-template-columns: minmax(320px, 390px) minmax(0, 1fr);
   }
 `;
 
 const Stack = styled.div`
   align-content: start;
   display: grid;
-  gap: ${({ theme }) => theme.spacing.lg};
+  gap: 1rem;
   min-width: 0;
 `;
 
@@ -149,33 +180,63 @@ const Card = styled.section`
   background: rgba(255, 255, 255, 0.94);
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radius.md};
-  box-shadow: 0 20px 60px rgba(16, 32, 51, 0.08);
+  box-shadow: 0 16px 42px rgba(16, 32, 51, 0.08);
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: 0.85rem;
   min-width: 0;
   overflow: hidden;
-  padding: ${({ theme }) => theme.spacing.lg};
+  padding: 1rem;
   position: relative;
 
   &::before {
     background: linear-gradient(90deg, rgba(0, 95, 115, 0.16), rgba(201, 123, 42, 0.12));
     content: "";
-    height: 3px;
+    height: 2px;
     inset: 0 0 auto;
     position: absolute;
   }
 `;
 
 const CardTitle = styled.h2`
-  font-size: clamp(1.05rem, 1vw, 1.2rem);
-  line-height: 1.15;
+  font-size: clamp(1rem, 1vw, 1.08rem);
+  line-height: 1.18;
   margin: 0;
 `;
 
 const List = styled.div`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: 0.55rem;
   min-width: 0;
+`;
+
+const QueueHeader = styled.div`
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  justify-content: space-between;
+`;
+
+const CountBadge = styled.span`
+  align-items: center;
+  background: rgba(0, 95, 115, 0.08);
+  border: 1px solid rgba(0, 95, 115, 0.12);
+  border-radius: 999px;
+  color: ${({ theme }) => theme.colors.primary};
+  display: inline-flex;
+  font-size: 0.76rem;
+  font-weight: 800;
+  min-height: 1.9rem;
+  padding: 0 0.7rem;
+  white-space: nowrap;
+`;
+
+const QueueList = styled.div`
+  display: grid;
+  gap: 0.55rem;
+  max-height: min(62vh, 720px);
+  overflow-y: auto;
+  padding-right: 0.15rem;
 `;
 
 const ListButton = styled.button`
@@ -184,12 +245,12 @@ const ListButton = styled.button`
       ? "linear-gradient(180deg, rgba(0, 95, 115, 0.12), rgba(0, 95, 115, 0.08))"
       : "rgba(255, 255, 255, 0.98)"};
   border: 1px solid ${({ $active, theme }) => ($active ? theme.colors.primary : theme.colors.border)};
-  border-radius: ${({ theme }) => theme.radius.md};
+  border-radius: 16px;
   cursor: pointer;
   display: grid;
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: 0.45rem;
   min-width: 0;
-  padding: ${({ theme }) => theme.spacing.md};
+  padding: 0.8rem 0.85rem;
   text-align: left;
   transition:
     border-color 160ms ease,
@@ -203,8 +264,40 @@ const ListButton = styled.button`
   }
 `;
 
+const ListHeader = styled.div`
+  align-items: start;
+  display: flex;
+  gap: 0.7rem;
+  justify-content: space-between;
+`;
+
 const ListTitle = styled.strong`
-  font-size: 1rem;
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
+`;
+
+const ListDate = styled.span`
+  color: ${({ theme }) => theme.colors.muted};
+  font-size: 0.76rem;
+  font-weight: 600;
+  white-space: nowrap;
+`;
+
+const ListExcerpt = styled.p`
+  color: ${({ theme }) => theme.colors.text};
+  display: -webkit-box;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  margin: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+`;
+
+const ListMeta = styled.span`
+  color: ${({ theme }) => theme.colors.muted};
+  font-size: 0.8rem;
+  line-height: 1.35;
   overflow-wrap: anywhere;
 `;
 
@@ -229,9 +322,11 @@ const Pill = styled.span`
         ? theme.colors.danger
         : theme.colors.primary};
   display: inline-flex;
-  font-size: 0.78rem;
+  font-size: 0.68rem;
   font-weight: 700;
-  padding: 0.34rem 0.72rem;
+  letter-spacing: 0.03em;
+  padding: 0.26rem 0.58rem;
+  text-transform: uppercase;
 `;
 
 const StatusBanner = styled.div`
@@ -240,7 +335,7 @@ const StatusBanner = styled.div`
   border: 1px solid
     ${({ $tone, theme }) => ($tone === "success" ? theme.colors.success : theme.colors.danger)};
   border-radius: ${({ theme }) => theme.radius.md};
-  padding: ${({ theme }) => theme.spacing.md};
+  padding: 0.82rem 0.95rem;
   position: relative;
 
   &::before {
@@ -255,23 +350,24 @@ const StatusBanner = styled.div`
 
 const Form = styled.form`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: 0.75rem;
   min-width: 0;
 `;
 
 const FilterGrid = styled.div`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: 0.75rem;
+  grid-template-columns: 1fr;
 `;
 
 const Field = styled.label`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.xs};
+  gap: 0.35rem;
   min-width: 0;
 `;
 
 const FieldLabel = styled.span`
+  font-size: 0.84rem;
   font-weight: 700;
 `;
 
@@ -283,7 +379,7 @@ const Input = styled.input`
   color: ${({ theme }) => theme.colors.text};
   font: inherit;
   min-width: 0;
-  padding: 0.82rem 0.92rem;
+  padding: 0.7rem 0.82rem;
   transition:
     border-color 160ms ease,
     box-shadow 160ms ease;
@@ -304,7 +400,7 @@ const Select = styled.select`
   color: ${({ theme }) => theme.colors.text};
   font: inherit;
   min-width: 0;
-  padding: 0.82rem 0.92rem;
+  padding: 0.7rem 0.82rem;
   transition:
     border-color 160ms ease,
     box-shadow 160ms ease;
@@ -324,9 +420,9 @@ const Textarea = styled.textarea`
   box-sizing: border-box;
   color: ${({ theme }) => theme.colors.text};
   font: inherit;
-  min-height: 8.5rem;
+  min-height: 6.4rem;
   min-width: 0;
-  padding: 0.82rem 0.92rem;
+  padding: 0.76rem 0.82rem;
   resize: vertical;
   transition:
     border-color 160ms ease,
@@ -343,7 +439,7 @@ const Textarea = styled.textarea`
 const ButtonRow = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: 0.6rem;
 `;
 
 const PrimaryButton = styled.button`
@@ -354,9 +450,9 @@ const PrimaryButton = styled.button`
   cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
   font: inherit;
   font-weight: 700;
-  min-height: 44px;
+  min-height: 38px;
   opacity: ${({ disabled }) => (disabled ? 0.7 : 1)};
-  padding: 0.82rem 1.35rem;
+  padding: 0.62rem 1rem;
   transition:
     box-shadow 160ms ease,
     transform 160ms ease;
@@ -376,8 +472,8 @@ const SecondaryButton = styled.button`
   cursor: pointer;
   font: inherit;
   font-weight: 700;
-  min-height: 44px;
-  padding: 0.82rem 1.1rem;
+  min-height: 38px;
+  padding: 0.62rem 0.95rem;
   transition:
     border-color 160ms ease,
     box-shadow 160ms ease,
@@ -396,18 +492,18 @@ const DangerButton = styled(PrimaryButton)`
 
 const MetaGrid = styled.dl`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11.5rem), 1fr));
 `;
 
 const MetaItem = styled.div`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.xs};
+  gap: 0.28rem;
 `;
 
 const MetaTerm = styled.dt`
   color: ${({ theme }) => theme.colors.muted};
-  font-size: 0.82rem;
+  font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   margin: 0;
@@ -420,9 +516,81 @@ const MetaValue = styled.dd`
   white-space: pre-wrap;
 `;
 
+const DetailHeader = styled.div`
+  align-items: start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: space-between;
+`;
+
+const DetailIdentity = styled.div`
+  display: grid;
+  gap: 0.18rem;
+`;
+
+const DetailName = styled.strong`
+  font-size: 1rem;
+  line-height: 1.2;
+`;
+
+const ContentGrid = styled.div`
+  display: grid;
+  gap: 0.75rem;
+
+  @media (min-width: 860px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+`;
+
+const ContentCard = styled.div`
+  background: rgba(247, 249, 252, 0.92);
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 14px;
+  display: grid;
+  gap: 0.4rem;
+  padding: 0.85rem 0.9rem;
+`;
+
+const ContentLabel = styled.span`
+  color: ${({ theme }) => theme.colors.muted};
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+`;
+
+const ContentText = styled.p`
+  color: ${({ theme }) => theme.colors.text};
+  font-size: 0.92rem;
+  line-height: 1.5;
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+`;
+
+const ReplyList = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+`;
+
+const ReplyChip = styled.span`
+  align-items: center;
+  background: rgba(0, 95, 115, 0.06);
+  border: 1px solid rgba(0, 95, 115, 0.1);
+  border-radius: 999px;
+  color: ${({ theme }) => theme.colors.text};
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 600;
+  min-height: 2rem;
+  padding: 0 0.7rem;
+`;
+
 const EventList = styled.div`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: 0.6rem;
 `;
 
 const EventCard = styled.div`
@@ -430,18 +598,18 @@ const EventCard = styled.div`
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radius.md};
   display: grid;
-  gap: ${({ theme }) => theme.spacing.xs};
-  padding: ${({ theme }) => theme.spacing.md};
+  gap: 0.25rem;
+  padding: 0.82rem 0.92rem;
 `;
 
 const EventTitle = styled.strong`
-  font-size: 0.96rem;
+  font-size: 0.9rem;
 `;
 
 const StatusActions = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: 0.55rem;
 `;
 
 const ModerationButton = styled.button`
@@ -459,9 +627,9 @@ const ModerationButton = styled.button`
   cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
   font: inherit;
   font-weight: 700;
-  min-height: 44px;
+  min-height: 38px;
   opacity: ${({ disabled }) => (disabled ? 0.7 : 1)};
-  padding: 0.78rem 1.05rem;
+  padding: 0.6rem 0.92rem;
   transition:
     box-shadow 160ms ease,
     transform 160ms ease;
@@ -474,9 +642,9 @@ const ModerationButton = styled.button`
 `;
 
 const StickyCard = styled(Card)`
-  @media (min-width: 1240px) {
+  @media (min-width: 1160px) {
     position: sticky;
-    top: 1rem;
+    top: 0.8rem;
   }
 `;
 
@@ -705,30 +873,35 @@ export default function CommentModerationScreen({ copy, initialData }) {
       <SummaryGrid>
         <SummaryCard>
           <SummaryValue>{data.summary.totalCount}</SummaryValue>
-          <SmallText>{resolvedCopy.totalCountLabel}</SmallText>
+          <SummaryLabel>{resolvedCopy.totalCountLabel}</SummaryLabel>
         </SummaryCard>
         <SummaryCard>
           <SummaryValue>{data.summary.pendingCount}</SummaryValue>
-          <SmallText>{resolvedCopy.pendingCountLabel}</SmallText>
+          <SummaryLabel>{resolvedCopy.pendingCountLabel}</SummaryLabel>
         </SummaryCard>
         <SummaryCard>
           <SummaryValue>{data.summary.approvedCount}</SummaryValue>
-          <SmallText>{resolvedCopy.approvedCountLabel}</SmallText>
+          <SummaryLabel>{resolvedCopy.approvedCountLabel}</SummaryLabel>
         </SummaryCard>
         <SummaryCard>
           <SummaryValue>{data.summary.rejectedCount}</SummaryValue>
-          <SmallText>{resolvedCopy.rejectedCountLabel}</SmallText>
+          <SummaryLabel>{resolvedCopy.rejectedCountLabel}</SummaryLabel>
         </SummaryCard>
         <SummaryCard>
           <SummaryValue>{data.summary.spamCount}</SummaryValue>
-          <SmallText>{resolvedCopy.spamCountLabel}</SmallText>
+          <SummaryLabel>{resolvedCopy.spamCountLabel}</SummaryLabel>
         </SummaryCard>
       </SummaryGrid>
 
       <Layout>
         <Stack>
           <StickyCard>
-            <CardTitle>{resolvedCopy.listTitle}</CardTitle>
+            <QueueHeader>
+              <CardTitle>{resolvedCopy.listTitle}</CardTitle>
+              <CountBadge>
+                {resolvedCopy.filteredCountLabel}: {data.summary.filteredCount}
+              </CountBadge>
+            </QueueHeader>
             <SmallText>{resolvedCopy.listDescription}</SmallText>
             {notice ? <StatusBanner $tone={notice.tone}>{notice.message}</StatusBanner> : null}
             <Form onSubmit={handleSubmitFilters}>
@@ -763,13 +936,10 @@ export default function CommentModerationScreen({ copy, initialData }) {
                   {resolvedCopy.resetFiltersAction}
                 </SecondaryButton>
               </ButtonRow>
-              <SmallText>
-                {resolvedCopy.filteredCountLabel}: {data.summary.filteredCount}
-              </SmallText>
             </Form>
 
             {data.comments.length ? (
-              <List>
+              <QueueList>
                 {data.comments.map((comment) => (
                   <ListButton
                     key={comment.id}
@@ -777,18 +947,28 @@ export default function CommentModerationScreen({ copy, initialData }) {
                     type="button"
                     $active={data.selection.commentId === comment.id}
                   >
-                    <ListTitle>{comment.name}</ListTitle>
-                    <SmallText>{comment.bodyPreview}</SmallText>
-                    <SmallText>{comment.post.title}</SmallText>
+                    <ListHeader>
+                      <ListTitle>{comment.name}</ListTitle>
+                      <ListDate>{formatShortDate(comment.createdAt)}</ListDate>
+                    </ListHeader>
                     <BadgeRow>
-                      <Pill $tone={statusTone(comment.status)}>{comment.status}</Pill>
+                      <Pill $tone={statusTone(comment.status)}>
+                        {formatStatusLabel(comment.status)}
+                      </Pill>
                       <Pill>{comment.isReply ? resolvedCopy.replyTypeLabel : resolvedCopy.topLevelTypeLabel}</Pill>
+                      {comment.repliesCount ? <Pill>{comment.repliesCount} replies</Pill> : null}
                       {comment.parentName ? <Pill>{comment.parentName}</Pill> : null}
                     </BadgeRow>
-                    <SmallText>{formatDate(comment.createdAt)}</SmallText>
+                    <ListExcerpt>{comment.bodyPreview}</ListExcerpt>
+                    <ListMeta>{comment.post.title}</ListMeta>
+                    {comment.latestEvent ? (
+                      <ListMeta>
+                        Last action: {comment.latestEvent.actionLabel} by {comment.latestEvent.actorName}
+                      </ListMeta>
+                    ) : null}
                   </ListButton>
                 ))}
-              </List>
+              </QueueList>
             ) : (
               <SmallText>{resolvedCopy.emptyState}</SmallText>
             )}
@@ -797,11 +977,35 @@ export default function CommentModerationScreen({ copy, initialData }) {
 
         <Stack>
           <Card>
-            <CardTitle>{resolvedCopy.detailTitle}</CardTitle>
+            <DetailHeader>
+              <CardTitle>{resolvedCopy.detailTitle}</CardTitle>
+              {data.editor.comment ? (
+                <Pill $tone={statusTone(data.editor.comment.status)}>
+                  {formatStatusLabel(data.editor.comment.status)}
+                </Pill>
+              ) : null}
+            </DetailHeader>
             <SmallText>{resolvedCopy.detailDescription}</SmallText>
 
             {data.editor.comment ? (
               <>
+                <DetailHeader>
+                  <DetailIdentity>
+                    <DetailName>{data.editor.comment.name}</DetailName>
+                    <SmallText>{data.editor.comment.email || "No email provided"}</SmallText>
+                  </DetailIdentity>
+                  <BadgeRow>
+                    <Pill>
+                      {data.editor.comment.parent
+                        ? resolvedCopy.replyTypeLabel
+                        : resolvedCopy.topLevelTypeLabel}
+                    </Pill>
+                    {data.editor.comment.replies.length ? (
+                      <Pill>{data.editor.comment.replies.length} replies</Pill>
+                    ) : null}
+                  </BadgeRow>
+                </DetailHeader>
+
                 <MetaGrid>
                   <MetaItem>
                     <MetaTerm>{resolvedCopy.postLabel}</MetaTerm>
@@ -831,25 +1035,33 @@ export default function CommentModerationScreen({ copy, initialData }) {
                     <MetaTerm>{resolvedCopy.userAgentLabel}</MetaTerm>
                     <MetaValue>{data.editor.comment.userAgent || "N/A"}</MetaValue>
                   </MetaItem>
-                  <MetaItem>
-                    <MetaTerm>{resolvedCopy.statusFilterLabel}</MetaTerm>
-                    <MetaValue>
-                      <Pill $tone={statusTone(data.editor.comment.status)}>
-                        {data.editor.comment.status}
-                      </Pill>
-                    </MetaValue>
-                  </MetaItem>
-                  {data.editor.comment.parent ? (
-                    <MetaItem>
-                      <MetaTerm>{resolvedCopy.replyContextLabel}</MetaTerm>
-                      <MetaValue>{data.editor.comment.parent.body}</MetaValue>
-                    </MetaItem>
-                  ) : null}
-                  <MetaItem>
-                    <MetaTerm>{resolvedCopy.commentBodyLabel || "Comment"}</MetaTerm>
-                    <MetaValue>{data.editor.comment.body}</MetaValue>
-                  </MetaItem>
                 </MetaGrid>
+
+                <ContentGrid>
+                  <ContentCard>
+                    <ContentLabel>{resolvedCopy.commentBodyLabel || "Comment"}</ContentLabel>
+                    <ContentText>{data.editor.comment.body}</ContentText>
+                  </ContentCard>
+                  {data.editor.comment.parent ? (
+                    <ContentCard>
+                      <ContentLabel>{resolvedCopy.replyContextLabel}</ContentLabel>
+                      <ContentText>{data.editor.comment.parent.body}</ContentText>
+                    </ContentCard>
+                  ) : null}
+                </ContentGrid>
+
+                {data.editor.comment.replies.length ? (
+                  <ContentCard>
+                    <ContentLabel>Replies on this comment</ContentLabel>
+                    <ReplyList>
+                      {data.editor.comment.replies.map((reply) => (
+                        <ReplyChip key={reply.id}>
+                          {reply.name} · {formatStatusLabel(reply.status)}
+                        </ReplyChip>
+                      ))}
+                    </ReplyList>
+                  </ContentCard>
+                ) : null}
 
                 <Field>
                   <FieldLabel>{resolvedCopy.moderationNotesLabel}</FieldLabel>
@@ -901,13 +1113,19 @@ export default function CommentModerationScreen({ copy, initialData }) {
 
           <Card>
             <CardTitle>{resolvedCopy.historyTitle}</CardTitle>
+            <SmallText>
+              Every moderation action keeps its actor, timestamp, and reviewer notes attached to the
+              comment.
+            </SmallText>
             {data.editor.comment?.moderationEvents.length ? (
               <EventList>
                 {data.editor.comment.moderationEvents.map((event) => (
                   <EventCard key={event.id}>
-                    <EventTitle>{event.actionLabel}</EventTitle>
+                    <DetailHeader>
+                      <EventTitle>{event.actionLabel}</EventTitle>
+                      <ListDate>{formatDate(event.createdAt)}</ListDate>
+                    </DetailHeader>
                     <SmallText>{event.actorName}</SmallText>
-                    <SmallText>{formatDate(event.createdAt)}</SmallText>
                     {event.notes ? <SmallText>{event.notes}</SmallText> : null}
                   </EventCard>
                 ))}
