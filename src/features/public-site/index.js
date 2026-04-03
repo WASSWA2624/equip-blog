@@ -6,6 +6,7 @@ import { defaultLocale, isSupportedLocale, supportedLocales } from "@/features/i
 import { buildLocalizedPath, publicRouteSegments } from "@/features/i18n/routing";
 import { env } from "@/lib/env/server";
 import { generatedArticleSectionOrder } from "@/lib/content/article-structure";
+import { getRenderableImageUrl } from "@/lib/media";
 import { normalizeDisplayText, normalizeEquipmentName } from "@/lib/normalization";
 
 export const publicDataRevalidateSeconds = 300;
@@ -316,39 +317,59 @@ function buildResponsiveImageSrcSet(media, url) {
 }
 
 function createMediaImage(media, fallbackAlt) {
-  const url = getMediaUrl(media);
+  const rawUrl = getMediaUrl(media);
+  const alt = media?.alt || media?.caption || fallbackAlt;
+  const caption = media?.caption || null;
+  const height = normalizeImageDimension(media?.height);
+  const width = normalizeImageDimension(media?.width);
+  const url = getRenderableImageUrl(rawUrl, {
+    alt,
+    caption,
+    height,
+    width,
+  });
 
   if (!url) {
     return null;
   }
 
   return {
-    alt: media?.alt || media?.caption || fallbackAlt,
+    alt,
     attributionText: media?.attributionText || null,
-    caption: media?.caption || null,
-    height: normalizeImageDimension(media?.height),
+    caption,
+    height,
     licenseType: media?.licenseType || null,
-    srcSet: buildResponsiveImageSrcSet(media, url),
+    srcSet: rawUrl === url ? buildResponsiveImageSrcSet(media, rawUrl) : null,
     url,
-    width: normalizeImageDimension(media?.width),
+    width,
   };
 }
 
 function createSectionImage(image, fallbackAlt) {
-  const url = typeof image?.url === "string" ? image.url.trim() : "";
+  const rawUrl = typeof image?.url === "string" ? image.url.trim() : "";
+  const alt = image.alt || image.caption || fallbackAlt;
+  const caption = image.caption || null;
+  const height = normalizeImageDimension(image?.height);
+  const width = normalizeImageDimension(image?.width);
+  const url = getRenderableImageUrl(rawUrl, {
+    alt,
+    caption,
+    height,
+    width,
+  });
 
   if (!url) {
     return null;
   }
 
   return {
-    alt: image.alt || image.caption || fallbackAlt,
+    alt,
     attributionText: image.attributionText || null,
-    caption: image.caption || null,
-    height: normalizeImageDimension(image?.height),
+    caption,
+    height,
     licenseType: image.licenseType || null,
     url,
-    width: normalizeImageDimension(image?.width),
+    width,
   };
 }
 

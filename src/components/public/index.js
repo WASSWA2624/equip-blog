@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import styled, { css } from "styled-components";
 
 import PublicViewTracker from "@/components/analytics/public-view-tracker";
 import { PublicCommentSection } from "@/components/comments";
 import ShareActions from "@/components/public/share-actions";
+import { createImagePlaceholderDataUrl } from "@/lib/media";
 
 function formatDateLabel(locale, value) {
   if (!value) {
@@ -434,9 +436,21 @@ function ResponsiveImage({
   priority = false,
   sizes = "100vw",
 }) {
-  if (!image?.url) {
+  const fallbackSrc = createImagePlaceholderDataUrl({
+    alt: image?.alt,
+    caption: image?.caption,
+    height: image?.height,
+    sourceUrl: image?.url,
+    width: image?.width,
+  });
+  const [failedSource, setFailedSource] = useState(null);
+  const src = failedSource === image?.url ? fallbackSrc : image?.url || "";
+
+  if (!src) {
     return null;
   }
+
+  const isFallbackSource = src === fallbackSrc;
 
   return (
     <FigureImage
@@ -445,9 +459,14 @@ function ResponsiveImage({
       fetchPriority={priority ? "high" : "auto"}
       height={image.height || undefined}
       loading={priority ? "eager" : loading}
-      sizes={image.srcSet ? sizes : undefined}
-      src={image.url}
-      srcSet={image.srcSet || undefined}
+      onError={() => {
+        if (!isFallbackSource) {
+          setFailedSource(image?.url || "");
+        }
+      }}
+      sizes={!isFallbackSource && image.srcSet ? sizes : undefined}
+      src={src}
+      srcSet={!isFallbackSource ? image.srcSet || undefined : undefined}
       width={image.width || undefined}
     />
   );

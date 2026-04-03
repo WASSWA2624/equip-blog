@@ -1,3 +1,5 @@
+import { getRenderableImageUrl } from "@/lib/media";
+
 function escapeHtml(value) {
   return `${value}`
     .replace(/&/g, "&amp;")
@@ -114,12 +116,19 @@ function renderHtmlSection(section) {
 
   if (section.kind === "image_gallery") {
     const gallery = (section.images || [])
-      .map(
-        (image) =>
-          `<figure><img src="${escapeHtml(image.url)}" alt="${escapeHtml(
-            image.alt || image.caption || section.title,
-          )}" loading="lazy" />${image.caption ? `<figcaption>${escapeHtml(image.caption)}</figcaption>` : ""}</figure>`,
-      )
+      .map((image) => {
+        const imageAlt = image.alt || image.caption || section.title;
+        const imageUrl = getRenderableImageUrl(image.url, {
+          alt: imageAlt,
+          caption: image.caption || section.title,
+          height: image.height,
+          width: image.width,
+        });
+
+        return `<figure><img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(
+          imageAlt,
+        )}" loading="lazy" />${image.caption ? `<figcaption>${escapeHtml(image.caption)}</figcaption>` : ""}</figure>`;
+      })
       .join("");
 
     return `<section>${title}${gallery}</section>`;

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { startTransition, useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 
 import SearchableSelect from "@/components/common/searchable-select";
 import { createAdminGenerationFormState, validateAdminGenerationInput } from "@/features/generator/admin-input";
@@ -119,6 +119,22 @@ function formatDateTime(value) {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(date);
+}
+
+function formatLifecycleStatus(status) {
+  if (status === "PUBLISHED") {
+    return "Live";
+  }
+
+  if (status === "SCHEDULED") {
+    return "Scheduled";
+  }
+
+  if (status === "DRAFT") {
+    return "Draft";
+  }
+
+  return status || "Draft";
 }
 
 function createReviewDraft(preview) {
@@ -395,15 +411,36 @@ const FieldGrid = styled.div`
 const Field = styled.label`
   display: grid;
   gap: ${({ theme }) => theme.spacing.xs};
+  min-width: 0;
+
+  ${({ $spanFull }) =>
+    $spanFull
+      ? css`
+          @media (min-width: 900px) {
+            grid-column: 1 / -1;
+          }
+        `
+      : ""}
 `;
 
 const FieldControlRow = styled.div`
+  background:
+    linear-gradient(135deg, rgba(0, 95, 115, 0.08), rgba(208, 138, 66, 0.08)),
+    rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(0, 95, 115, 0.14);
+  border-radius: ${({ theme }) => theme.radius.md};
   display: grid;
   gap: ${({ theme }) => theme.spacing.sm};
+  padding: ${({ theme }) => theme.spacing.sm};
+`;
+
+const FieldActionGroup = styled.div`
+  display: grid;
+  gap: ${({ theme }) => theme.spacing.sm};
+  width: 100%;
 
   @media (min-width: 760px) {
-    align-items: start;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 `;
 
@@ -430,18 +467,25 @@ const TextInput = styled.input`
   background: white;
   border: 1px solid ${({ $invalid, theme }) => ($invalid ? theme.colors.danger : theme.colors.border)};
   border-radius: ${({ theme }) => theme.radius.sm};
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
   color: ${({ theme }) => theme.colors.text};
-  padding: 0.82rem 0.92rem;
+  font-size: 1rem;
+  min-height: 3.4rem;
+  min-width: 0;
+  padding: 0.9rem 1rem;
+  width: 100%;
 `;
 
 const Textarea = styled.textarea`
   background: white;
   border: 1px solid ${({ $invalid, theme }) => ($invalid ? theme.colors.danger : theme.colors.border)};
   border-radius: ${({ theme }) => theme.radius.sm};
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
   color: ${({ theme }) => theme.colors.text};
   min-height: ${({ $rows }) => `${$rows * 1.65}rem`};
-  padding: 0.82rem 0.92rem;
+  padding: 0.92rem 1rem;
   resize: vertical;
+  width: 100%;
 `;
 
 const FieldError = styled.span`
@@ -501,12 +545,14 @@ const ButtonRow = styled.div`
 const Button = styled.button`
   background: ${({ $tone, theme }) =>
     $tone === "secondary"
-      ? "rgba(255, 255, 255, 0.95)"
+      ? "rgba(255, 255, 255, 0.98)"
       : $tone === "danger"
         ? theme.colors.danger
         : theme.colors.primary};
   border: 1px solid ${({ $tone, theme }) => ($tone === "secondary" ? theme.colors.border : "transparent")};
   border-radius: 999px;
+  box-shadow: ${({ $tone }) =>
+    $tone === "secondary" ? "0 10px 22px rgba(16, 32, 51, 0.08)" : "0 14px 28px rgba(0, 95, 115, 0.18)"};
   color: ${({ $tone }) => ($tone === "secondary" ? "inherit" : "white")};
   cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
   font-weight: 700;
@@ -515,9 +561,11 @@ const Button = styled.button`
 `;
 
 const InlineSubmitButton = styled(Button)`
+  align-items: center;
+  display: inline-flex;
   justify-content: center;
-  min-height: 48px;
-  white-space: nowrap;
+  min-height: 56px;
+  width: 100%;
 `;
 
 const LinkButton = styled(Link)`
@@ -543,6 +591,9 @@ const PreviewFrame = styled.article`
     linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 249, 252, 0.94));
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radius.md};
+  box-shadow:
+    0 24px 48px rgba(16, 32, 51, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
   display: grid;
   gap: ${({ theme }) => theme.spacing.md};
   overflow: hidden;
@@ -577,10 +628,35 @@ const PreviewArticle = styled.div`
     gap: ${({ theme }) => theme.spacing.md};
   }
 
+  figure {
+    background: linear-gradient(180deg, rgba(244, 248, 252, 0.98), rgba(255, 255, 255, 0.98));
+    border: 1px solid rgba(16, 32, 51, 0.08);
+    border-radius: ${({ theme }) => theme.radius.md};
+    margin: 0;
+    overflow: hidden;
+    padding: ${({ theme }) => theme.spacing.sm};
+  }
+
+  figcaption {
+    color: ${({ theme }) => theme.colors.muted};
+    font-size: 0.92rem;
+    padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.xs} 0;
+  }
+
   h1,
   h2,
   h3 {
     line-height: 1.15;
+  }
+
+  img {
+    aspect-ratio: 16 / 9;
+    background: rgba(16, 32, 51, 0.05);
+    border-radius: ${({ theme }) => theme.radius.sm};
+    display: block;
+    height: auto;
+    object-fit: cover;
+    width: 100%;
   }
 
   p,
@@ -651,6 +727,8 @@ export default function GeneratePostScreen({ copy, initialData }) {
   const [reviewDraft, setReviewDraft] = useState(null);
   const [saveState, setSaveState] = useState("idle");
   const [publishState, setPublishState] = useState("idle");
+  const [workflowSnapshot, setWorkflowSnapshot] = useState(null);
+  const [generationIntent, setGenerationIntent] = useState("draft");
   const [scheduleIntent, setScheduleIntent] = useState(
     initialData.defaults.schedulePublishAt ? "schedule" : "draft",
   );
@@ -781,7 +859,66 @@ export default function GeneratePostScreen({ copy, initialData }) {
     ];
   }
 
-  async function submitGenerationRequest(replaceExistingPost = false) {
+  async function publishPostById(postId, publishAt = null, options = {}) {
+    const { afterGeneration = false } = options;
+
+    if (!postId) {
+      throw new Error(copy.unknownError);
+    }
+
+    setPublishState(publishAt ? "scheduling" : "publishing");
+    setNotice(null);
+
+    try {
+      const response = await fetch("/api/publish-post", {
+        body: JSON.stringify({
+          postId,
+          publishAt,
+        }),
+        headers: {
+          "content-type": "application/json",
+        },
+        method: "POST",
+      });
+      const responsePayload = await response.json();
+
+      if (responsePayload.status === "scaffold_only") {
+        setNotice({
+          kind: "warning",
+          message: copy.publishScaffolded,
+        });
+        return false;
+      }
+
+      if (!response.ok) {
+        throw new Error(responsePayload.message || copy.publishErrorPrefix);
+      }
+
+      startTransition(() => {
+        setWorkflowSnapshot(responsePayload.data?.snapshot || null);
+      });
+
+      setNotice({
+        kind: "success",
+        message: afterGeneration ? copy.generateAndPublishSuccess : publishAt ? copy.scheduleSuccess : copy.publishSuccess,
+      });
+
+      return true;
+    } catch (error) {
+      setNotice({
+        kind: "error",
+        message: afterGeneration
+          ? `${copy.generateAndPublishErrorPrefix}: ${error.message}`
+          : `${publishAt ? copy.scheduleErrorPrefix : copy.publishErrorPrefix}: ${error.message}`,
+      });
+      return false;
+    } finally {
+      setPublishState("idle");
+    }
+  }
+
+  async function submitGenerationRequest(replaceExistingPost = false, options = {}) {
+    const { autoPublish = false } = options;
     const payload = {
       ...formData,
       replaceExistingPost,
@@ -800,11 +937,13 @@ export default function GeneratePostScreen({ copy, initialData }) {
     }
 
     setFieldErrors({});
+    setGenerationIntent(autoPublish ? "publish" : "draft");
     setNotice(null);
     setScheduleConfirmationOpen(false);
     setReviewDraft(null);
     setSaveState("idle");
     setPublishState("idle");
+    setWorkflowSnapshot(null);
     dispatch(
       setGeneratorState({
         currentStage: generationStageOrder[0],
@@ -837,6 +976,7 @@ export default function GeneratePostScreen({ copy, initialData }) {
 
       if (response.ok) {
         const nextReviewDraft = createReviewDraft(responsePayload.preview);
+        const postId = responsePayload.postId || nextReviewDraft?.postId || responsePayload.preview?.post?.id || null;
 
         startTransition(() => {
           setReviewDraft(nextReviewDraft);
@@ -854,12 +994,19 @@ export default function GeneratePostScreen({ copy, initialData }) {
               loading: false,
               preview: responsePayload.preview || null,
               progress: 100,
-              resultPostId: responsePayload.postId || null,
+              resultPostId: postId,
               status: "ready",
               warnings: responsePayload.warnings || [],
             }),
           );
         });
+
+        if (autoPublish) {
+          await publishPostById(postId, null, {
+            afterGeneration: true,
+          });
+          return;
+        }
 
         setNotice({
           kind: "success",
@@ -926,7 +1073,15 @@ export default function GeneratePostScreen({ copy, initialData }) {
 
   async function handleGenerate(event) {
     event.preventDefault();
-    await submitGenerationRequest(false);
+    await submitGenerationRequest(false, {
+      autoPublish: false,
+    });
+  }
+
+  async function handleGenerateAndPublish() {
+    await submitGenerationRequest(false, {
+      autoPublish: true,
+    });
   }
 
   async function handleSaveDraft() {
@@ -1000,52 +1155,34 @@ export default function GeneratePostScreen({ copy, initialData }) {
       return;
     }
 
-    setPublishState(publishAt ? "scheduling" : "publishing");
-    setNotice(null);
-
-    try {
-      const response = await fetch("/api/publish-post", {
-        body: JSON.stringify({
-          postId,
-          publishAt,
-        }),
-        headers: {
-          "content-type": "application/json",
-        },
-        method: "POST",
-      });
-      const responsePayload = await response.json();
-
-      if (responsePayload.status === "scaffold_only") {
-        setNotice({
-          kind: "warning",
-          message: copy.publishScaffolded,
-        });
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error(responsePayload.message || copy.publishErrorPrefix);
-      }
-
-      setNotice({
-        kind: "success",
-        message: publishAt ? copy.scheduleSuccess : copy.publishSuccess,
-      });
-    } catch (error) {
-      setNotice({
-        kind: "error",
-        message: `${publishAt ? copy.scheduleErrorPrefix : copy.publishErrorPrefix}: ${error.message}`,
-      });
-    } finally {
-      setPublishState("idle");
-    }
+    await publishPostById(postId, publishAt);
   }
 
   const stageProgress = generator.progress || 0;
   const duplicateMatch = generator.duplicateMatch;
   const duplicateDetected = Boolean(duplicateMatch);
   const resolvedPostId = reviewDraft?.postId || generator.resultPostId || generator.preview?.post?.id || null;
+  const resolvedWorkflowPost = workflowSnapshot?.post || null;
+  const resolvedPublicPath =
+    resolvedWorkflowPost?.status === "PUBLISHED" && resolvedWorkflowPost?.publicPath
+      ? resolvedWorkflowPost.publicPath
+      : null;
+  const lifecycleStatus = resolvedWorkflowPost?.status || (generator.preview ? "DRAFT" : null);
+  const lifecycleTimestamp =
+    resolvedWorkflowPost?.status === "PUBLISHED"
+      ? resolvedWorkflowPost?.publishedAt
+      : resolvedWorkflowPost?.status === "SCHEDULED"
+        ? resolvedWorkflowPost?.scheduledPublishAt
+        : null;
+  const isSubmitBusy = generator.loading || publishState !== "idle";
+  const generateButtonLabel =
+    generator.loading && generationIntent === "draft"
+      ? copy.generateWorking
+      : copy.generateAction;
+  const generateAndPublishButtonLabel =
+    generator.loading || (publishState === "publishing" && generationIntent === "publish")
+      ? copy.generateAndPublishWorking
+      : copy.generateAndPublishAction;
   const scheduleLabel =
     scheduleIntent === "schedule" && formData.schedulePublishAt
       ? `${copy.scheduleIntentPrepared}: ${formatDateTime(formData.schedulePublishAt)}`
@@ -1135,7 +1272,7 @@ export default function GeneratePostScreen({ copy, initialData }) {
             ) : null}
             <Form onSubmit={handleGenerate}>
               <FieldGrid>
-                <Field as="div">
+                <Field $spanFull as="div">
                   <FieldLabel>{copy.equipmentNameLabel}</FieldLabel>
                   <FieldControlRow>
                     <TextInput
@@ -1152,18 +1289,35 @@ export default function GeneratePostScreen({ copy, initialData }) {
                       }
                       value={formData.equipmentName}
                     />
-                    <InlineSubmitButton
-                      disabled={generator.loading || !initialData.providerConfigs.length}
-                      type="submit"
-                    >
-                      {generator.loading ? copy.generateWorking : copy.generateAction}
-                    </InlineSubmitButton>
+                    <FieldActionGroup>
+                      <InlineSubmitButton
+                        disabled={isSubmitBusy || !initialData.providerConfigs.length}
+                        type="submit"
+                      >
+                        {generateButtonLabel}
+                      </InlineSubmitButton>
+                      <InlineSubmitButton
+                        $tone="secondary"
+                        disabled={
+                          isSubmitBusy ||
+                          !initialData.permissions.canPublish ||
+                          !initialData.providerConfigs.length
+                        }
+                        onClick={handleGenerateAndPublish}
+                        type="button"
+                      >
+                        {generateAndPublishButtonLabel}
+                      </InlineSubmitButton>
+                    </FieldActionGroup>
                   </FieldControlRow>
                   {getFirstFieldError(fieldErrors, "equipmentName") ? (
                     <FieldError>{getFirstFieldError(fieldErrors, "equipmentName")}</FieldError>
                   ) : null}
+                  {!initialData.permissions.canPublish ? (
+                    <SmallText>{copy.publishUnavailable}</SmallText>
+                  ) : null}
                 </Field>
-                <Field as="div">
+                <Field $spanFull as="div">
                   <FieldLabelRow>
                     <FieldLabel>{copy.providerLabel}</FieldLabel>
                     {initialData.permissions.canManageProviders ? (
@@ -1371,10 +1525,14 @@ export default function GeneratePostScreen({ copy, initialData }) {
                 <Button
                   $tone="danger"
                   disabled={generator.loading}
-                  onClick={() => submitGenerationRequest(true)}
+                  onClick={() =>
+                    submitGenerationRequest(true, {
+                      autoPublish: generationIntent === "publish",
+                    })
+                  }
                   type="button"
                 >
-                  {copy.replaceAction}
+                  {generationIntent === "publish" ? copy.replaceAndPublishAction : copy.replaceAction}
                 </Button>
                 <Button
                   $tone="secondary"
@@ -1496,6 +1654,9 @@ export default function GeneratePostScreen({ copy, initialData }) {
                   ) : null}
                   {resolvedPostId ? (
                     <SecondaryActions>
+                      {resolvedPublicPath ? (
+                        <LinkButton href={resolvedPublicPath}>{copy.openLiveAction}</LinkButton>
+                      ) : null}
                       <LinkButton
                         href={`/admin/localization?postId=${resolvedPostId}&locale=${reviewDraft.locale}`}
                       >
@@ -1512,6 +1673,7 @@ export default function GeneratePostScreen({ copy, initialData }) {
                     <PillRow>
                       <Pill $tone="accent">{generator.preview.editorialStage}</Pill>
                       <Pill $tone="primary">{formatProviderLabel(generator.preview.providerConfig)}</Pill>
+                      {lifecycleStatus ? <Pill $tone="success">{formatLifecycleStatus(lifecycleStatus)}</Pill> : null}
                       {generator.duplicateDecision === "replace_existing" ? (
                         <Pill $tone="danger">{copy.replacedBadge}</Pill>
                       ) : null}
@@ -1532,6 +1694,14 @@ export default function GeneratePostScreen({ copy, initialData }) {
                       <MetaCard>
                         <MetaLabel>{copy.summarySchedule}</MetaLabel>
                         <SmallText>{scheduleLabel}</SmallText>
+                      </MetaCard>
+                      <MetaCard>
+                        <MetaLabel>{copy.lifecycleLabel}</MetaLabel>
+                        <SmallText>{lifecycleStatus ? formatLifecycleStatus(lifecycleStatus) : "Draft"}</SmallText>
+                      </MetaCard>
+                      <MetaCard>
+                        <MetaLabel>{copy.lifecycleAtLabel}</MetaLabel>
+                        <SmallText>{lifecycleTimestamp ? formatDateTime(lifecycleTimestamp) : "Not live yet"}</SmallText>
                       </MetaCard>
                       <MetaCard>
                         <MetaLabel>{copy.seoTitle}</MetaLabel>
