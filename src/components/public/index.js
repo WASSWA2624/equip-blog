@@ -174,6 +174,13 @@ const PageMain = styled.main`
   max-width: 1280px;
   padding: clamp(1.35rem, 3vw, 2.2rem) clamp(1rem, 3vw, 1.6rem) clamp(2rem, 4vw, 3rem);
   width: 100%;
+
+  ${({ $layout }) =>
+    $layout === "post" &&
+    css`
+      max-width: none;
+      padding: 0 0 clamp(2rem, 4vw, 3rem);
+    `}
 `;
 
 const Panel = styled.section`
@@ -473,7 +480,7 @@ const Figure = styled.figure`
 const FigureFrame = styled.div`
   background: linear-gradient(180deg, rgba(248, 250, 253, 0.96), rgba(241, 245, 249, 0.98));
   border: 1px solid rgba(16, 32, 51, 0.08);
-  border-radius: 14px;
+  border-radius: ${({ $variant }) => ($variant === "article" ? "0" : "14px")};
   display: grid;
   justify-items: center;
   overflow: hidden;
@@ -556,7 +563,7 @@ const FigureImage = styled.img`
   aspect-ratio: ${({ $aspectRatio, $variant }) =>
     $variant === "article" ? $aspectRatio || "4 / 3" : "16 / 9"};
   background: rgba(16, 32, 51, 0.04);
-  border-radius: ${({ $variant }) => ($variant === "article" ? "10px" : "14px")};
+  border-radius: ${({ $variant }) => ($variant === "article" ? "0" : "14px")};
   display: block;
   filter: ${({ $presentation, $variant }) =>
     $presentation === "atlas" && $variant === "article"
@@ -1277,7 +1284,7 @@ const PostHeroShell = styled.section`
     radial-gradient(circle at bottom left, rgba(0, 95, 115, 0.11), transparent 42%),
     linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(247, 250, 255, 0.95));
   border: 1px solid rgba(16, 32, 51, 0.08);
-  border-radius: 20px;
+  border-radius: 0;
   box-shadow:
     0 32px 90px rgba(19, 34, 58, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.76);
@@ -1331,13 +1338,31 @@ const PostHeroGrid = styled.div`
 
   @media (min-width: 980px) {
     align-items: start;
-    grid-template-columns: minmax(0, 1.7fr) minmax(220px, 0.66fr);
+    grid-template-columns: minmax(0, 1.42fr) minmax(280px, 0.88fr);
   }
 `;
 
 const PostHeader = styled.div`
   display: grid;
   gap: clamp(0.7rem, 1.4vw, 0.95rem);
+`;
+
+const PostLeadGrid = styled.div`
+  display: grid;
+  gap: clamp(0.72rem, 1.5vw, 0.95rem);
+
+  @media (min-width: 980px) {
+    align-items: start;
+    column-gap: clamp(0.95rem, 2vw, 1.35rem);
+    grid-template-columns: minmax(0, 1.08fr) minmax(250px, 0.72fr);
+  }
+`;
+
+const PostDeckBlock = styled.div`
+  align-content: start;
+  display: grid;
+  gap: 0.68rem;
+  min-width: 0;
 `;
 
 const PostKicker = styled.p`
@@ -1352,13 +1377,17 @@ const PostKicker = styled.p`
 const PostTitle = styled.h1`
   color: #16243b;
   font-family: var(--font-editorial), Georgia, serif;
-  font-size: clamp(1.9rem, 4vw, 2.8rem);
+  font-size: clamp(1.85rem, 3.6vw, 2.55rem);
   font-weight: 600;
   letter-spacing: -0.045em;
   line-height: 1.04;
   margin: 0;
-  max-width: 18ch;
+  max-width: 16ch;
   text-wrap: balance;
+
+  @media (min-width: 980px) {
+    max-width: none;
+  }
 `;
 
 const PostDeck = styled.p`
@@ -1368,6 +1397,10 @@ const PostDeck = styled.p`
   line-height: 1.42;
   margin: 0;
   max-width: 50ch;
+
+  @media (min-width: 980px) {
+    max-width: none;
+  }
 `;
 
 const HeroSignalRow = styled.div`
@@ -1379,7 +1412,7 @@ const HeroSignalRow = styled.div`
 const HeroSignal = styled.span`
   background: rgba(255, 255, 255, 0.74);
   border: 1px solid rgba(16, 32, 51, 0.1);
-  border-radius: 999px;
+  border-radius: 0;
   color: rgba(32, 61, 90, 0.9);
   display: inline-flex;
   font-size: 0.72rem;
@@ -1395,11 +1428,28 @@ const PostMetaGrid = styled.div`
   gap: 0.45rem;
 `;
 
+const PostHeroUtilityBand = styled.div`
+  display: grid;
+  gap: 0.7rem;
+
+  @media (min-width: 980px) {
+    align-items: end;
+    column-gap: clamp(0.85rem, 2vw, 1.25rem);
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+`;
+
+const PostHeroContext = styled.div`
+  display: grid;
+  gap: 0.65rem;
+  min-width: 0;
+`;
+
 const MetaPill = styled.span`
   align-items: center;
   background: rgba(255, 255, 255, 0.76);
   border: 1px solid rgba(16, 32, 51, 0.1);
-  border-radius: 14px;
+  border-radius: 0;
   box-shadow: 0 10px 28px rgba(19, 34, 58, 0.04);
   color: rgba(62, 75, 95, 0.9);
   display: inline-flex;
@@ -1417,6 +1467,7 @@ const MetaPill = styled.span`
 const PostHeroChip = styled(Chip)`
   background: rgba(32, 74, 113, 0.08);
   border-color: rgba(32, 74, 113, 0.12);
+  border-radius: 0;
   box-shadow: 0 10px 24px rgba(19, 34, 58, 0.04);
   padding: 0.34rem 0.72rem;
 `;
@@ -1425,12 +1476,16 @@ const HeroActionRow = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+
+  @media (min-width: 980px) {
+    justify-content: flex-end;
+  }
 `;
 
 const HeroPrimaryAction = styled.a`
   align-items: center;
   background: linear-gradient(180deg, #274d74, #1f3e5e);
-  border-radius: 14px;
+  border-radius: 0;
   box-shadow: 0 18px 40px rgba(31, 62, 94, 0.18);
   color: #fff;
   display: inline-flex;
@@ -1438,19 +1493,21 @@ const HeroPrimaryAction = styled.a`
   justify-content: center;
   min-height: 42px;
   padding: 0.64rem 1rem;
+  white-space: nowrap;
 `;
 
 const HeroSecondaryAction = styled(Link)`
   align-items: center;
   background: rgba(255, 255, 255, 0.84);
   border: 1px solid rgba(16, 32, 51, 0.12);
-  border-radius: 14px;
+  border-radius: 0;
   color: #183b63;
   display: inline-flex;
   font-weight: 800;
   justify-content: center;
   min-height: 42px;
   padding: 0.64rem 0.95rem;
+  white-space: nowrap;
 `;
 
 const HeroGhostAction = styled(Link)`
@@ -1460,6 +1517,7 @@ const HeroGhostAction = styled(Link)`
   font-weight: 700;
   min-height: 42px;
   padding: 0.2rem 0.1rem;
+  white-space: nowrap;
 `;
 
 const PostHeroAside = styled.aside`
@@ -1472,7 +1530,7 @@ const HeroSnapshotCard = styled.div`
     linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(248, 250, 255, 0.94)),
     radial-gradient(circle at top right, rgba(36, 75, 115, 0.08), transparent 56%);
   border: 1px solid rgba(16, 32, 51, 0.08);
-  border-radius: 18px;
+  border-radius: 0;
   display: grid;
   gap: 0.72rem;
   padding: clamp(0.8rem, 1.6vw, 0.95rem);
@@ -1541,7 +1599,7 @@ const HeroResumeLink = styled.a`
     linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(246, 249, 253, 0.94)),
     radial-gradient(circle at top right, rgba(63, 115, 154, 0.12), transparent 58%);
   border: 1px solid rgba(36, 75, 115, 0.14);
-  border-radius: 14px;
+  border-radius: 0;
   box-shadow:
     0 12px 28px rgba(19, 34, 58, 0.05),
     inset 0 1px 0 rgba(255, 255, 255, 0.74);
@@ -1600,7 +1658,7 @@ const HeroStatsGrid = styled.dl`
 const HeroStatCard = styled.div`
   background: rgba(255, 255, 255, 0.82);
   border: 1px solid rgba(16, 32, 51, 0.08);
-  border-radius: 14px;
+  border-radius: 0;
   display: grid;
   gap: 0.22rem;
   min-height: 72px;
@@ -1642,7 +1700,7 @@ const SectionNavList = styled.div`
 const SectionNavLink = styled.a`
   background: rgba(255, 255, 255, 0.78);
   border: 1px solid rgba(16, 32, 51, 0.08);
-  border-radius: 14px;
+  border-radius: 0;
   color: #17253d;
   display: grid;
   gap: 0.12rem;
@@ -1688,7 +1746,7 @@ const SectionNavLabel = styled.span`
 const PostImagePanel = styled.section`
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(247, 250, 255, 0.93));
   border: 1px solid rgba(16, 32, 51, 0.07);
-  border-radius: 18px;
+  border-radius: 0;
   box-shadow:
     0 16px 38px rgba(19, 34, 58, 0.06),
     inset 0 1px 0 rgba(255, 255, 255, 0.76);
@@ -1820,13 +1878,45 @@ const HeroImageGrid = styled.div`
 `;
 
 const SidebarPanel = styled(Panel)`
+  border-radius: 0;
   gap: 0.72rem;
   padding: clamp(0.78rem, 1.7vw, 0.92rem);
+`;
+
+const PostRelatedPanel = styled(Panel)`
+  border-radius: 0;
 `;
 
 const SidebarNavigatorPanel = styled(SidebarPanel)`
   @media (min-width: 1100px) {
     order: 0;
+  }
+`;
+
+const SidebarNavigatorBody = styled.div`
+  display: grid;
+  gap: 0.5rem;
+
+  @media (min-width: 1100px) {
+    max-height: min(44vh, 23rem);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 0.12rem;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(36, 75, 115, 0.2);
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
   }
 `;
 
@@ -1906,7 +1996,7 @@ const SidebarManufacturerChip = styled(Link)`
     linear-gradient(180deg, rgba(246, 249, 253, 0.96), rgba(235, 241, 247, 0.96)),
     radial-gradient(circle at top right, rgba(63, 115, 154, 0.12), transparent 58%);
   border: 1px solid rgba(36, 75, 115, 0.14);
-  border-radius: 999px;
+  border-radius: 0;
   box-shadow:
     0 10px 24px rgba(19, 34, 58, 0.05),
     inset 0 1px 0 rgba(255, 255, 255, 0.78);
@@ -1948,7 +2038,7 @@ const SidebarAction = styled(Link)`
     linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 249, 253, 0.96)),
     radial-gradient(circle at top right, rgba(63, 115, 154, 0.12), transparent 56%);
   border: 1px solid rgba(16, 32, 51, 0.12);
-  border-radius: 14px;
+  border-radius: 0;
   color: #183b63;
   display: inline-flex;
   font-weight: 800;
@@ -2044,7 +2134,7 @@ const ArticlePaper = styled.article`
     linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(250, 251, 255, 0.96)),
     radial-gradient(circle at top right, rgba(36, 75, 115, 0.05), transparent 52%);
   border: 1px solid rgba(16, 32, 51, 0.07);
-  border-radius: 18px;
+  border-radius: 0;
   box-shadow:
     0 28px 70px rgba(19, 34, 58, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.78);
@@ -2096,7 +2186,7 @@ const StorySection = styled.section`
         linear-gradient(180deg, rgba(243, 247, 255, 0.86), rgba(250, 251, 255, 0.98)),
         radial-gradient(circle at top right, rgba(36, 75, 115, 0.08), transparent 48%);
       border: 1px solid rgba(36, 75, 115, 0.12);
-      border-radius: 18px;
+      border-radius: 0;
       padding: clamp(0.82rem, 1.8vw, 1rem);
     `}
 
@@ -2107,7 +2197,7 @@ const StorySection = styled.section`
         linear-gradient(180deg, rgba(255, 247, 238, 0.96), rgba(255, 251, 246, 0.99)),
         radial-gradient(circle at top right, rgba(201, 123, 42, 0.1), transparent 52%);
       border: 1px solid rgba(201, 123, 42, 0.18);
-      border-radius: 18px;
+      border-radius: 0;
       padding: clamp(0.82rem, 1.8vw, 1rem);
     `}
 
@@ -2116,7 +2206,7 @@ const StorySection = styled.section`
     css`
       background: rgba(245, 248, 252, 0.82);
       border: 1px solid rgba(16, 32, 51, 0.08);
-      border-radius: 18px;
+      border-radius: 0;
       padding: clamp(0.78rem, 1.7vw, 0.95rem);
     `}
 `;
@@ -2217,7 +2307,7 @@ const DetailCardGrid = styled.div`
 const DetailCard = styled.article`
   background: rgba(255, 255, 255, 0.78);
   border: 1px solid rgba(16, 32, 51, 0.08);
-  border-radius: 14px;
+  border-radius: 0;
   box-shadow: 0 12px 28px rgba(19, 34, 58, 0.04);
   display: grid;
   gap: 0.72rem;
@@ -2252,7 +2342,7 @@ const FaultCard = styled.article`
     linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(246, 249, 252, 0.96)),
     radial-gradient(circle at top right, rgba(0, 95, 115, 0.08), transparent 48%);
   border: 1px solid rgba(0, 95, 115, 0.12);
-  border-radius: 16px;
+  border-radius: 0;
   display: grid;
   gap: 0.85rem;
   padding: clamp(1rem, 2.2vw, 1.25rem);
@@ -2274,6 +2364,8 @@ const ResourceList = styled.ul`
 `;
 
 const ResourceItem = styled.li`
+  display: grid;
+  gap: 0.22rem;
   margin: 0;
 `;
 
@@ -2289,6 +2381,49 @@ const ResourceLink = styled.a`
 const ResourceMeta = styled.span`
   color: rgba(89, 100, 120, 0.88);
   font-size: 0.95em;
+`;
+
+const ResourceNote = styled.p`
+  color: rgba(72, 84, 108, 0.92);
+  font-size: 0.92rem;
+  line-height: 1.42;
+  margin: 0;
+`;
+
+const SectionEvidenceNote = styled.p`
+  color: rgba(68, 82, 104, 0.84);
+  font-size: 0.88rem;
+  line-height: 1.42;
+  margin: 0.12rem 0 0;
+`;
+
+const InlineToggleButton = styled.button`
+  align-items: center;
+  appearance: none;
+  background: none;
+  border: 0;
+  color: #244b73;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 0.92rem;
+  font-weight: 700;
+  justify-content: flex-start;
+  margin: 0.12rem 0 0;
+  padding: 0;
+  text-decoration: underline;
+  text-decoration-color: rgba(36, 75, 115, 0.32);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
+
+  &:hover {
+    color: #173454;
+    text-decoration-color: rgba(23, 52, 84, 0.42);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(36, 75, 115, 0.34);
+    outline-offset: 3px;
+  }
 `;
 
 const ResourceGroup = styled.div`
@@ -2517,6 +2652,147 @@ function renderImageResourceList(images = []) {
   );
 }
 
+function formatAccessStatusLabel(value) {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  const normalizedValue = value.trim().replace(/[_-]+/g, " ");
+
+  if (!normalizedValue) {
+    return "";
+  }
+
+  return normalizedValue.replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+function getSectionEvidenceSummary(section) {
+  if (section?.id === "disclaimer") {
+    return null;
+  }
+
+  const sourceCount = section?.sourceReferences?.length || section?.sourceReferenceIds?.length || 0;
+
+  if (!sourceCount) {
+    return null;
+  }
+
+  return sourceCount === 1
+    ? "Evidence base: 1 cited source. The prose below condenses that material into plain-language guidance."
+    : `Evidence base: ${sourceCount} cited sources. The prose below condenses those materials into plain-language guidance.`;
+}
+
+function getDocumentMetaLabel(item, locale) {
+  const details = [item?.fileType, item?.language];
+  const accessStatusLabel = formatAccessStatusLabel(item?.accessStatus);
+  const checkedAtLabel = formatDateLabel(locale, item?.lastCheckedAt);
+
+  if (accessStatusLabel) {
+    details.push(`Access: ${accessStatusLabel}`);
+  }
+
+  if (checkedAtLabel) {
+    details.push(`Checked ${checkedAtLabel}`);
+  }
+
+  return details.filter(Boolean).join(" | ");
+}
+
+function SectionToggle({
+  collapseLabel = "Show fewer",
+  expanded,
+  hiddenCount,
+  pluralLabel,
+  singularLabel,
+  onToggle,
+}) {
+  if (!hiddenCount) {
+    return null;
+  }
+
+  const hiddenLabel = hiddenCount === 1 ? singularLabel : pluralLabel;
+
+  return (
+    <InlineToggleButton aria-expanded={expanded} onClick={onToggle} type="button">
+      {expanded ? collapseLabel : `View ${hiddenCount} more ${hiddenLabel}`}
+    </InlineToggleButton>
+  );
+}
+
+function ExpandableBulletList({ items = [] }) {
+  const [expanded, setExpanded] = useState(false);
+  const visibleItems = expanded ? items : items.slice(0, 5);
+
+  return (
+    <>
+      <BulletList>
+        {visibleItems.map((item) => (
+          <li key={`${item.title}-${item.description || ""}`}>
+            <strong>{item.title}</strong>
+            {item.description ? `: ${item.description}` : ""}
+          </li>
+        ))}
+      </BulletList>
+      <SectionToggle
+        expanded={expanded}
+        hiddenCount={Math.max(0, items.length - 5)}
+        onToggle={() => setExpanded((currentValue) => !currentValue)}
+        pluralLabel="manufacturers"
+        singularLabel="manufacturer"
+      />
+    </>
+  );
+}
+
+function ManufacturerModelGroupCard({ group }) {
+  const [expanded, setExpanded] = useState(false);
+  const visibleModels = expanded ? group.models || [] : (group.models || []).slice(0, 5);
+
+  return (
+    <DetailCard>
+      <DetailCardTitle>{group.manufacturer}</DetailCardTitle>
+      <BulletList>
+        {visibleModels.map((model) => (
+          <li key={model.name}>
+            <strong>{model.name}</strong>
+            {model.latestKnownYear ? ` (${model.latestKnownYear})` : ""}
+            {model.summary ? `: ${model.summary}` : ""}
+          </li>
+        ))}
+      </BulletList>
+      <SectionToggle
+        expanded={expanded}
+        hiddenCount={Math.max(0, (group.models || []).length - 5)}
+        onToggle={() => setExpanded((currentValue) => !currentValue)}
+        pluralLabel="models"
+        singularLabel="model"
+      />
+    </DetailCard>
+  );
+}
+
+function ExpandableModelGroups({ groups = [] }) {
+  const [expanded, setExpanded] = useState(false);
+  const visibleGroups = expanded ? groups : groups.slice(0, 5);
+
+  return (
+    <>
+      <DetailCardGrid>
+        {visibleGroups.map((group) => (
+          <ManufacturerModelGroupCard group={group} key={group.manufacturer} />
+        ))}
+      </DetailCardGrid>
+      <SectionToggle
+        expanded={expanded}
+        hiddenCount={Math.max(0, groups.length - 5)}
+        onToggle={() => setExpanded((currentValue) => !currentValue)}
+        pluralLabel="manufacturers"
+        singularLabel="manufacturer"
+      />
+    </>
+  );
+}
+
 function InlinePhotoFigure({
   image,
   presentation = "default",
@@ -2640,7 +2916,7 @@ function renderInlinePhotoFigure(
   );
 }
 
-function renderArticleSection(section, copy, { presentation = "default" } = {}) {
+function renderArticleSection(section, copy, { locale, presentation = "default" } = {}) {
   if (section.kind === "text") {
     return (
       <ArticleBody>
@@ -2655,37 +2931,24 @@ function renderArticleSection(section, copy, { presentation = "default" } = {}) 
     return (
       <ArticleBody>
         {section.intro ? <p>{section.intro}</p> : null}
-        <BulletList>
-          {(section.items || []).map((item) => (
-            <li key={`${item.title}-${item.description || ""}`}>
-              <strong>{item.title}</strong>
-              {item.description ? `: ${item.description}` : ""}
-            </li>
-          ))}
-        </BulletList>
+        {section.id === "commonly_used_manufacturers" ? (
+          <ExpandableBulletList items={section.items || []} />
+        ) : (
+          <BulletList>
+            {(section.items || []).map((item) => (
+              <li key={`${item.title}-${item.description || ""}`}>
+                <strong>{item.title}</strong>
+                {item.description ? `: ${item.description}` : ""}
+              </li>
+            ))}
+          </BulletList>
+        )}
       </ArticleBody>
     );
   }
 
   if (section.kind === "models_by_manufacturer") {
-    return (
-      <DetailCardGrid>
-        {(section.groups || []).map((group) => (
-          <DetailCard key={group.manufacturer}>
-            <DetailCardTitle>{group.manufacturer}</DetailCardTitle>
-            <BulletList>
-              {(group.models || []).map((model) => (
-                <li key={model.name}>
-                  <strong>{model.name}</strong>
-                  {model.latestKnownYear ? ` (${model.latestKnownYear})` : ""}
-                  {model.summary ? `: ${model.summary}` : ""}
-                </li>
-              ))}
-            </BulletList>
-          </DetailCard>
-        ))}
-      </DetailCardGrid>
-    );
+    return <ExpandableModelGroups groups={section.groups || []} />;
   }
 
   if (section.kind === "faults") {
@@ -2735,6 +2998,7 @@ function renderArticleSection(section, copy, { presentation = "default" } = {}) 
       <ResourceList>
         {(section.items || []).map((item) => {
           const safeUrl = sanitizeExternalUrl(item.url);
+          const metaLabel = getDocumentMetaLabel(item, locale);
 
           return (
             <ResourceItem key={`${item.title}-${item.url || "no-url"}`}>
@@ -2745,11 +3009,8 @@ function renderArticleSection(section, copy, { presentation = "default" } = {}) 
               ) : (
                 <strong>{item.title}</strong>
               )}
-              {item.fileType || item.language ? (
-                <ResourceMeta>
-                  {[item.fileType, item.language].filter(Boolean).join(" | ")}
-                </ResourceMeta>
-              ) : null}
+              {metaLabel ? <ResourceMeta>{metaLabel}</ResourceMeta> : null}
+              {item.notes ? <ResourceNote>{item.notes}</ResourceNote> : null}
             </ResourceItem>
           );
         })}
@@ -2797,6 +3058,33 @@ function renderArticleSection(section, copy, { presentation = "default" } = {}) 
     );
   }
 
+  if (Array.isArray(section.paragraphs) && section.paragraphs.length) {
+    return (
+      <ArticleBody>
+        {section.paragraphs.map((paragraph) => (
+          <p key={paragraph}>{paragraph}</p>
+        ))}
+      </ArticleBody>
+    );
+  }
+
+  if (Array.isArray(section.items) && section.items.length) {
+    return (
+      <ArticleBody>
+        <BulletList>
+          {section.items.map((item, index) => (
+            <li key={`${item.title || item.label || index}`}>
+              <strong>{item.title || item.label || item.name || `Item ${index + 1}`}</strong>
+              {item.description || item.details || item.summary
+                ? `: ${item.description || item.details || item.summary}`
+                : ""}
+            </li>
+          ))}
+        </BulletList>
+      </ArticleBody>
+    );
+  }
+
   return null;
 }
 
@@ -2839,7 +3127,9 @@ export function PublicPostPage({ locale, messages, pageData }) {
   const firstSectionId = sectionLinks[0]?.id || "";
   const sectionLinkKey = sectionLinks.map((section) => section.id).join("|");
   const readingResumeStorageKey = getReadingResumeStorageKey(article.path);
+  const navigatorBodyRef = useRef(null);
   const sidebarColumnRef = useRef(null);
+  const tocLinkRefs = useRef(new Map());
   const previousWindowScrollDirectionRef = useRef("down");
   const previousWindowScrollYRef = useRef(0);
   const sectionLinksRef = useRef(sectionLinks);
@@ -3010,6 +3300,38 @@ export function PublicPostPage({ locale, messages, pageData }) {
   }, [firstSectionId, sectionLinkKey]);
 
   useEffect(() => {
+    if (typeof window === "undefined" || window.innerWidth < 1100 || !activeSectionId) {
+      return;
+    }
+
+    const activeTocLink = tocLinkRefs.current.get(activeSectionId);
+    const navigatorElement = navigatorBodyRef.current;
+
+    if (!activeTocLink || !navigatorElement) {
+      return;
+    }
+
+    const navigatorRect = navigatorElement.getBoundingClientRect();
+    const linkRect = activeTocLink.getBoundingClientRect();
+    const centeredOffset =
+      navigatorElement.scrollTop +
+      (linkRect.top - navigatorRect.top) -
+      navigatorElement.clientHeight / 2 +
+      linkRect.height / 2;
+    const nextScrollTop = Math.max(
+      0,
+      Math.min(centeredOffset, navigatorElement.scrollHeight - navigatorElement.clientHeight),
+    );
+
+    if (Math.abs(navigatorElement.scrollTop - nextScrollTop) > 6) {
+      navigatorElement.scrollTo({
+        behavior: "smooth",
+        top: nextScrollTop,
+      });
+    }
+  }, [activeSectionId]);
+
+  useEffect(() => {
     if (typeof window === "undefined" || !activeSectionId || !sectionLinksRef.current.length) {
       return;
     }
@@ -3041,7 +3363,7 @@ export function PublicPostPage({ locale, messages, pageData }) {
   }, [activeSectionId, readingResumeStorageKey, sectionLinkKey]);
 
   return (
-    <PageMain>
+    <PageMain $layout="post">
       <PublicViewTracker eventType="POST_VIEW" locale={locale} postId={article.id} />
       <PostScene>
         <PostHeroShell $presentation={presentation}>
@@ -3056,54 +3378,62 @@ export function PublicPostPage({ locale, messages, pageData }) {
                 ))}
               </Breadcrumbs>
               <PostKicker>{displayEquipmentName}</PostKicker>
-              <PostTitle>{displayTitle}</PostTitle>
-              <PostDeck>{article.excerpt}</PostDeck>
-              {heroSignals.length ? (
-                <HeroSignalRow>
-                  {heroSignals.map((signal) => (
-                    <HeroSignal key={signal}>{signal}</HeroSignal>
-                  ))}
-                </HeroSignalRow>
-              ) : null}
-              <PostMetaGrid>
-                {article.publishedAt ? (
-                  <MetaPill>
-                    {copy.publishedLabel}
-                    <strong>{formatDateLabel(locale, article.publishedAt)}</strong>
-                  </MetaPill>
-                ) : null}
-                {article.updatedAt ? (
-                  <MetaPill>
-                    {copy.updatedLabel}
-                    <strong>{formatDateLabel(locale, article.updatedAt)}</strong>
-                  </MetaPill>
-                ) : null}
-                <MetaPill>
-                  {copy.authorLabel}
-                  <strong>{article.authorName}</strong>
-                </MetaPill>
-              </PostMetaGrid>
-              {article.categories.length || article.manufacturers.length ? (
-                <ChipRow>
-                  {article.categories.map((category) => (
-                    <PostHeroChip href={category.path} key={category.slug}>
-                      {category.name}
-                    </PostHeroChip>
-                  ))}
-                  {article.manufacturers.map((manufacturer) => (
-                    <PostHeroChip href={manufacturer.path} key={manufacturer.slug}>
-                      {manufacturer.name}
-                    </PostHeroChip>
-                  ))}
-                </ChipRow>
-              ) : null}
-              <HeroActionRow>
-                <HeroPrimaryAction href="#guide-content">Start reading</HeroPrimaryAction>
-                <HeroSecondaryAction href={article.equipment.path}>
-                  {copy.browseEquipment}
-                </HeroSecondaryAction>
-                <HeroGhostAction href={backToBlogHref}>{copy.backToBlogAction}</HeroGhostAction>
-              </HeroActionRow>
+              <PostLeadGrid>
+                <PostTitle>{displayTitle}</PostTitle>
+                <PostDeckBlock>
+                  <PostDeck>{article.excerpt}</PostDeck>
+                  {heroSignals.length ? (
+                    <HeroSignalRow>
+                      {heroSignals.map((signal) => (
+                        <HeroSignal key={signal}>{signal}</HeroSignal>
+                      ))}
+                    </HeroSignalRow>
+                  ) : null}
+                </PostDeckBlock>
+              </PostLeadGrid>
+              <PostHeroUtilityBand>
+                <PostHeroContext>
+                  <PostMetaGrid>
+                    {article.publishedAt ? (
+                      <MetaPill>
+                        {copy.publishedLabel}
+                        <strong>{formatDateLabel(locale, article.publishedAt)}</strong>
+                      </MetaPill>
+                    ) : null}
+                    {article.updatedAt ? (
+                      <MetaPill>
+                        {copy.updatedLabel}
+                        <strong>{formatDateLabel(locale, article.updatedAt)}</strong>
+                      </MetaPill>
+                    ) : null}
+                    <MetaPill>
+                      {copy.authorLabel}
+                      <strong>{article.authorName}</strong>
+                    </MetaPill>
+                  </PostMetaGrid>
+                  {article.categories.length || article.manufacturers.length ? (
+                    <ChipRow>
+                      {article.categories.map((category) => (
+                        <PostHeroChip href={category.path} key={category.slug}>
+                          {category.name}
+                        </PostHeroChip>
+                      ))}
+                      {article.manufacturers.map((manufacturer) => (
+                        <PostHeroChip href={manufacturer.path} key={manufacturer.slug}>
+                          {manufacturer.name}
+                        </PostHeroChip>
+                      ))}
+                    </ChipRow>
+                  ) : null}
+                </PostHeroContext>
+                <HeroActionRow>
+                  <HeroPrimaryAction href="#guide-content">Start reading</HeroPrimaryAction>
+                  <HeroSecondaryAction href={article.equipment.path}>
+                    {copy.browseEquipment}
+                  </HeroSecondaryAction>
+                  <HeroGhostAction href={backToBlogHref}>{copy.backToBlogAction}</HeroGhostAction>
+                </HeroActionRow>
+              </PostHeroUtilityBand>
             </PostHeader>
 
             <PostHeroAside>
@@ -3211,8 +3541,12 @@ export function PublicPostPage({ locale, messages, pageData }) {
                       <PostSectionTitle>
                         {section.id === "references" ? copy.referencesHeading : section.title}
                       </PostSectionTitle>
+                      {getSectionEvidenceSummary(section) ? (
+                        <SectionEvidenceNote>{getSectionEvidenceSummary(section)}</SectionEvidenceNote>
+                      ) : null}
                     </StorySectionHeader>
                     {renderArticleSection(section, copy, {
+                      locale,
                       presentation,
                     })}
                   </StorySection>
@@ -3220,7 +3554,7 @@ export function PublicPostPage({ locale, messages, pageData }) {
               </ArticleFlow>
             </ArticlePaper>
 
-            <Panel>
+            <PostRelatedPanel>
               <SectionHeader>
                 <SectionTitle>{copy.relatedPostsTitle}</SectionTitle>
                 <SectionDescription>{copy.relatedPostsDescription}</SectionDescription>
@@ -3237,7 +3571,7 @@ export function PublicPostPage({ locale, messages, pageData }) {
                   <SectionDescription>{copy.emptyStateDescription}</SectionDescription>
                 </EmptyState>
               )}
-            </Panel>
+            </PostRelatedPanel>
 
             <PublicCommentSection article={article} copy={copy} locale={locale} />
           </ArticleColumn>
@@ -3255,19 +3589,29 @@ export function PublicPostPage({ locale, messages, pageData }) {
                     Now reading: <strong>{activeSectionLabel}</strong>
                   </SidebarStatusNote>
                 ) : null}
-                <TocList>
-                  {sectionLinks.map((section) => (
-                    <TocItem $active={section.id === activeSectionId} key={section.id}>
-                      <TocLink
-                        $active={section.id === activeSectionId}
-                        aria-current={section.id === activeSectionId ? "location" : undefined}
-                        href={`#${getPostSectionAnchor(section.id)}`}
-                      >
-                        {getSectionNavigationLabel(section, copy)}
-                      </TocLink>
-                    </TocItem>
-                  ))}
-                </TocList>
+                <SidebarNavigatorBody ref={navigatorBodyRef}>
+                  <TocList>
+                    {sectionLinks.map((section) => (
+                      <TocItem $active={section.id === activeSectionId} key={section.id}>
+                        <TocLink
+                          $active={section.id === activeSectionId}
+                          aria-current={section.id === activeSectionId ? "location" : undefined}
+                          href={`#${getPostSectionAnchor(section.id)}`}
+                          ref={(node) => {
+                            if (node) {
+                              tocLinkRefs.current.set(section.id, node);
+                              return;
+                            }
+
+                            tocLinkRefs.current.delete(section.id);
+                          }}
+                        >
+                          {getSectionNavigationLabel(section, copy)}
+                        </TocLink>
+                      </TocItem>
+                    ))}
+                  </TocList>
+                </SidebarNavigatorBody>
               </SidebarNavigatorPanel>
             ) : null}
 

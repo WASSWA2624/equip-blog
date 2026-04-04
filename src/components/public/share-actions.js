@@ -8,14 +8,14 @@ const Panel = styled.section`
     linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 250, 255, 0.95)),
     radial-gradient(circle at top right, rgba(36, 75, 115, 0.1), transparent 56%);
   border: 1px solid rgba(16, 32, 51, 0.08);
-  border-radius: 18px;
+  border-radius: 0;
   box-shadow:
     0 24px 54px rgba(22, 40, 64, 0.09),
     inset 0 1px 0 rgba(255, 255, 255, 0.72);
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: 0.9rem;
   overflow: hidden;
-  padding: clamp(1rem, 2.6vw, 1.3rem);
+  padding: clamp(0.95rem, 2.4vw, 1.18rem);
   position: relative;
 
   &::before {
@@ -31,7 +31,7 @@ const Panel = styled.section`
 
 const SectionHeader = styled.div`
   display: grid;
-  gap: 0.35rem;
+  gap: 0.22rem;
 `;
 
 const SectionEyebrow = styled.p`
@@ -53,14 +53,14 @@ const SectionTitle = styled.h2`
 
 const SectionDescription = styled.p`
   color: rgba(72, 84, 108, 0.92);
-  font-size: 0.96rem;
-  line-height: 1.54;
+  font-size: 0.94rem;
+  line-height: 1.48;
   margin: 0;
 `;
 
 const ShareButtonRow = styled.div`
   display: grid;
-  gap: 0.72rem;
+  gap: 0.58rem;
 
   @media (min-width: 460px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -71,18 +71,19 @@ const shareTileStyles = css`
   align-items: center;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(249, 251, 255, 0.92)),
+    linear-gradient(90deg, ${({ $surfaceStrong }) => $surfaceStrong}, transparent 42%),
     radial-gradient(circle at top right, ${({ $surface }) => $surface}, transparent 58%);
   border: 1px solid ${({ $border }) => $border || "rgba(16, 32, 51, 0.1)"};
-  border-radius: 14px;
+  border-radius: 0;
   box-shadow:
-    0 14px 28px rgba(19, 34, 58, 0.05),
+    0 10px 22px rgba(19, 34, 58, 0.05),
     inset 0 1px 0 rgba(255, 255, 255, 0.72);
   color: #173454;
   display: inline-flex;
   font-weight: 800;
   justify-content: flex-start;
-  min-height: 56px;
-  padding: 0.72rem 0.82rem;
+  min-height: 74px;
+  padding: 0.72rem 0.8rem;
   position: relative;
   text-align: left;
   transition:
@@ -93,7 +94,7 @@ const shareTileStyles = css`
   &:hover {
     border-color: ${({ $hoverBorder, $border }) => $hoverBorder || $border};
     box-shadow:
-      0 18px 36px rgba(19, 34, 58, 0.08),
+      0 14px 30px rgba(19, 34, 58, 0.08),
       inset 0 1px 0 rgba(255, 255, 255, 0.76);
     transform: translateY(-1px);
   }
@@ -115,8 +116,9 @@ const ShareButton = styled.button`
 
 const ShareTileContent = styled.span`
   align-items: center;
-  display: inline-flex;
+  display: grid;
   gap: 0.72rem;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   width: 100%;
 `;
 
@@ -124,14 +126,20 @@ const ShareIconBadge = styled.span`
   align-items: center;
   background: ${({ $surface }) => $surface};
   border: 1px solid ${({ $border }) => $border};
-  border-radius: 12px;
+  border-radius: 0;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62);
   color: ${({ $accent }) => $accent};
   display: inline-flex;
   flex: 0 0 auto;
-  height: 2.25rem;
+  height: 2.55rem;
   justify-content: center;
-  width: 2.25rem;
+  width: 2.55rem;
+`;
+
+const ShareTextGroup = styled.span`
+  display: grid;
+  gap: 0.12rem;
+  min-width: 0;
 `;
 
 const ShareLabel = styled.span`
@@ -140,6 +148,24 @@ const ShareLabel = styled.span`
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1.1;
+`;
+
+const ShareMeta = styled.span`
+  color: rgba(74, 86, 108, 0.84);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.24;
+`;
+
+const ShareArrow = styled.span`
+  align-items: center;
+  color: rgba(36, 75, 115, 0.54);
+  display: inline-flex;
+  font-size: 1rem;
+  font-weight: 700;
+  justify-content: center;
+  line-height: 1;
 `;
 
 const ShareIconSvg = styled.svg`
@@ -256,8 +282,10 @@ export default function ShareActions({ article, copy }) {
       href: `https://twitter.com/intent/tweet?text=${title}&url=${url}`,
       hoverBorder: "rgba(17, 24, 39, 0.24)",
       label: "X",
+      meta: "Post headline",
       network: "x",
       surface: "rgba(17, 24, 39, 0.08)",
+      surfaceStrong: "rgba(17, 24, 39, 0.08)",
     },
     {
       accent: "#1877F2",
@@ -265,8 +293,10 @@ export default function ShareActions({ article, copy }) {
       href: `https://www.facebook.com/sharer/sharer.php?u=${url}`,
       hoverBorder: "rgba(24, 119, 242, 0.24)",
       label: "Facebook",
+      meta: "Share publicly",
       network: "facebook",
       surface: "rgba(24, 119, 242, 0.1)",
+      surfaceStrong: "rgba(24, 119, 242, 0.08)",
     },
     {
       accent: "#0A66C2",
@@ -274,8 +304,10 @@ export default function ShareActions({ article, copy }) {
       href: `https://www.linkedin.com/shareArticle?mini=true&url=${url}&title=${title}`,
       hoverBorder: "rgba(10, 102, 194, 0.24)",
       label: "LinkedIn",
+      meta: "Send to peers",
       network: "linkedin",
       surface: "rgba(10, 102, 194, 0.1)",
+      surfaceStrong: "rgba(10, 102, 194, 0.08)",
     },
     {
       accent: "#25D366",
@@ -283,8 +315,10 @@ export default function ShareActions({ article, copy }) {
       href: `https://wa.me/?text=${title}%20${url}`,
       hoverBorder: "rgba(37, 211, 102, 0.26)",
       label: "WhatsApp",
+      meta: "Send to chat",
       network: "whatsapp",
       surface: "rgba(37, 211, 102, 0.12)",
+      surfaceStrong: "rgba(37, 211, 102, 0.09)",
     },
     {
       accent: "#D97706",
@@ -292,14 +326,17 @@ export default function ShareActions({ article, copy }) {
       href: `mailto:?subject=${title}&body=${encodeURIComponent(`${article.title}\n\n${article.url}`)}`,
       hoverBorder: "rgba(217, 119, 6, 0.24)",
       label: "Email",
+      meta: "Draft message",
       network: "email",
       surface: "rgba(217, 119, 6, 0.12)",
+      surfaceStrong: "rgba(217, 119, 6, 0.08)",
     },
   ];
   const copyAccent = copied ? "#15803D" : "#244B73";
   const copyBorder = copied ? "rgba(21, 128, 61, 0.18)" : "rgba(36, 75, 115, 0.14)";
   const copyHoverBorder = copied ? "rgba(21, 128, 61, 0.28)" : "rgba(36, 75, 115, 0.24)";
   const copySurface = copied ? "rgba(21, 128, 61, 0.12)" : "rgba(36, 75, 115, 0.09)";
+  const copySurfaceStrong = copied ? "rgba(21, 128, 61, 0.08)" : "rgba(36, 75, 115, 0.08)";
 
   async function handleCopyLink() {
     try {
@@ -325,6 +362,7 @@ export default function ShareActions({ article, copy }) {
             $border={link.border}
             $hoverBorder={link.hoverBorder}
             $surface={link.surface}
+            $surfaceStrong={link.surfaceStrong}
             href={link.href}
             key={link.label}
             rel="noreferrer"
@@ -338,7 +376,11 @@ export default function ShareActions({ article, copy }) {
               >
                 <ShareIcon network={link.network} />
               </ShareIconBadge>
-              <ShareLabel>{link.label}</ShareLabel>
+              <ShareTextGroup>
+                <ShareLabel>{link.label}</ShareLabel>
+                <ShareMeta>{link.meta}</ShareMeta>
+              </ShareTextGroup>
+              <ShareArrow aria-hidden="true">{"->"}</ShareArrow>
             </ShareTileContent>
           </ShareLink>
         ))}
@@ -347,6 +389,7 @@ export default function ShareActions({ article, copy }) {
           $border={copyBorder}
           $hoverBorder={copyHoverBorder}
           $surface={copySurface}
+          $surfaceStrong={copySurfaceStrong}
           onClick={handleCopyLink}
           type="button"
         >
@@ -358,7 +401,11 @@ export default function ShareActions({ article, copy }) {
             >
               <ShareIcon network={copied ? "check" : "copy"} />
             </ShareIconBadge>
-            <ShareLabel>{copied ? copy.copiedLink : copy.copyLink}</ShareLabel>
+            <ShareTextGroup>
+              <ShareLabel>{copied ? copy.copiedLink : copy.copyLink}</ShareLabel>
+              <ShareMeta>{copied ? "Ready to paste" : "Keep URL handy"}</ShareMeta>
+            </ShareTextGroup>
+            <ShareArrow aria-hidden="true">{copied ? "OK" : "->"}</ShareArrow>
           </ShareTileContent>
         </ShareButton>
       </ShareButtonRow>

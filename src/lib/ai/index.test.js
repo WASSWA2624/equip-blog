@@ -239,6 +239,21 @@ describe("AI composition pipeline", () => {
       generatedArticleSectionOrder.filter((sectionId) => sectionIds.includes(sectionId)),
     );
     expect(draft.article.sections.find((section) => section.id === "references")?.items.length).toBeGreaterThan(0);
+    expect(
+      draft.article.sections.find((section) => section.id === "manuals_and_technical_documents")?.items[0],
+    ).toMatchObject({
+      accessStatus: "available",
+      fileType: "PDF",
+      language: "English",
+      lastCheckedAt: "2026-04-03T08:00:00.000Z",
+      notes: "Operator guide covering routine cleaning, handling, and care.",
+    });
+    expect(draft.article.sections.find((section) => section.id === "references")?.items[0]).toMatchObject({
+      sourceReferenceIds: expect.any(Array),
+    });
+    expect(
+      draft.article.sections.find((section) => section.id === "commonly_encountered_models")?.title,
+    ).toBe("Commonly encountered models");
     expect(draft.article.sections.find((section) => section.id === "disclaimer")?.paragraphs).toEqual([
       "English disclaimer",
     ]);

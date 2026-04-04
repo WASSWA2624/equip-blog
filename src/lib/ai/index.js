@@ -990,7 +990,7 @@ function buildManufacturersSection(researchPayload) {
 }
 
 function buildModelsSection(researchPayload) {
-  return createSection("commonly_encountered_models", "Commonly encountered models by manufacturer", {
+  return createSection("commonly_encountered_models", "Commonly encountered models", {
     groups: researchPayload.manufacturers
       .filter((manufacturer) => manufacturer.models?.length)
       .map((manufacturer) => ({
@@ -1179,7 +1179,13 @@ function buildFaqSection(researchPayload, request) {
 function buildReferencesSection(researchPayload) {
   return createSection("references", "References", {
     items: researchPayload.sourceReferences.map((reference) => ({
+      accessStatus: reference.accessStatus,
+      fileType: reference.fileType,
+      language: reference.language,
+      lastCheckedAt: reference.lastCheckedAt,
+      notes: reference.notes,
       sourceType: reference.sourceType,
+      sourceReferenceIds: reference.id ? [reference.id] : [],
       title: reference.title,
       url: reference.url,
     })),
@@ -1293,8 +1299,11 @@ function buildStructuredArticle({ disclaimer, fixture, providerConfig, request, 
     optionalSections.push(
       createSection("manuals_and_technical_documents", "Manuals and technical documents", {
         items: researchPayload.manuals.map((manual) => ({
+          accessStatus: manual.accessStatus,
           fileType: manual.fileType,
           language: manual.language,
+          lastCheckedAt: manual.lastCheckedAt,
+          notes: manual.notes,
           sourceReferenceIds: manual.sourceReferenceIds,
           title: manual.title,
           url: manual.url,

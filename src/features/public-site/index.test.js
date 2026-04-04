@@ -347,11 +347,26 @@ describe("public site data", () => {
       slug: "microscope-basics",
       sourceReferences: [
         {
+          accessStatus: "available",
           fileType: "PDF",
+          id: "ref_manual_1",
           language: "English",
+          lastCheckedAt: new Date("2026-04-02T08:00:00.000Z"),
+          notes: "Official maintenance manual with cleaning and inspection guidance.",
           sourceType: "OFFICIAL_MANUAL",
           title: "Microscope service manual",
           url: "https://example.com/manual.pdf",
+        },
+        {
+          accessStatus: "available",
+          fileType: null,
+          id: "ref_definition_1",
+          language: "English",
+          lastCheckedAt: new Date("2026-04-01T08:00:00.000Z"),
+          notes: "Trusted biomedical reference for microscope fundamentals.",
+          sourceType: "TRUSTED_BIOMEDICAL_REFERENCE",
+          title: "Microscope fundamentals",
+          url: "https://example.com/microscope-fundamentals",
         },
       ],
       status: "PUBLISHED",
@@ -397,7 +412,48 @@ describe("public site data", () => {
                 id: "definition_and_overview",
                 kind: "text",
                 paragraphs: ["Microscopes magnify small structures for inspection."],
+                sourceReferenceIds: ["ref_definition_1"],
                 title: "Definition and overview",
+              },
+              {
+                groups: [
+                  {
+                    manufacturer: "Northfield Optics",
+                    models: [
+                      {
+                        latestKnownYear: 2025,
+                        name: "CompoundLab 200",
+                        summary: "Entry-level teaching microscope.",
+                      },
+                    ],
+                  },
+                ],
+                id: "commonly_encountered_models",
+                kind: "models_by_manufacturer",
+                title: "Commonly encountered models by manufacturer",
+              },
+              {
+                id: "uses_and_applications",
+                items: [
+                  {
+                    details: "Supports routine laboratory bench inspection and teaching workflows.",
+                    label: "Bench inspection",
+                  },
+                ],
+                kind: "checklist",
+                title: "Uses and applications",
+              },
+              {
+                id: "manuals_and_technical_documents",
+                items: [
+                  {
+                    sourceReferenceIds: ["ref_manual_1"],
+                    title: "Microscope service manual",
+                    url: "https://example.com/manual.pdf",
+                  },
+                ],
+                kind: "manuals",
+                title: "Manuals and technical documents",
               },
             ],
           },
@@ -493,10 +549,47 @@ describe("public site data", () => {
     });
     expect(pageData.article.bodySections.map((section) => section.id)).toEqual([
       "definition_and_overview",
+      "uses_and_applications",
+      "commonly_encountered_models",
+      "manuals_and_technical_documents",
       "faq",
       "references",
       "disclaimer",
     ]);
+    expect(pageData.article.bodySections.find((section) => section.id === "definition_and_overview"))
+      .toMatchObject({
+        sourceReferenceIds: ["ref_definition_1"],
+        sourceReferences: [
+          {
+            id: "ref_definition_1",
+            title: "Microscope fundamentals",
+          },
+        ],
+      });
+    expect(pageData.article.bodySections.find((section) => section.id === "uses_and_applications"))
+      .toMatchObject({
+        items: [
+          {
+            description: "Supports routine laboratory bench inspection and teaching workflows.",
+            title: "Bench inspection",
+          },
+        ],
+        kind: "list",
+      });
+    expect(pageData.article.bodySections.find((section) => section.id === "commonly_encountered_models"))
+      .toMatchObject({
+        title: "Commonly encountered models",
+      });
+    expect(
+      pageData.article.bodySections.find((section) => section.id === "manuals_and_technical_documents")
+        ?.items[0],
+    ).toMatchObject({
+      accessStatus: "available",
+      lastCheckedAt: "2026-04-02T08:00:00.000Z",
+      notes: "Official maintenance manual with cleaning and inspection guidance.",
+      sourceReferenceIds: ["ref_manual_1"],
+      title: "Microscope service manual",
+    });
     expect(pageData.article.comments.items[0]).toMatchObject({
       body: "Very helpful summary.",
       name: "Amina",

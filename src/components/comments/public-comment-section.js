@@ -39,7 +39,7 @@ const Panel = styled.section`
     linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.94)),
     radial-gradient(circle at top right, rgba(0, 95, 115, 0.14), transparent 40%);
   border: 1px solid rgba(16, 32, 51, 0.08);
-  border-radius: 18px;
+  border-radius: 0;
   box-shadow: 0 26px 82px rgba(16, 32, 51, 0.08);
   display: grid;
   gap: ${({ theme }) => theme.spacing.md};
@@ -78,7 +78,7 @@ const Notice = styled.div`
     $tone === "success" ? "rgba(21, 115, 71, 0.12)" : "rgba(180, 35, 24, 0.12)"};
   border: 1px solid
     ${({ $tone, theme }) => ($tone === "success" ? theme.colors.success : theme.colors.danger)};
-  border-radius: ${({ theme }) => theme.radius.md};
+  border-radius: 0;
   padding: ${({ theme }) => theme.spacing.md};
 `;
 
@@ -108,7 +108,7 @@ const FieldLabel = styled.span`
 const Input = styled.input`
   background: rgba(255, 255, 255, 0.94);
   border: 1px solid rgba(16, 32, 51, 0.14);
-  border-radius: 12px;
+  border-radius: 0;
   color: ${({ theme }) => theme.colors.text};
   font: inherit;
   min-height: 48px;
@@ -118,7 +118,7 @@ const Input = styled.input`
 const Textarea = styled.textarea`
   background: rgba(255, 255, 255, 0.94);
   border: 1px solid rgba(16, 32, 51, 0.14);
-  border-radius: 12px;
+  border-radius: 0;
   color: ${({ theme }) => theme.colors.text};
   font: inherit;
   min-height: 140px;
@@ -149,7 +149,7 @@ const ButtonRow = styled.div`
 const PrimaryButton = styled.button`
   background: linear-gradient(180deg, #274d74, #1f3e5e);
   border: none;
-  border-radius: 12px;
+  border-radius: 0;
   box-shadow: 0 18px 36px rgba(31, 62, 94, 0.18);
   color: white;
   cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
@@ -162,7 +162,7 @@ const PrimaryButton = styled.button`
 const SecondaryButton = styled.button`
   background: rgba(247, 249, 252, 0.96);
   border: 1px solid rgba(16, 32, 51, 0.12);
-  border-radius: 12px;
+  border-radius: 0;
   color: ${({ theme }) => theme.colors.text};
   cursor: pointer;
   font: inherit;
@@ -180,7 +180,7 @@ const CommentCard = styled.article`
     linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 253, 0.96)),
     radial-gradient(circle at top right, rgba(36, 75, 115, 0.05), transparent 52%);
   border: 1px solid rgba(16, 32, 51, 0.08);
-  border-radius: 14px;
+  border-radius: 0;
   box-shadow: 0 12px 28px rgba(19, 34, 58, 0.04);
   display: grid;
   gap: ${({ theme }) => theme.spacing.sm};
@@ -244,7 +244,7 @@ const PagerActions = styled.div`
 const PagerButton = styled(Link)`
   background: rgba(255, 255, 255, 0.82);
   border: 1px solid rgba(16, 32, 51, 0.12);
-  border-radius: 12px;
+  border-radius: 0;
   color: #183b63;
   font-weight: 700;
   padding: 0.55rem 0.95rem;

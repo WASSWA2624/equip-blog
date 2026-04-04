@@ -19,6 +19,36 @@ const articleSectionOrderIndex = new Map(
 );
 
 const publicEntityKinds = Object.freeze(["category", "manufacturer", "equipment"]);
+const supportedStructuredSectionKinds = new Set([
+  "faq",
+  "faults",
+  "image_gallery",
+  "list",
+  "manuals",
+  "models_by_manufacturer",
+  "references",
+  "steps",
+  "text",
+]);
+const canonicalStructuredSectionTitles = Object.freeze({
+  commonly_encountered_models: "Commonly encountered models",
+  commonly_used_manufacturers: "Commonly used manufacturers",
+  components_and_parts: "Components and parts",
+  daily_care_and_maintenance: "Daily care and maintenance",
+  definition_and_overview: "Definition and overview",
+  disclaimer: "Disclaimer",
+  faq: "FAQ",
+  faults_and_remedies: "Faults and remedies",
+  featured_image: "Featured image",
+  manuals_and_technical_documents: "Manuals and technical documents",
+  preventive_maintenance_schedule: "Preventive maintenance schedule",
+  principle_of_operation: "Principle of operation",
+  references: "References",
+  safety_precautions: "Safety precautions",
+  sop_and_how_to_use_guidance: "SOP and how-to-use guidance",
+  types_and_variants: "Types and variants",
+  uses_and_applications: "Uses and applications",
+});
 const fixtureMediaUrlMap = Object.freeze({
   "https://fixtures.example/images/microscope-bench.jpg":
     "https://upload.wikimedia.org/wikipedia/commons/c/cd/Microscope_Machine.jpg",
@@ -336,6 +366,256 @@ function normalizeImageDimension(value) {
   return Number.isFinite(parsedValue) && parsedValue > 0 ? parsedValue : null;
 }
 
+function normalizeSourceReferenceIds(value) {
+  return Array.isArray(value)
+    ? dedupeStrings(value.map((entry) => `${entry}`.trim()).filter(Boolean))
+    : [];
+}
+
+function normalizeSerializableDate(value) {
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const normalizedValue = value.trim();
+
+  if (!normalizedValue) {
+    return null;
+  }
+
+  const timestamp = Date.parse(normalizedValue);
+
+  return Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : normalizedValue;
+}
+
+function createPublicSourceReference(reference) {
+  if (!reference || typeof reference !== "object") {
+    return null;
+  }
+
+  const title = typeof reference.title === "string" ? reference.title.trim() : "";
+  const url = typeof reference.url === "string" ? reference.url.trim() : "";
+
+  if (!title && !url) {
+    return null;
+  }
+
+  return {
+    accessStatus: reference.accessStatus || null,
+    fileType: reference.fileType || null,
+    id: reference.id || null,
+    language: reference.language || null,
+    lastCheckedAt: normalizeSerializableDate(reference.lastCheckedAt),
+    notes: reference.notes || null,
+    sourceType: reference.sourceType || null,
+    title: title || url,
+    url: url || null,
+  };
+}
+
+function buildSourceReferenceMap(sourceReferences = []) {
+  const map = new Map();
+
+  for (const reference of sourceReferences) {
+    const normalizedReference = createPublicSourceReference(reference);
+
+    if (!normalizedReference?.id) {
+      continue;
+    }
+
+    map.set(normalizedReference.id, normalizedReference);
+  }
+
+  return map;
+}
+
+function resolveSourceReferences(referenceIds, sourceReferenceMap) {
+  return dedupeBy(
+    normalizeSourceReferenceIds(referenceIds)
+      .map((referenceId) => sourceReferenceMap.get(referenceId))
+      .filter(Boolean),
+    (reference) => reference.id || `${reference.title}:${reference.url || ""}`,
+  );
+}
+
+function takeFirstText(...values) {
+  for (const value of values) {
+    if (typeof value !== "string") {
+      continue;
+    }
+
+    const normalizedValue = value.trim();
+
+    if (normalizedValue) {
+      return normalizedValue;
+    }
+  }
+
+  return "";
+}
+
+function normalizeSectionTitle(section) {
+  if (!section || typeof section !== "object") {
+    return "";
+  }
+
+  return canonicalStructuredSectionTitles[section.id] || takeFirstText(section.title, section.heading);
+}
+
+function inferStructuredSectionKind(section) {
+  const kind = typeof section?.kind === "string" ? section.kind.trim() : "";
+
+  if (supportedStructuredSectionKinds.has(kind)) {
+    return kind;
+  }
+
+  if (Array.isArray(section?.images)) {
+    return "image_gallery";
+  }
+
+  if (Array.isArray(section?.groups)) {
+    return "models_by_manufacturer";
+  }
+
+  if (Array.isArray(section?.steps)) {
+    return "steps";
+  }
+
+  if (Array.isArray(section?.items)) {
+    if (section.items.every((item) => item?.question && item?.answer)) {
+      return "faq";
+    }
+
+    if (
+      section.id === "manuals_and_technical_documents" ||
+      section.items.some((item) => item?.notes || item?.fileType || item?.language || item?.accessStatus)
+    ) {
+      return "manuals";
+    }
+
+    if (
+      section.id === "references" ||
+      section.items.some((item) => item?.sourceType || item?.url)
+    ) {
+      return "references";
+    }
+
+    if (section.items.some((item) => item?.cause || item?.symptoms || item?.remedy)) {
+      return "faults";
+    }
+
+    return "list";
+  }
+
+  return "text";
+}
+
+function normalizeListItems(items = [], sourceReferenceMap) {
+  return (items || [])
+    .filter((item) => item && typeof item === "object")
+    .map((item, index) => ({
+      ...item,
+      description: takeFirstText(item.description, item.details, item.summary) || null,
+      sourceReferenceIds: normalizeSourceReferenceIds(item.sourceReferenceIds),
+      sourceReferences: resolveSourceReferences(item.sourceReferenceIds, sourceReferenceMap),
+      title: takeFirstText(item.title, item.label, item.name, item.heading, `Item ${index + 1}`),
+    }));
+}
+
+function normalizeModelGroups(groups = [], sourceReferenceMap) {
+  return (groups || [])
+    .filter((group) => group && typeof group === "object")
+    .map((group, groupIndex) => ({
+      ...group,
+      manufacturer: takeFirstText(group.manufacturer, group.title, `Manufacturer ${groupIndex + 1}`),
+      models: (group.models || [])
+        .filter((model) => model && typeof model === "object")
+        .map((model, modelIndex) => ({
+          ...model,
+          name: takeFirstText(model.name, model.title, `Model ${modelIndex + 1}`),
+          sourceReferenceIds: normalizeSourceReferenceIds(model.sourceReferenceIds),
+          sourceReferences: resolveSourceReferences(model.sourceReferenceIds, sourceReferenceMap),
+          summary: takeFirstText(model.summary, model.description, model.details) || null,
+        })),
+    }))
+    .filter((group) => group.models.length);
+}
+
+function normalizeFaultItems(items = [], sourceReferenceMap) {
+  return (items || [])
+    .filter((item) => item && typeof item === "object")
+    .map((item, index) => ({
+      ...item,
+      cause: takeFirstText(item.cause, item.reason) || null,
+      remedy: takeFirstText(item.remedy, item.fix, item.resolution) || null,
+      severity: takeFirstText(item.severity) || null,
+      sourceReferenceIds: normalizeSourceReferenceIds(item.sourceReferenceIds),
+      sourceReferences: resolveSourceReferences(item.sourceReferenceIds, sourceReferenceMap),
+      symptoms: takeFirstText(item.symptoms, item.symptom, item.effect) || null,
+      title: takeFirstText(item.title, item.label, item.name, `Fault ${index + 1}`),
+    }));
+}
+
+function normalizeStepItems(steps = []) {
+  return (steps || [])
+    .filter((step) => step && typeof step === "object")
+    .map((step, index) => ({
+      ...step,
+      description: takeFirstText(step.description, step.details, step.summary) || null,
+      title: takeFirstText(step.title, step.label, `Step ${index + 1}`),
+    }));
+}
+
+function normalizeFaqItems(items = []) {
+  return (items || [])
+    .filter((item) => item && typeof item === "object")
+    .map((item) => ({
+      ...item,
+      answer: takeFirstText(item.answer, item.description, item.summary),
+      question: takeFirstText(item.question, item.title, item.label),
+    }))
+    .filter((item) => item.question && item.answer);
+}
+
+function normalizeDocumentItems(items = [], sourceReferenceMap) {
+  return (items || [])
+    .filter((item) => item && typeof item === "object")
+    .map((item, index) => {
+      const sourceReferenceIds = normalizeSourceReferenceIds(item.sourceReferenceIds);
+      const sourceReferences = resolveSourceReferences(sourceReferenceIds, sourceReferenceMap);
+      const primarySourceReference = sourceReferences[0] || null;
+
+      return {
+        ...item,
+        accessStatus: takeFirstText(item.accessStatus, primarySourceReference?.accessStatus) || null,
+        fileType: takeFirstText(item.fileType, primarySourceReference?.fileType) || null,
+        language: takeFirstText(item.language, primarySourceReference?.language) || null,
+        lastCheckedAt:
+          normalizeSerializableDate(item.lastCheckedAt) || primarySourceReference?.lastCheckedAt || null,
+        notes: takeFirstText(item.notes, primarySourceReference?.notes) || null,
+        sourceReferenceIds,
+        sourceReferences,
+        sourceType: takeFirstText(item.sourceType, primarySourceReference?.sourceType) || null,
+        title: takeFirstText(item.title, primarySourceReference?.title, `Document ${index + 1}`),
+        url: takeFirstText(item.url, primarySourceReference?.url) || null,
+      };
+    });
+}
+
+function normalizeTextParagraphs(section) {
+  if (Array.isArray(section?.paragraphs) && section.paragraphs.length) {
+    return section.paragraphs.map((paragraph) => `${paragraph}`.trim()).filter(Boolean);
+  }
+
+  return [takeFirstText(section?.summary, section?.description, section?.content, section?.intro)].filter(
+    Boolean,
+  );
+}
+
 function buildResponsiveImageSrcSet(media, url) {
   const candidates = [];
   const seenEntries = new Set();
@@ -450,14 +730,66 @@ function createSectionImage(image, fallbackAlt) {
   };
 }
 
-function normalizeStructuredSections(translation) {
+function normalizeStructuredSections(translation, sourceReferences = []) {
   const sections = translation?.structuredContentJson?.sections;
 
   if (!Array.isArray(sections)) {
     return [];
   }
 
-  return sections.filter((section) => section && typeof section === "object" && section.id && section.title);
+  const sourceReferenceMap = buildSourceReferenceMap(sourceReferences);
+
+  return sections
+    .filter((section) => section && typeof section === "object" && section.id)
+    .map((section) => {
+      const kind = inferStructuredSectionKind(section);
+      const normalizedSection = {
+        ...section,
+        kind,
+        sourceReferenceIds: normalizeSourceReferenceIds(section.sourceReferenceIds),
+        title: normalizeSectionTitle(section),
+      };
+
+      normalizedSection.sourceReferences = resolveSourceReferences(
+        normalizedSection.sourceReferenceIds,
+        sourceReferenceMap,
+      );
+
+      if (kind === "text") {
+        normalizedSection.paragraphs = normalizeTextParagraphs(section);
+      }
+
+      if (kind === "list") {
+        normalizedSection.items = normalizeListItems(section.items, sourceReferenceMap);
+      }
+
+      if (kind === "models_by_manufacturer") {
+        normalizedSection.groups = normalizeModelGroups(section.groups, sourceReferenceMap);
+      }
+
+      if (kind === "faults") {
+        normalizedSection.items = normalizeFaultItems(section.items, sourceReferenceMap);
+      }
+
+      if (kind === "steps") {
+        normalizedSection.steps = normalizeStepItems(section.steps);
+      }
+
+      if (kind === "faq") {
+        normalizedSection.items = normalizeFaqItems(section.items);
+      }
+
+      if (kind === "manuals" || kind === "references") {
+        normalizedSection.items = normalizeDocumentItems(section.items, sourceReferenceMap);
+      }
+
+      if (kind === "image_gallery") {
+        normalizedSection.images = Array.isArray(section.images) ? section.images.filter(Boolean) : [];
+      }
+
+      return normalizedSection;
+    })
+    .filter((section) => section.title);
 }
 
 function sortSectionsInRequiredOrder(sections) {
@@ -505,8 +837,12 @@ function createReferencesFallbackSection(sourceReferences) {
   return {
     id: "references",
     items: sourceReferences.map((reference) => ({
+      accessStatus: reference.accessStatus || null,
       fileType: reference.fileType || null,
       language: reference.language || null,
+      lastCheckedAt: normalizeSerializableDate(reference.lastCheckedAt),
+      notes: reference.notes || null,
+      sourceReferenceIds: reference.id ? [reference.id] : [],
       sourceType: reference.sourceType,
       title: reference.title,
       url: reference.url,
@@ -533,7 +869,7 @@ function createDisclaimerFallbackSection(translation) {
 
 function buildHeroImages(post, translation) {
   const fallbackAlt = translation?.title || post?.equipment?.name || "Featured article image";
-  const structuredSections = normalizeStructuredSections(translation);
+  const structuredSections = normalizeStructuredSections(translation, post?.sourceReferences || []);
   const featuredImageSection = structuredSections.find((section) => section.id === "featured_image");
   const structuredImages = Array.isArray(featuredImageSection?.images)
     ? featuredImageSection.images.map((image) => createSectionImage(image, fallbackAlt)).filter(Boolean)
@@ -544,7 +880,10 @@ function buildHeroImages(post, translation) {
 }
 
 function buildPostBodySections(translation, sourceReferences) {
-  const structuredSections = normalizeStructuredSections(translation).filter(
+  const normalizedSourceReferences = (sourceReferences || [])
+    .map((reference) => createPublicSourceReference(reference))
+    .filter(Boolean);
+  const structuredSections = normalizeStructuredSections(translation, normalizedSourceReferences).filter(
     (section) => section.id !== "featured_image",
   );
   const sectionIds = new Set(structuredSections.map((section) => section.id));
@@ -559,7 +898,7 @@ function buildPostBodySections(translation, sourceReferences) {
   }
 
   if (!sectionIds.has("references")) {
-    const referencesSection = createReferencesFallbackSection(sourceReferences);
+    const referencesSection = createReferencesFallbackSection(normalizedSourceReferences);
 
     if (referencesSection) {
       sections.push(referencesSection);
@@ -1829,8 +2168,12 @@ async function getPublishedPostPageDataInternal(
           title: "asc",
         },
         select: {
+          accessStatus: true,
           fileType: true,
+          id: true,
           language: true,
+          lastCheckedAt: true,
+          notes: true,
           sourceType: true,
           title: true,
           url: true,
