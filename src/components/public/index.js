@@ -2813,6 +2813,7 @@ function getDocumentMetaLabel(item, locale) {
   const details = [item?.fileType, item?.language];
   const accessStatusLabel = formatAccessStatusLabel(item?.accessStatus);
   const checkedAtLabel = formatDateLabel(locale, item?.lastCheckedAt);
+  const sourceTypeLabel = formatAccessStatusLabel(item?.sourceType);
 
   if (accessStatusLabel) {
     details.push(`Access: ${accessStatusLabel}`);
@@ -2822,7 +2823,39 @@ function getDocumentMetaLabel(item, locale) {
     details.push(`Checked ${checkedAtLabel}`);
   }
 
+  if (sourceTypeLabel && item?.sourceType) {
+    details.push(sourceTypeLabel);
+  }
+
   return details.filter(Boolean).join(" | ");
+}
+
+function getInlineEvidenceText(entry) {
+  const sourceReferences = Array.isArray(entry?.sourceReferences)
+    ? entry.sourceReferences.filter((reference) => reference?.title)
+    : [];
+
+  if (sourceReferences.length) {
+    return `Sources: ${sourceReferences.map((reference) => reference.title).join("; ")}`;
+  }
+
+  const sourceCount = entry?.sourceReferenceIds?.length || 0;
+
+  if (sourceCount) {
+    return sourceCount === 1 ? "Source linked for this item." : `${sourceCount} sources linked for this item.`;
+  }
+
+  return null;
+}
+
+function renderInlineEvidenceNote(entry) {
+  const evidenceText = getInlineEvidenceText(entry);
+
+  if (!evidenceText) {
+    return null;
+  }
+
+  return <SectionEvidenceNote>{evidenceText}</SectionEvidenceNote>;
 }
 
 function SectionToggle({
@@ -2857,6 +2890,8 @@ function ExpandableBulletList({ items = [] }) {
           <li key={`${item.title}-${item.description || ""}`}>
             <strong>{item.title}</strong>
             {item.description ? `: ${item.description}` : ""}
+            {item.notes ? <ResourceNote>{item.notes}</ResourceNote> : null}
+            {renderInlineEvidenceNote(item)}
           </li>
         ))}
       </BulletList>
@@ -2884,6 +2919,8 @@ function ManufacturerModelGroupCard({ group }) {
             <strong>{model.name}</strong>
             {model.latestKnownYear ? ` (${model.latestKnownYear})` : ""}
             {model.summary ? `: ${model.summary}` : ""}
+            {model.notes ? <ResourceNote>{model.notes}</ResourceNote> : null}
+            {renderInlineEvidenceNote(model)}
           </li>
         ))}
       </BulletList>
@@ -3070,6 +3107,9 @@ function renderArticleSection(section, copy, { locale, presentation = "default" 
               <li key={`${item.title}-${item.description || ""}`}>
                 <strong>{item.title}</strong>
                 {item.description ? `: ${item.description}` : ""}
+                {item.frequency ? <ResourceMeta>{`Frequency: ${item.frequency}`}</ResourceMeta> : null}
+                {item.notes ? <ResourceNote>{item.notes}</ResourceNote> : null}
+                {renderInlineEvidenceNote(item)}
               </li>
             ))}
           </BulletList>
@@ -3079,7 +3119,16 @@ function renderArticleSection(section, copy, { locale, presentation = "default" 
   }
 
   if (section.kind === "models_by_manufacturer") {
-    return <ExpandableModelGroups groups={section.groups || []} />;
+    return (
+      <>
+        {section.intro ? (
+          <ArticleBody>
+            <p>{section.intro}</p>
+          </ArticleBody>
+        ) : null}
+        <ExpandableModelGroups groups={section.groups || []} />
+      </>
+    );
   }
 
   if (section.kind === "faults") {
@@ -3098,9 +3147,16 @@ function renderArticleSection(section, copy, { locale, presentation = "default" 
               <p>
                 <strong>Remedy:</strong> {fault.remedy || "Not verified."}
               </p>
-              <p>
-                <strong>Severity:</strong> {fault.severity}
-              </p>
+              {fault.severity ? (
+                <p>
+                  <strong>Severity:</strong> {fault.severity}
+                </p>
+              ) : null}
+              {typeof fault.evidenceCount === "number" && fault.evidenceCount > 0 ? (
+                <ResourceMeta>{`Evidence points: ${fault.evidenceCount}`}</ResourceMeta>
+              ) : null}
+              {fault.notes ? <ResourceNote>{fault.notes}</ResourceNote> : null}
+              {renderInlineEvidenceNote(fault)}
             </ArticleBody>
           </FaultCard>
         ))}
@@ -3117,6 +3173,8 @@ function renderArticleSection(section, copy, { locale, presentation = "default" 
             <li key={step.title}>
               <strong>{step.title}</strong>
               {step.description ? `: ${step.description}` : ""}
+              {step.notes ? <ResourceNote>{step.notes}</ResourceNote> : null}
+              {renderInlineEvidenceNote(step)}
             </li>
           ))}
         </NumberedList>
@@ -3142,6 +3200,7 @@ function renderArticleSection(section, copy, { locale, presentation = "default" 
               )}
               {metaLabel ? <ResourceMeta>{metaLabel}</ResourceMeta> : null}
               {item.notes ? <ResourceNote>{item.notes}</ResourceNote> : null}
+              {section.kind === "manuals" ? renderInlineEvidenceNote(item) : null}
             </ResourceItem>
           );
         })}

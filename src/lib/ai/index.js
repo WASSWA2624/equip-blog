@@ -711,6 +711,7 @@ function getGenerationModeProfile(articleDepth) {
     return {
       faqCount: 3,
       overviewSentenceCount: 2,
+      sectionDetailLevel: "concise",
       sectionIntroTone: "concise",
     };
   }
@@ -719,6 +720,7 @@ function getGenerationModeProfile(articleDepth) {
     return {
       faqCount: 4,
       overviewSentenceCount: 3,
+      sectionDetailLevel: "detailed",
       sectionIntroTone: "troubleshooting",
     };
   }
@@ -727,13 +729,15 @@ function getGenerationModeProfile(articleDepth) {
     return {
       faqCount: 4,
       overviewSentenceCount: 3,
+      sectionDetailLevel: "detailed",
       sectionIntroTone: "maintenance",
     };
   }
 
   return {
-    faqCount: 5,
-    overviewSentenceCount: 4,
+    faqCount: 6,
+    overviewSentenceCount: 6,
+    sectionDetailLevel: "comprehensive",
     sectionIntroTone: "complete",
   };
 }
@@ -964,6 +968,50 @@ function buildOverviewParagraphs(researchPayload, request) {
     );
   }
 
+  if (researchPayload.components.length) {
+    paragraphs.push(
+      `${request.equipmentName} is explained through ${researchPayload.components.length} core component${
+        researchPayload.components.length === 1 ? "" : "s"
+      } so readers can connect each part to its role in normal operation.`,
+    );
+  }
+
+  if (researchPayload.variants.length) {
+    paragraphs.push(
+      `Where the evidence supports it, the guide also distinguishes ${researchPayload.variants.length} major variant${
+        researchPayload.variants.length === 1 ? "" : "s"
+      } so differences in setup, handling, or application stay visible.`,
+    );
+  }
+
+  if (researchPayload.uses.length) {
+    paragraphs.push(
+      `Use-case coverage stays practical by linking the equipment to ${researchPayload.uses.length} verified application area${
+        researchPayload.uses.length === 1 ? "" : "s"
+      }, rather than treating the device as a purely abstract concept.`,
+    );
+  }
+
+  if (researchPayload.maintenanceTasks.length || researchPayload.safetyPrecautions.length) {
+    paragraphs.push(
+      "Maintenance and safety sections explain not only what to do, but also why each step matters for reliability, operator safety, and service escalation.",
+    );
+  }
+
+  if (profile.sectionDetailLevel === "comprehensive") {
+    if (researchPayload.manufacturers.length) {
+      paragraphs.push(
+        `Manufacturer and model coverage is included where the sources support it, so the article can connect general equipment principles to real product families used in practice.`,
+      );
+    }
+
+    if (researchPayload.manuals.length) {
+      paragraphs.push(
+        "Manual and reference coverage stays visible throughout the article so readers can move from plain-language explanation to the source documents used to ground each section.",
+      );
+    }
+  }
+
   return chunkList(paragraphs, profile.overviewSentenceCount);
 }
 
@@ -1013,8 +1061,11 @@ function buildModelsSection(researchPayload) {
 
 function buildFaultsSection(researchPayload) {
   return createSection("faults_and_remedies", "Faults and remedies", {
+    intro:
+      "Common faults are summarized with their likely causes, visible symptoms, and first-line remedies so the troubleshooting path stays concrete and source-grounded.",
     items: researchPayload.faults.map((fault) => ({
       cause: fault.cause,
+      evidenceCount: fault.sourceReferenceIds?.length || 0,
       remedy: fault.remedy,
       severity: fault.severity,
       sourceReferenceIds: fault.sourceReferenceIds,
@@ -1061,6 +1112,7 @@ function buildMaintenanceSections(researchPayload) {
         "Daily care tasks should be completed consistently so the optical path stays clean and the instrument is ready for the next verified workflow.",
       items: dailyTasks.map((task) => ({
         description: task.details || "",
+        frequency: task.frequency || null,
         sourceReferenceIds: task.sourceReferenceIds,
         title: task.label,
       })),
@@ -1074,6 +1126,7 @@ function buildMaintenanceSections(researchPayload) {
         description: task.details
           ? `${task.details}${task.frequency ? ` (${task.frequency})` : ""}`
           : task.frequency || task.label,
+        frequency: task.frequency || null,
         sourceReferenceIds: task.sourceReferenceIds,
         title: task.label,
       })),
@@ -1104,17 +1157,17 @@ function buildSopSection(researchPayload, fixture) {
         : [
             {
               description:
-                "Confirm the device is clean, safe to energize, and prepared according to the official operating instructions before use.",
+                "Confirm the device is clean, safe to energize, connected correctly, and prepared according to the official operating instructions before use.",
               title: "Prepare the equipment",
             },
             {
               description:
-                "Follow the manufacturer workflow step by step, documenting any model-specific adjustments and abnormal behavior.",
+                "Follow the manufacturer workflow step by step, checking controls, patient or specimen positioning, operating indicators, and any model-specific adjustments as you proceed.",
               title: "Operate using the approved workflow",
             },
             {
               description:
-                "Shut the equipment down safely, complete cleaning or reset steps, and record follow-up maintenance or service actions when needed.",
+                "Shut the equipment down safely, complete cleaning or reset steps, and record any abnormal findings, maintenance needs, or service escalations before the next use.",
               title: "Close out and document the session",
             },
           ]),
@@ -1161,6 +1214,12 @@ function buildFaqSection(researchPayload, request) {
         "Use only the model-specific operator manual, approved cleaning materials, and institutional biomedical engineering procedures for deeper service actions.",
       question: "Which documents should staff follow before maintenance or repair?",
     },
+    {
+      answer:
+        researchPayload.safetyPrecautions?.[0]?.details ||
+        "Safety guidance should be read before use so transport, energizing, cleaning, and shutdown steps do not damage the equipment or create avoidable risk.",
+      question: "Why are the safety precautions described in detail?",
+    },
   ];
 
   return createSection("faq", "FAQ", {
@@ -1204,6 +1263,7 @@ function buildDisclaimerSection(disclaimer) {
 
 function buildStructuredArticle({ disclaimer, fixture, providerConfig, request, researchPayload }) {
   const equipmentTitle = normalizeDisplayText(request.equipmentName) || researchPayload.equipment.name;
+  const profile = getGenerationModeProfile(request.articleDepth);
   const title =
     request.articleDepth === "repair"
       ? `${equipmentTitle}: Troubleshooting, Faults, Maintenance, and Manuals`
@@ -1214,17 +1274,23 @@ function buildStructuredArticle({ disclaimer, fixture, providerConfig, request, 
     researchPayload.definition?.summary,
     request.articleDepth === "fast"
       ? "This concise guide focuses on core operation, care, and safety points, with references for deeper follow-up."
-      : "This guide covers definition, operation, maintenance, common faults, and supporting manuals while keeping safety notes and references easy to review.",
+      : profile.sectionDetailLevel === "comprehensive"
+        ? "This detailed guide explains how the equipment works, what its major parts do, where it is used, how to maintain it, which faults are commonly encountered, and which references or manuals support those points."
+        : "This guide covers definition, operation, maintenance, common faults, and supporting manuals while keeping safety notes and references easy to review.",
   ]
     .filter(Boolean)
     .join(" ");
-  const imageCandidates = chunkList(researchPayload.mediaCandidates || [], 2);
+  const imageCandidates = request.includeImages ? researchPayload.mediaCandidates || [] : [];
   const baseSections = [
-    createSection("featured_image", "Featured image", {
-      images: imageCandidates,
-      kind: "image_gallery",
-      sourceReferenceIds: collectSourceReferenceIds(imageCandidates),
-    }),
+    ...(imageCandidates.length
+      ? [
+          createSection("featured_image", "Featured image", {
+            images: imageCandidates,
+            kind: "image_gallery",
+            sourceReferenceIds: collectSourceReferenceIds(imageCandidates),
+          }),
+        ]
+      : []),
     createSection("definition_and_overview", "Definition and overview", {
       kind: "text",
       paragraphs: buildOverviewParagraphs(researchPayload, request),
@@ -1240,27 +1306,33 @@ function buildStructuredArticle({ disclaimer, fixture, providerConfig, request, 
       sourceReferenceIds: collectSourceReferenceIds([researchPayload.operatingPrinciple]),
     }),
     createSection("components_and_parts", "Components and parts", {
+      intro:
+        "Component descriptions focus on what each part contributes to normal operation so the device can be understood as a working system instead of a list of names.",
       kind: "list",
       items: researchPayload.components.map((component) => ({
-        description: component.details,
+        description: component.details || component.label,
         sourceReferenceIds: component.sourceReferenceIds,
         title: component.label,
       })),
       sourceReferenceIds: collectSourceReferenceIds(researchPayload.components),
     }),
     createSection("types_and_variants", "Types and variants", {
+      intro:
+        "Variant coverage highlights the practical differences that affect setup, viewing, workflow, or expected use context.",
       kind: "list",
       items: researchPayload.variants.map((variant) => ({
-        description: variant.details,
+        description: variant.details || variant.label,
         sourceReferenceIds: variant.sourceReferenceIds,
         title: variant.label,
       })),
       sourceReferenceIds: collectSourceReferenceIds(researchPayload.variants),
     }),
     createSection("uses_and_applications", "Uses and applications", {
+      intro:
+        "Applications are described in concrete workflow terms so readers can connect the equipment to real clinical, laboratory, teaching, or service contexts.",
       kind: "list",
       items: researchPayload.uses.map((useCase) => ({
-        description: useCase.details,
+        description: useCase.details || useCase.label,
         sourceReferenceIds: useCase.sourceReferenceIds,
         title: useCase.label,
       })),
@@ -1284,9 +1356,11 @@ function buildStructuredArticle({ disclaimer, fixture, providerConfig, request, 
   optionalSections.push(...buildMaintenanceSections(researchPayload));
   optionalSections.push(
     createSection("safety_precautions", "Safety precautions", {
+      intro:
+        "These precautions are intentionally explicit so handling, cleaning, adjustment, and shutdown risks remain visible while reading the operational guidance.",
       kind: "list",
       items: researchPayload.safetyPrecautions.map((precaution) => ({
-        description: precaution.details,
+        description: precaution.details || precaution.label,
         sourceReferenceIds: precaution.sourceReferenceIds,
         title: precaution.label,
       })),
@@ -1298,6 +1372,8 @@ function buildStructuredArticle({ disclaimer, fixture, providerConfig, request, 
   if (request.includeManualLinks && researchPayload.manuals.length) {
     optionalSections.push(
       createSection("manuals_and_technical_documents", "Manuals and technical documents", {
+        intro:
+          "These documents anchor the article to operator, service, or maintenance material that readers can consult for the exact model in use.",
         items: researchPayload.manuals.map((manual) => ({
           accessStatus: manual.accessStatus,
           fileType: manual.fileType,
@@ -1521,6 +1597,9 @@ async function composeStructuredArticleWithOpenAiSdk({
       "Always include the required sections: definition_and_overview, principle_of_operation, daily_care_and_maintenance, references, disclaimer.",
       "structuredBlocks.faq must match faq.",
       "Use empty arrays instead of invented references when verified references are unavailable.",
+      "Default to detailed, educational explanations that unpack how parts, workflow steps, maintenance tasks, and fault patterns relate to one another.",
+      "When evidence exists, prefer fully populated sections over skeletal ones and explain the rationale behind safety, maintenance, and troubleshooting guidance.",
+      "For text sections, write multi-paragraph explanations instead of single-sentence summaries unless the requested article depth is explicitly fast.",
       "Write in a natural editorial voice that reads like a normal published equipment guide.",
       "Do not mention AI, automation, prompts, models, research payloads, internal workflows, or that the article was generated, drafted, compiled, or composed.",
       "If supporting evidence is missing, omit the claim or state the limitation plainly without referring to the generation process.",

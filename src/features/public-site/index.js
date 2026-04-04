@@ -520,6 +520,8 @@ function normalizeListItems(items = [], sourceReferenceMap) {
     .map((item, index) => ({
       ...item,
       description: takeFirstText(item.description, item.details, item.summary) || null,
+      frequency: takeFirstText(item.frequency, item.interval) || null,
+      notes: takeFirstText(item.notes) || null,
       sourceReferenceIds: normalizeSourceReferenceIds(item.sourceReferenceIds),
       sourceReferences: resolveSourceReferences(item.sourceReferenceIds, sourceReferenceMap),
       title: takeFirstText(item.title, item.label, item.name, item.heading, `Item ${index + 1}`),
@@ -537,6 +539,7 @@ function normalizeModelGroups(groups = [], sourceReferenceMap) {
         .map((model, modelIndex) => ({
           ...model,
           name: takeFirstText(model.name, model.title, `Model ${modelIndex + 1}`),
+          notes: takeFirstText(model.notes) || null,
           sourceReferenceIds: normalizeSourceReferenceIds(model.sourceReferenceIds),
           sourceReferences: resolveSourceReferences(model.sourceReferenceIds, sourceReferenceMap),
           summary: takeFirstText(model.summary, model.description, model.details) || null,
@@ -551,6 +554,11 @@ function normalizeFaultItems(items = [], sourceReferenceMap) {
     .map((item, index) => ({
       ...item,
       cause: takeFirstText(item.cause, item.reason) || null,
+      evidenceCount:
+        typeof item.evidenceCount === "number" && Number.isFinite(item.evidenceCount)
+          ? item.evidenceCount
+          : null,
+      notes: takeFirstText(item.notes) || null,
       remedy: takeFirstText(item.remedy, item.fix, item.resolution) || null,
       severity: takeFirstText(item.severity) || null,
       sourceReferenceIds: normalizeSourceReferenceIds(item.sourceReferenceIds),
@@ -560,12 +568,15 @@ function normalizeFaultItems(items = [], sourceReferenceMap) {
     }));
 }
 
-function normalizeStepItems(steps = []) {
+function normalizeStepItems(steps = [], sourceReferenceMap) {
   return (steps || [])
     .filter((step) => step && typeof step === "object")
     .map((step, index) => ({
       ...step,
       description: takeFirstText(step.description, step.details, step.summary) || null,
+      notes: takeFirstText(step.notes) || null,
+      sourceReferenceIds: normalizeSourceReferenceIds(step.sourceReferenceIds),
+      sourceReferences: resolveSourceReferences(step.sourceReferenceIds, sourceReferenceMap),
       title: takeFirstText(step.title, step.label, `Step ${index + 1}`),
     }));
 }
@@ -772,7 +783,7 @@ function normalizeStructuredSections(translation, sourceReferences = []) {
       }
 
       if (kind === "steps") {
-        normalizedSection.steps = normalizeStepItems(section.steps);
+        normalizedSection.steps = normalizeStepItems(section.steps, sourceReferenceMap);
       }
 
       if (kind === "faq") {
