@@ -221,9 +221,7 @@ describe("scheduled publishing worker", () => {
         status: "PUBLISHED",
       },
       revalidatedPaths: [
-        "/",
         "/sitemap.xml",
-        "/en",
         "/en/blog",
         "/en/blog/microscope",
         "/en/equipment/microscope",
@@ -243,16 +241,14 @@ describe("scheduled publishing worker", () => {
       scheduledPublishAt: new Date("2026-04-03T09:05:00.000Z"),
       status: "SCHEDULED",
     });
-    expect(revalidate.mock.calls.map(([path]) => path)).toEqual([
-      "/",
-      "/sitemap.xml",
-      "/en",
-      "/en/blog",
-      "/en/blog/microscope",
-      "/en/equipment/microscope",
-      "/en/category/maintenance",
-      "/en/category/safety",
-      "/en/manufacturer/acme-medical",
+    expect(revalidate.mock.calls).toEqual([
+      ["/sitemap.xml"],
+      ["/en/blog"],
+      ["/en/blog/microscope"],
+      ["/en/equipment/microscope"],
+      ["/en/category/maintenance"],
+      ["/en/category/safety"],
+      ["/en/manufacturer/acme-medical"],
     ]);
     expect(prisma.state.audits.map((audit) => audit.action)).toEqual(
       expect.arrayContaining([

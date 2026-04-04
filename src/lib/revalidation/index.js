@@ -61,10 +61,9 @@ export function buildPublishedPostRevalidationPaths({
   slug,
 } = {}) {
   const resolvedLocales = resolveLocales(locales);
-  const paths = ["/", "/sitemap.xml"];
+  const paths = ["/sitemap.xml"];
 
   for (const locale of resolvedLocales) {
-    paths.push(buildLocalizedPath(locale));
     paths.push(buildLocalizedPath(locale, publicRouteSegments.blog));
 
     if (slug) {

@@ -28,9 +28,7 @@ describe("revalidation helpers", () => {
         slug: "microscope-repair",
       }),
     ).toEqual([
-      "/",
       "/sitemap.xml",
-      "/en",
       "/en/blog",
       "/en/blog/microscope-repair",
       "/en/equipment/microscope",

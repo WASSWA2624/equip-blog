@@ -1939,14 +1939,6 @@ async function getPublishedPostPageDataInternal(
   };
 }
 
-const getCachedPublishedHomePageData = unstable_cache(
-  async (locale) => getPublishedHomePageDataInternal({ locale }),
-  ["public-home-page-data"],
-  {
-    revalidate: publicDataRevalidateSeconds,
-  },
-);
-
 const getCachedPublishedLandingPageData = unstable_cache(
   async (entityKind, locale, page, pageSize, slug) =>
     getPublishedLandingPageDataInternal({ entityKind, locale, page, pageSize, slug }),
@@ -2035,11 +2027,13 @@ export async function searchPublishedEquipmentSuggestions(options = {}, prisma) 
 }
 
 export async function getPublishedHomePageData(options = {}, prisma) {
-  if (prisma) {
-    return getPublishedHomePageDataInternal(options, prisma);
-  }
-
-  return getCachedPublishedHomePageData(normalizePublicLocale(options.locale));
+  return getPublishedHomePageDataInternal(
+    {
+      ...options,
+      locale: normalizePublicLocale(options.locale),
+    },
+    prisma,
+  );
 }
 
 export async function getPublishedLandingPageData(options = {}, prisma) {
