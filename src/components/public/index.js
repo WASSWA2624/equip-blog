@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styled, { css } from "styled-components";
 
 import PublicViewTracker from "@/components/analytics/public-view-tracker";
@@ -1519,6 +1519,74 @@ const HeroSnapshotText = styled.p`
   margin: 0;
 `;
 
+const HeroResumeBlock = styled.div`
+  border-top: 1px solid rgba(16, 32, 51, 0.08);
+  display: grid;
+  gap: 0.38rem;
+  padding-top: 0.72rem;
+`;
+
+const HeroResumeLabel = styled.p`
+  color: rgba(58, 72, 95, 0.72);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  margin: 0;
+  text-transform: uppercase;
+`;
+
+const HeroResumeLink = styled.a`
+  align-items: center;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(246, 249, 253, 0.94)),
+    radial-gradient(circle at top right, rgba(63, 115, 154, 0.12), transparent 58%);
+  border: 1px solid rgba(36, 75, 115, 0.14);
+  border-radius: 14px;
+  box-shadow:
+    0 12px 28px rgba(19, 34, 58, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.74);
+  color: #183b63;
+  display: inline-flex;
+  font-weight: 800;
+  justify-content: space-between;
+  gap: 0.85rem;
+  letter-spacing: -0.02em;
+  line-height: 1.18;
+  min-height: 2.75rem;
+  padding: 0.72rem 0.82rem;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+
+  &:hover {
+    border-color: rgba(36, 75, 115, 0.24);
+    box-shadow:
+      0 16px 32px rgba(19, 34, 58, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    transform: translateY(-1px);
+  }
+`;
+
+const HeroResumeMeta = styled.span`
+  color: rgba(36, 75, 115, 0.72);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+`;
+
+const HeroResumeTitle = styled.span`
+  display: grid;
+  gap: 0.12rem;
+`;
+
+const HeroResumeArrow = styled.span`
+  color: rgba(36, 75, 115, 0.58);
+  font-size: 1rem;
+  line-height: 1;
+`;
+
 const HeroStatsGrid = styled.dl`
   display: grid;
   gap: 0.55rem;
@@ -1583,6 +1651,17 @@ const SectionNavLink = styled.a`
     border-color 160ms ease,
     box-shadow 160ms ease,
     transform 160ms ease;
+
+  ${({ $active }) =>
+    $active &&
+    css`
+      background:
+        linear-gradient(180deg, rgba(245, 249, 253, 0.96), rgba(237, 244, 250, 0.96)),
+        radial-gradient(circle at top right, rgba(63, 115, 154, 0.12), transparent 54%);
+      border-color: rgba(36, 75, 115, 0.18);
+      box-shadow: 0 14px 34px rgba(19, 34, 58, 0.07);
+      color: #183b63;
+    `}
 
   &:hover {
     border-color: rgba(36, 75, 115, 0.2);
@@ -1752,40 +1831,154 @@ const SidebarNavigatorPanel = styled(SidebarPanel)`
 `;
 
 const SidebarEquipmentPanel = styled(SidebarPanel)`
+  overflow: hidden;
+  position: relative;
+
+  &::before {
+    background: linear-gradient(90deg, rgba(24, 59, 99, 0.92), rgba(63, 115, 154, 0.4));
+    content: "";
+    height: 3px;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+  }
+
   @media (min-width: 1100px) {
     order: 2;
   }
 `;
 
+const SidebarEyebrow = styled.p`
+  color: rgba(42, 72, 103, 0.72);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  margin: 0;
+  text-transform: uppercase;
+`;
+
 const SidebarTitle = styled.h2`
   color: #16243b;
-  font-size: 1.02rem;
-  letter-spacing: -0.03em;
+  font-size: 1.12rem;
+  letter-spacing: -0.04em;
+  line-height: 1.08;
   margin: 0;
+`;
+
+const SidebarStatusNote = styled.p`
+  color: rgba(67, 80, 102, 0.82);
+  font-size: 0.9rem;
+  line-height: 1.42;
+  margin: 0;
+
+  strong {
+    color: #183b63;
+    font-weight: 800;
+  }
 `;
 
 const SidebarText = styled.p`
   color: rgba(72, 84, 108, 0.94);
-  line-height: 1.56;
+  font-size: 0.98rem;
+  line-height: 1.5;
   margin: 0;
+`;
+
+const SidebarSubheading = styled.p`
+  color: rgba(58, 71, 94, 0.76);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  margin: 0.1rem 0 0;
+  text-transform: uppercase;
+`;
+
+const SidebarManufacturerGrid = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+`;
+
+const SidebarManufacturerChip = styled(Link)`
+  align-items: center;
+  background:
+    linear-gradient(180deg, rgba(246, 249, 253, 0.96), rgba(235, 241, 247, 0.96)),
+    radial-gradient(circle at top right, rgba(63, 115, 154, 0.12), transparent 58%);
+  border: 1px solid rgba(36, 75, 115, 0.14);
+  border-radius: 999px;
+  box-shadow:
+    0 10px 24px rgba(19, 34, 58, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78);
+  color: #234a73;
+  display: inline-flex;
+  font-size: 0.94rem;
+  font-weight: 700;
+  gap: 0.45rem;
+  line-height: 1.2;
+  min-height: 2.45rem;
+  padding: 0.46rem 0.88rem;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+
+  &::before {
+    background: currentColor;
+    border-radius: 999px;
+    content: "";
+    display: block;
+    height: 0.38rem;
+    opacity: 0.46;
+    width: 0.38rem;
+  }
+
+  &:hover {
+    border-color: rgba(36, 75, 115, 0.24);
+    box-shadow:
+      0 14px 30px rgba(19, 34, 58, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    transform: translateY(-1px);
+  }
 `;
 
 const SidebarAction = styled(Link)`
   align-items: center;
-  background: rgba(255, 255, 255, 0.84);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 249, 253, 0.96)),
+    radial-gradient(circle at top right, rgba(63, 115, 154, 0.12), transparent 56%);
   border: 1px solid rgba(16, 32, 51, 0.12);
   border-radius: 14px;
   color: #183b63;
   display: inline-flex;
   font-weight: 800;
   justify-content: center;
+  letter-spacing: -0.02em;
   min-height: 42px;
   padding: 0.62rem 0.9rem;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+  width: 100%;
+
+  &:hover {
+    border-color: rgba(36, 75, 115, 0.2);
+    box-shadow:
+      0 16px 30px rgba(19, 34, 58, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.82);
+    transform: translateY(-1px);
+  }
 `;
 
 const SidebarBackLink = styled(Link)`
   color: rgba(53, 67, 90, 0.94);
+  display: inline-flex;
   font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: rgba(53, 67, 90, 0.2);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
 `;
 
 const TocList = styled.ol`
@@ -1808,6 +2001,14 @@ const TocList = styled.ol`
 const TocItem = styled.li`
   margin: 0;
   padding-left: 0.08rem;
+
+  ${({ $active }) =>
+    $active &&
+    css`
+      &::marker {
+        color: #244b73;
+      }
+    `}
 `;
 
 const TocLink = styled.a`
@@ -1818,6 +2019,17 @@ const TocLink = styled.a`
   letter-spacing: -0.01em;
   line-height: 1.42;
   text-decoration: none;
+
+  ${({ $active }) =>
+    $active &&
+    css`
+      color: #173454;
+      font-weight: 800;
+      text-decoration: underline;
+      text-decoration-color: rgba(36, 75, 115, 0.34);
+      text-decoration-thickness: 1.5px;
+      text-underline-offset: 0.18em;
+    `}
 
   &:hover {
     color: #244b73;
@@ -2152,6 +2364,14 @@ function getPostSectionAnchor(sectionId) {
   return `section-${sectionId}`;
 }
 
+function getReadingResumeStorageKey(articlePath) {
+  return `equip-blog:reading-progress:${articlePath || "unknown-article"}`;
+}
+
+function getSectionNavigationLabel(section, copy) {
+  return section?.id === "references" ? copy.referencesHeading : section?.title;
+}
+
 function getVisualBadgeLabel(image) {
   if (image?.isAiGenerated) {
     return "AI illustration";
@@ -2304,6 +2524,58 @@ function InlinePhotoFigure({
   sizes = "100vw",
 }) {
   const [measuredDimensions, setMeasuredDimensions] = useState(null);
+
+  useEffect(() => {
+    if (!image?.url || typeof window === "undefined") {
+      return undefined;
+    }
+
+    let cancelled = false;
+    const probe = new window.Image();
+
+    function updateMeasuredDimensions() {
+      if (cancelled) {
+        return;
+      }
+
+      const { naturalHeight, naturalWidth } = probe;
+
+      if (
+        Number.isFinite(naturalWidth) &&
+        Number.isFinite(naturalHeight) &&
+        naturalWidth > 0 &&
+        naturalHeight > 0
+      ) {
+        setMeasuredDimensions((currentValue) => {
+          if (
+            currentValue &&
+            currentValue.width === naturalWidth &&
+            currentValue.height === naturalHeight
+          ) {
+            return currentValue;
+          }
+
+          return {
+            height: naturalHeight,
+            width: naturalWidth,
+          };
+        });
+      }
+    }
+
+    probe.onload = updateMeasuredDimensions;
+    probe.src = image.url;
+
+    if (probe.complete) {
+      updateMeasuredDimensions();
+    }
+
+    return () => {
+      cancelled = true;
+      probe.onload = null;
+    };
+  }, [image?.url]);
+
   const resolvedImage = measuredDimensions
     ? {
         ...image,
@@ -2564,6 +2836,23 @@ export function PublicPostPage({ locale, messages, pageData }) {
     presentation === "atlas"
       ? "Real photos and supporting visuals are arranged inline so the article reads like an illustrated study guide."
       : null;
+  const firstSectionId = sectionLinks[0]?.id || "";
+  const sectionLinkKey = sectionLinks.map((section) => section.id).join("|");
+  const readingResumeStorageKey = getReadingResumeStorageKey(article.path);
+  const sidebarColumnRef = useRef(null);
+  const previousWindowScrollDirectionRef = useRef("down");
+  const previousWindowScrollYRef = useRef(0);
+  const sectionLinksRef = useRef(sectionLinks);
+  const [activeSectionId, setActiveSectionId] = useState(firstSectionId);
+  const [resumeSectionId, setResumeSectionId] = useState(null);
+  const activeSection =
+    sectionLinks.find((section) => section.id === activeSectionId) || sectionLinks[0] || null;
+  const resumeSection =
+    resumeSectionId && resumeSectionId !== firstSectionId
+      ? sectionLinks.find((section) => section.id === resumeSectionId) || null
+      : null;
+  const activeSectionLabel = activeSection ? getSectionNavigationLabel(activeSection, copy) : null;
+  const resumeSectionLabel = resumeSection ? getSectionNavigationLabel(resumeSection, copy) : null;
   const heroStats = [
     {
       label: "Estimated read",
@@ -2582,6 +2871,174 @@ export function PublicPostPage({ locale, messages, pageData }) {
       value: `${article.manufacturers.length || 0}`,
     },
   ];
+
+  useEffect(() => {
+    sectionLinksRef.current = sectionLinks;
+  }, [sectionLinks]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+
+    previousWindowScrollDirectionRef.current = "down";
+    previousWindowScrollYRef.current = window.scrollY;
+
+    function handleWindowScroll() {
+      const currentWindowScrollY = window.scrollY;
+      const previousWindowScrollY = previousWindowScrollYRef.current;
+      const nextDirection =
+        currentWindowScrollY < previousWindowScrollY - 8
+          ? "up"
+          : currentWindowScrollY > previousWindowScrollY + 8
+            ? "down"
+            : previousWindowScrollDirectionRef.current;
+      const sidebarElement = sidebarColumnRef.current;
+
+      if (
+        window.innerWidth >= 1100 &&
+        sidebarElement &&
+        nextDirection === "up" &&
+        previousWindowScrollDirectionRef.current !== "up" &&
+        sidebarElement.scrollTop > 8
+      ) {
+        sidebarElement.scrollTo({
+          behavior: "smooth",
+          top: 0,
+        });
+      }
+
+      previousWindowScrollDirectionRef.current = nextDirection;
+      previousWindowScrollYRef.current = currentWindowScrollY;
+    }
+
+    window.addEventListener("scroll", handleWindowScroll, {
+      passive: true,
+    });
+
+    return () => {
+      window.removeEventListener("scroll", handleWindowScroll);
+    };
+  }, []);
+
+  useEffect(() => {
+    setActiveSectionId(firstSectionId);
+  }, [firstSectionId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    try {
+      const storedValue = window.localStorage.getItem(readingResumeStorageKey);
+
+      if (!storedValue) {
+        setResumeSectionId(null);
+        return;
+      }
+
+      const parsedValue = JSON.parse(storedValue);
+      const storedSectionId = typeof parsedValue?.id === "string" ? parsedValue.id : "";
+      const isKnownSection = sectionLinksRef.current.some(
+        (section) => section.id === storedSectionId,
+      );
+
+      setResumeSectionId(isKnownSection ? storedSectionId : null);
+    } catch {
+      setResumeSectionId(null);
+    }
+  }, [readingResumeStorageKey, sectionLinkKey]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !sectionLinksRef.current.length) {
+      return undefined;
+    }
+
+    let frameId = null;
+
+    function updateActiveSection() {
+      frameId = null;
+
+      const stickyOffset = window.innerWidth < 760 ? 124 : 152;
+      let nextActiveSectionId = firstSectionId;
+
+      for (const section of sectionLinksRef.current) {
+        const element = document.getElementById(getPostSectionAnchor(section.id));
+
+        if (!element) {
+          continue;
+        }
+
+        if (element.getBoundingClientRect().top - stickyOffset <= 0) {
+          nextActiveSectionId = section.id;
+          continue;
+        }
+
+        break;
+      }
+
+      setActiveSectionId((currentValue) =>
+        currentValue === nextActiveSectionId ? currentValue : nextActiveSectionId,
+      );
+    }
+
+    function requestActiveSectionUpdate() {
+      if (frameId !== null) {
+        return;
+      }
+
+      frameId = window.requestAnimationFrame(updateActiveSection);
+    }
+
+    requestActiveSectionUpdate();
+    window.addEventListener("hashchange", requestActiveSectionUpdate);
+    window.addEventListener("resize", requestActiveSectionUpdate);
+    window.addEventListener("scroll", requestActiveSectionUpdate, {
+      passive: true,
+    });
+
+    return () => {
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+      }
+
+      window.removeEventListener("hashchange", requestActiveSectionUpdate);
+      window.removeEventListener("resize", requestActiveSectionUpdate);
+      window.removeEventListener("scroll", requestActiveSectionUpdate);
+    };
+  }, [firstSectionId, sectionLinkKey]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !activeSectionId || !sectionLinksRef.current.length) {
+      return;
+    }
+
+    const guideContentElement = window.document.getElementById("guide-content");
+    const readingThreshold = guideContentElement
+      ? Math.max(guideContentElement.offsetTop - 140, 220)
+      : 220;
+
+    if (window.scrollY < readingThreshold) {
+      return;
+    }
+
+    try {
+      window.localStorage.setItem(
+        readingResumeStorageKey,
+        JSON.stringify({
+          id: activeSectionId,
+          savedAt: Date.now(),
+        }),
+      );
+    } catch {
+      return;
+    }
+
+    setResumeSectionId((currentValue) =>
+      currentValue === activeSectionId ? currentValue : activeSectionId,
+    );
+  }, [activeSectionId, readingResumeStorageKey, sectionLinkKey]);
 
   return (
     <PageMain>
@@ -2662,6 +3119,18 @@ export function PublicPostPage({ locale, messages, pageData }) {
                     </HeroStatCard>
                   ))}
                 </HeroStatsGrid>
+                {resumeSection && resumeSectionLabel ? (
+                  <HeroResumeBlock>
+                    <HeroResumeLabel>Saved place</HeroResumeLabel>
+                    <HeroResumeLink href={`#${getPostSectionAnchor(resumeSection.id)}`}>
+                      <HeroResumeTitle>
+                        <HeroResumeMeta>Resume reading</HeroResumeMeta>
+                        <span>{resumeSectionLabel}</span>
+                      </HeroResumeTitle>
+                      <HeroResumeArrow aria-hidden="true">{"->"}</HeroResumeArrow>
+                    </HeroResumeLink>
+                  </HeroResumeBlock>
+                ) : null}
               </HeroSnapshotCard>
 
               {heroSectionLinks.length ? (
@@ -2671,12 +3140,14 @@ export function PublicPostPage({ locale, messages, pageData }) {
                   <SectionNavList>
                     {heroSectionLinks.map((section, index) => (
                       <SectionNavLink
+                        $active={section.id === activeSectionId}
+                        aria-current={section.id === activeSectionId ? "location" : undefined}
                         href={`#${getPostSectionAnchor(section.id)}`}
                         key={section.id}
                       >
                         <SectionNavIndex>{`${index + 1}`.padStart(2, "0")}</SectionNavIndex>
                         <SectionNavLabel>
-                          {section.id === "references" ? copy.referencesHeading : section.title}
+                          {getSectionNavigationLabel(section, copy)}
                         </SectionNavLabel>
                       </SectionNavLink>
                     ))}
@@ -2771,7 +3242,7 @@ export function PublicPostPage({ locale, messages, pageData }) {
             <PublicCommentSection article={article} copy={copy} locale={locale} />
           </ArticleColumn>
 
-          <SidebarColumn>
+          <SidebarColumn ref={sidebarColumnRef}>
             <SidebarShareWrap>
               <ShareActions article={article} copy={copy} />
             </SidebarShareWrap>
@@ -2779,11 +3250,20 @@ export function PublicPostPage({ locale, messages, pageData }) {
             {sectionLinks.length ? (
               <SidebarNavigatorPanel>
                 <SidebarTitle>Guide navigator</SidebarTitle>
+                {activeSectionLabel ? (
+                  <SidebarStatusNote>
+                    Now reading: <strong>{activeSectionLabel}</strong>
+                  </SidebarStatusNote>
+                ) : null}
                 <TocList>
                   {sectionLinks.map((section) => (
-                    <TocItem key={section.id}>
-                      <TocLink href={`#${getPostSectionAnchor(section.id)}`}>
-                        {section.id === "references" ? copy.referencesHeading : section.title}
+                    <TocItem $active={section.id === activeSectionId} key={section.id}>
+                      <TocLink
+                        $active={section.id === activeSectionId}
+                        aria-current={section.id === activeSectionId ? "location" : undefined}
+                        href={`#${getPostSectionAnchor(section.id)}`}
+                      >
+                        {getSectionNavigationLabel(section, copy)}
                       </TocLink>
                     </TocItem>
                   ))}
@@ -2792,19 +3272,23 @@ export function PublicPostPage({ locale, messages, pageData }) {
             ) : null}
 
             <SidebarEquipmentPanel>
+              <SidebarEyebrow>Equipment page</SidebarEyebrow>
               <SidebarTitle as={sectionLinks.length ? "h3" : "h2"}>{displayEquipmentName}</SidebarTitle>
               <SidebarText>
                 This published guide belongs to the equipment landing page for{" "}
                 {displayEquipmentName}.
               </SidebarText>
               {article.manufacturers.length ? (
-                <ChipRow>
+                <>
+                  <SidebarSubheading>Manufacturers in this guide</SidebarSubheading>
+                  <SidebarManufacturerGrid>
                   {article.manufacturers.map((manufacturer) => (
-                    <PostHeroChip href={manufacturer.path} key={manufacturer.slug}>
+                    <SidebarManufacturerChip href={manufacturer.path} key={manufacturer.slug}>
                       {manufacturer.name}
-                    </PostHeroChip>
+                    </SidebarManufacturerChip>
                   ))}
-                </ChipRow>
+                  </SidebarManufacturerGrid>
+                </>
               ) : null}
               <SidebarAction href={article.equipment.path}>{copy.browseEquipment}</SidebarAction>
               <SidebarBackLink href={backToBlogHref}>{copy.backToBlogAction}</SidebarBackLink>
