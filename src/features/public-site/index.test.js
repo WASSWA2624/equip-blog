@@ -316,9 +316,13 @@ describe("public site data", () => {
         alt: "Microscope",
         attributionText: null,
         caption: "Primary microscope image",
+        isAiGenerated: true,
         licenseType: null,
-        publicUrl: "https://cdn.example.com/microscope.jpg",
+        localPath: "public/uploads/media/microscope-primary.png",
+        publicUrl: "/uploads/media/microscope-primary.png",
         sourceUrl: null,
+        storageDriver: "local",
+        storageKey: "media/microscope-primary.png",
       },
       id: "post_1",
       manufacturers: [
@@ -475,6 +479,16 @@ describe("public site data", () => {
       twitterTitle: "Microscope meta title",
     });
     expect(pageData.article.heroImages).toHaveLength(2);
+    expect(pageData.article.heroImages[0]).toMatchObject({
+      href: "/uploads/media/microscope-primary.png",
+      renderInline: true,
+      url: "/uploads/media/microscope-primary.png",
+    });
+    expect(pageData.article.heroImages[1]).toMatchObject({
+      href: "https://cdn.example.com/microscope-secondary.jpg",
+      renderInline: false,
+      url: "https://cdn.example.com/microscope-secondary.jpg",
+    });
     expect(pageData.article.bodySections.map((section) => section.id)).toEqual([
       "definition_and_overview",
       "faq",

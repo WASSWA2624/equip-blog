@@ -20,6 +20,52 @@ function formatDateLabel(locale, value) {
   }).format(new Date(value));
 }
 
+function formatEquipmentDisplayName(value) {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    return "";
+  }
+
+  if (/[A-Z]/.test(trimmedValue)) {
+    return trimmedValue;
+  }
+
+  const firstLetterIndex = trimmedValue.search(/[a-z]/i);
+
+  if (firstLetterIndex === -1) {
+    return trimmedValue;
+  }
+
+  return `${trimmedValue.slice(0, firstLetterIndex)}${trimmedValue
+    .charAt(firstLetterIndex)
+    .toUpperCase()}${trimmedValue.slice(firstLetterIndex + 1)}`;
+}
+
+function formatArticleDisplayTitle(title, equipmentName) {
+  const normalizedTitle = typeof title === "string" ? title.trim() : "";
+  const normalizedEquipmentName = typeof equipmentName === "string" ? equipmentName.trim() : "";
+  const displayEquipmentName = formatEquipmentDisplayName(normalizedEquipmentName);
+
+  if (!normalizedTitle) {
+    return displayEquipmentName;
+  }
+
+  if (!normalizedEquipmentName || !displayEquipmentName) {
+    return normalizedTitle;
+  }
+
+  if (normalizedTitle.toLowerCase().startsWith(normalizedEquipmentName.toLowerCase())) {
+    return `${displayEquipmentName}${normalizedTitle.slice(normalizedEquipmentName.length)}`;
+  }
+
+  return normalizedTitle;
+}
+
 function getLocaleLabel(locale) {
   if (locale === "en") {
     return "English";
@@ -474,6 +520,9 @@ function ResponsiveImage({
 }
 
 function PostCard({ copy, locale, post }) {
+  const displayEquipmentName = formatEquipmentDisplayName(post.equipment.name);
+  const displayTitle = formatArticleDisplayTitle(post.title, post.equipment.name);
+
   return (
     <Card>
       {post.heroImage ? (
@@ -491,11 +540,11 @@ function PostCard({ copy, locale, post }) {
             {copy.publishedLabel}: {formatDateLabel(locale, post.publishedAt)}
           </span>
         ) : null}
-        <span>{post.equipment.name}</span>
+        <span>{displayEquipmentName}</span>
       </MetaRow>
       <div>
         <PostCardTitle>
-          <TitleLink href={post.path}>{post.title}</TitleLink>
+          <TitleLink href={post.path}>{displayTitle}</TitleLink>
         </PostCardTitle>
       </div>
       <PostCardText>{post.excerpt}</PostCardText>
@@ -1065,20 +1114,20 @@ const PostKicker = styled.p`
 const PostTitle = styled.h1`
   color: #16243b;
   font-family: var(--font-editorial), Georgia, serif;
-  font-size: clamp(3rem, 8vw, 5.8rem);
+  font-size: clamp(2.15rem, 4.8vw, 3.4rem);
   font-weight: 600;
-  letter-spacing: -0.06em;
-  line-height: 0.94;
+  letter-spacing: -0.045em;
+  line-height: 1;
   margin: 0;
-  max-width: 12ch;
+  max-width: 15ch;
   text-wrap: balance;
 `;
 
 const PostDeck = styled.p`
   color: rgba(54, 67, 88, 0.92);
   font-family: var(--font-editorial), Georgia, serif;
-  font-size: clamp(1.2rem, 2.6vw, 1.5rem);
-  line-height: 1.58;
+  font-size: clamp(1.02rem, 2vw, 1.18rem);
+  line-height: 1.7;
   margin: 0;
   max-width: 42ch;
 `;
@@ -1183,9 +1232,9 @@ const HeroSnapshotEyebrow = styled.p`
 
 const HeroSnapshotTitle = styled.h2`
   color: #16243b;
-  font-size: clamp(1.2rem, 3vw, 1.45rem);
+  font-size: clamp(1rem, 2vw, 1.18rem);
   letter-spacing: -0.03em;
-  line-height: 1.08;
+  line-height: 1.18;
   margin: 0;
 `;
 
@@ -1431,10 +1480,10 @@ const SectionLabel = styled.span`
 const PostSectionTitle = styled.h2`
   color: #16243b;
   font-family: var(--font-editorial), Georgia, serif;
-  font-size: clamp(1.9rem, 3.2vw, 2.6rem);
+  font-size: clamp(1.35rem, 2.4vw, 1.8rem);
   font-weight: 600;
-  letter-spacing: -0.045em;
-  line-height: 1.03;
+  letter-spacing: -0.035em;
+  line-height: 1.12;
   margin: 0;
   text-wrap: balance;
 `;
@@ -1699,7 +1748,7 @@ function getArticleSectionLabel(section) {
 }
 
 function getImageResourceTitle(image, index) {
-  const candidate = image?.caption || image?.alt;
+  const candidate = image?.alt || image?.caption;
 
   return candidate && `${candidate}`.trim() ? candidate : `Photo resource ${index + 1}`;
 }
