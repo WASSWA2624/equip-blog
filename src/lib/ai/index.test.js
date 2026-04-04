@@ -87,7 +87,7 @@ function createPromptLayers() {
 function createGenerationRequest(overrides = {}) {
   return {
     articleDepth: "complete",
-    equipmentName: "Microscope",
+    equipmentName: "Endoscopy machine",
     includeFaults: true,
     includeImages: true,
     includeManualLinks: true,
@@ -102,20 +102,20 @@ function createGenerationRequest(overrides = {}) {
   };
 }
 
-async function createMicroscopeFixtureResolution() {
+async function createEndoscopyFixtureResolution() {
   const [{ getFixtureByNormalizedEquipmentName }, { buildVerifiedResearchPayload }] = await Promise.all([
     import("./fixture-data"),
     import("@/lib/research"),
   ]);
-  const fixture = getFixtureByNormalizedEquipmentName("microscope");
+  const fixture = getFixtureByNormalizedEquipmentName("endoscopy machine");
   const researchPayload = buildVerifiedResearchPayload(
     {
       ...fixture.researchInput,
       equipment: {
         aliases: fixture.researchInput.aliases || [],
-        name: "Microscope",
+        name: "Endoscopy machine",
       },
-      equipmentName: "Microscope",
+      equipmentName: "Endoscopy machine",
       locale: "en",
       sourceConfigs: [],
     },
@@ -137,12 +137,12 @@ function createDuplicatePost(overrides = {}) {
     id: "post_1",
     publishedAt: new Date("2026-04-03T08:00:00.000Z"),
     scheduledPublishAt: null,
-    slug: "microscope",
+    slug: "endoscopy-machine",
     status: "PUBLISHED",
     translations: [
       {
         id: "translation_existing",
-        title: "Microscope",
+        title: "Endoscopy machine",
       },
     ],
     updatedAt: new Date("2026-04-03T09:00:00.000Z"),
@@ -193,19 +193,19 @@ describe("AI composition pipeline", () => {
     });
   });
 
-  it("builds a compliant microscope draft package with disclaimer and references preserved", async () => {
+  it("builds a compliant endoscopy machine draft package with disclaimer and references preserved", async () => {
     const prisma = {
       sourceConfig: {
         findMany: vi.fn().mockResolvedValue([]),
       },
     };
     const { composeDraftPackage, generatedArticleSectionOrder } = await import("./index");
-    const fixtureResolution = await createMicroscopeFixtureResolution();
+    const fixtureResolution = await createEndoscopyFixtureResolution();
 
     const draft = await composeDraftPackage(
       {
         articleDepth: "complete",
-        equipmentName: "Microscope",
+        equipmentName: "Endoscopy machine",
         includeFaults: true,
         includeImages: true,
         includeManualLinks: true,
@@ -238,16 +238,73 @@ describe("AI composition pipeline", () => {
     expect(sectionIds).toEqual(
       generatedArticleSectionOrder.filter((sectionId) => sectionIds.includes(sectionId)),
     );
+    expect(sectionIds).toContain("operation_visual_guide");
+    expect(
+      sectionIds.includes("components_visual_guide") || sectionIds.includes("workflow_visual_guide"),
+    ).toBe(true);
+    expect(
+      draft.article.sections.find((section) => section.id === "featured_image")?.images,
+    ).toEqual([
+      expect.objectContaining({
+        sourceUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Endoscopy_Surgery.jpg",
+      }),
+    ]);
+    expect(
+      draft.article.sections.find((section) => section.id === "operation_visual_guide")?.images,
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourceUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Endoscopy.jpg",
+        }),
+        expect.objectContaining({
+          sourceUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Flexibles_Endoskop.jpg",
+        }),
+      ]),
+    );
+    expect(
+      draft.article.sections.find((section) => section.id === "components_visual_guide")?.images,
+    ).toEqual([
+      expect.objectContaining({
+        sourceUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Flexibles_Endoskop.jpg",
+      }),
+    ]);
+    expect(
+      draft.article.sections.find((section) => section.id === "model_visual_guide")?.images,
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourceUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Bronchoscope.jpg",
+        }),
+        expect.objectContaining({
+          sourceUrl:
+            "https://commons.wikimedia.org/wiki/Special:FilePath/Endoscope_at_Palais_de_la_Decouverte-IMG_6924-white.jpg",
+        }),
+      ]),
+    );
+    expect(
+      draft.article.sections.find((section) => section.id === "workflow_visual_guide")?.images,
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourceUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Bronchoscopy_nci-vol-1950-300.jpg",
+        }),
+      ]),
+    );
     expect(draft.article.sections.find((section) => section.id === "references")?.items.length).toBeGreaterThan(0);
     expect(
-      draft.article.sections.find((section) => section.id === "manuals_and_technical_documents")?.items[0],
-    ).toMatchObject({
-      accessStatus: "available",
-      fileType: "PDF",
-      language: "English",
-      lastCheckedAt: "2026-04-03T08:00:00.000Z",
-      notes: "Operator guide covering routine cleaning, handling, and care.",
-    });
+      draft.article.sections.find((section) => section.id === "manuals_and_technical_documents")?.items,
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          accessStatus: "available",
+          fileType: "PDF",
+          language: "English",
+          lastCheckedAt: "2026-04-03T08:00:00.000Z",
+          notes: "Operator guide for processor startup, image controls, and connected-scope workflow.",
+          title: "Video endoscopy processor operator manual",
+        }),
+      ]),
+    );
     expect(draft.article.sections.find((section) => section.id === "references")?.items[0]).toMatchObject({
       sourceReferenceIds: expect.any(Array),
     });
@@ -260,9 +317,10 @@ describe("AI composition pipeline", () => {
     expect(draft.article.excerpt.toLowerCase()).not.toContain("draft");
     expect(draft.article.excerpt.toLowerCase()).not.toContain("research bundle");
     expect(draft.article.contentMd.toLowerCase()).not.toContain("synthesized orientation layer");
-    expect(draft.article.contentMd).toContain("# Microscope");
+    expect(draft.article.contentMd).toContain("# Endoscopy machine");
+    expect(draft.article.faq.length).toBeGreaterThanOrEqual(7);
     expect(draft.article.contentHtml).toContain("<article>");
-    expect(draft.seoPayload.canonicalUrl).toContain("/en/blog/microscope");
+    expect(draft.seoPayload.canonicalUrl).toContain("/en/blog/endoscopy-machine");
   });
 
   it("allows non-OpenAI provider configs to use the deterministic composition path", async () => {
@@ -359,7 +417,7 @@ describe("AI composition pipeline", () => {
     });
   });
 
-  it("no longer fixture-blocks non-microscope equipment when a provider composition path is available", async () => {
+  it("no longer fixture-blocks non-endoscopy equipment when a provider composition path is available", async () => {
     const prisma = {
       sourceConfig: {
         findMany: vi.fn().mockResolvedValue([]),
@@ -694,7 +752,7 @@ describe("AI composition pipeline", () => {
     });
   });
 
-  it("persists the microscope acceptance draft, seo payload, structured blocks, and generation job", async () => {
+  it("persists the endoscopy machine acceptance draft, seo payload, structured blocks, and generation job", async () => {
     const generationJobCreate = vi.fn().mockResolvedValue({
       id: "job_1",
     });
@@ -710,13 +768,13 @@ describe("AI composition pipeline", () => {
           .mockResolvedValueOnce(null)
           .mockResolvedValueOnce({
             id: "equipment_1",
-            name: "Microscope",
-            normalizedName: "microscope",
-            slug: "microscope",
+            name: "Endoscopy machine",
+            normalizedName: "endoscopy machine",
+            slug: "endoscopy-machine",
           }),
         upsert: vi.fn().mockResolvedValue({
           id: "equipment_1",
-          slug: "microscope",
+          slug: "endoscopy-machine",
         }),
       },
       fault: {
@@ -744,13 +802,13 @@ describe("AI composition pipeline", () => {
       post: {
         create: vi.fn().mockResolvedValue({
           id: "post_1",
-          slug: "microscope",
+          slug: "endoscopy-machine",
         }),
         findFirst: vi.fn().mockResolvedValue(null),
         findMany: vi.fn().mockResolvedValue([]),
         update: vi.fn().mockResolvedValue({
           id: "post_1",
-          slug: "microscope",
+          slug: "endoscopy-machine",
         }),
       },
       postManufacturer: {
@@ -798,7 +856,7 @@ describe("AI composition pipeline", () => {
       },
     };
     const { generateDraftFromRequest } = await import("./index");
-    const fixtureResolution = await createMicroscopeFixtureResolution();
+    const fixtureResolution = await createEndoscopyFixtureResolution();
 
     const result = await generateDraftFromRequest(createGenerationRequest(), {
         actorId: "user_1",
@@ -845,9 +903,9 @@ describe("AI composition pipeline", () => {
       equipment: {
         findUnique: vi.fn().mockResolvedValue({
           id: "equipment_1",
-          name: "Microscope",
-          normalizedName: "microscope",
-          slug: "microscope",
+          name: "Endoscopy machine",
+          normalizedName: "endoscopy machine",
+          slug: "endoscopy-machine",
         }),
       },
       generationJob: {
@@ -936,17 +994,17 @@ describe("AI composition pipeline", () => {
           .fn()
           .mockResolvedValueOnce({
             id: "equipment_1",
-            slug: "microscope",
+            slug: "endoscopy-machine",
           })
           .mockResolvedValueOnce({
             id: "equipment_1",
-            name: "Microscope",
-            normalizedName: "microscope",
-            slug: "microscope",
+            name: "Endoscopy machine",
+            normalizedName: "endoscopy machine",
+            slug: "endoscopy-machine",
           }),
         upsert: vi.fn().mockResolvedValue({
           id: "equipment_1",
-          slug: "microscope",
+          slug: "endoscopy-machine",
         }),
       },
       fault: {
@@ -974,13 +1032,13 @@ describe("AI composition pipeline", () => {
       post: {
         create: vi.fn().mockResolvedValue({
           id: "post_2",
-          slug: "microscope-2",
+          slug: "endoscopy-machine-2",
         }),
         findFirst: vi.fn().mockResolvedValue(null),
         findMany: vi.fn().mockResolvedValue([duplicatePost]),
         update: vi.fn().mockResolvedValue({
           id: "post_1",
-          slug: "microscope",
+          slug: "endoscopy-machine",
         }),
       },
       postManufacturer: {
@@ -1005,9 +1063,9 @@ describe("AI composition pipeline", () => {
       equipment: {
         findUnique: vi.fn().mockResolvedValue({
           id: "equipment_1",
-          name: "Microscope",
-          normalizedName: "microscope",
-          slug: "microscope",
+          name: "Endoscopy machine",
+          normalizedName: "endoscopy machine",
+          slug: "endoscopy-machine",
         }),
       },
       generationJob: {
@@ -1033,7 +1091,7 @@ describe("AI composition pipeline", () => {
       },
     };
     const { generateDraftFromRequest } = await import("./index");
-    const fixtureResolution = await createMicroscopeFixtureResolution();
+    const fixtureResolution = await createEndoscopyFixtureResolution();
 
     const result = await generateDraftFromRequest(
       createGenerationRequest({
@@ -1063,7 +1121,7 @@ describe("AI composition pipeline", () => {
     expect(tx.post.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          slug: "microscope",
+          slug: "endoscopy-machine",
         }),
         where: {
           id: "post_1",

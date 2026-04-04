@@ -41,11 +41,15 @@ const canonicalStructuredSectionTitles = Object.freeze({
   faults_and_remedies: "Faults and remedies",
   featured_image: "Featured image",
   manuals_and_technical_documents: "Manuals and technical documents",
+  model_visual_guide: "Model visual guide",
+  operation_visual_guide: "Operation visual guide",
   preventive_maintenance_schedule: "Preventive maintenance schedule",
   principle_of_operation: "Principle of operation",
   references: "References",
   safety_precautions: "Safety precautions",
   sop_and_how_to_use_guidance: "SOP and how-to-use guidance",
+  workflow_visual_guide: "Workflow visual guide",
+  components_visual_guide: "Components visual guide",
   types_and_variants: "Types and variants",
   uses_and_applications: "Uses and applications",
 });
@@ -795,7 +799,11 @@ function normalizeStructuredSections(translation, sourceReferences = []) {
       }
 
       if (kind === "image_gallery") {
-        normalizedSection.images = Array.isArray(section.images) ? section.images.filter(Boolean) : [];
+        const fallbackAlt =
+          takeFirstText(section.title, translation?.title, "Article illustration") || "Article illustration";
+        normalizedSection.images = Array.isArray(section.images)
+          ? section.images.map((image) => createSectionImage(image, fallbackAlt)).filter(Boolean)
+          : [];
       }
 
       return normalizedSection;

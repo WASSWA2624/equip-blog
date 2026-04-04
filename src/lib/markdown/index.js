@@ -35,6 +35,10 @@ function renderMarkdownSection(section) {
   const lines = [`## ${section.title}`];
 
   if (section.kind === "image_gallery") {
+    if (section.intro) {
+      lines.push(section.intro);
+    }
+
     for (const image of section.images || []) {
       lines.push(`![${image.alt || image.caption || section.title}](${image.url})`);
 
@@ -78,6 +82,10 @@ function renderMarkdownSection(section) {
       );
     }
   } else if (section.kind === "faults") {
+    if (section.intro) {
+      lines.push(section.intro);
+    }
+
     for (const fault of section.items || []) {
       lines.push(`### ${fault.title}`);
       lines.push(`- Cause: ${fault.cause || "Not verified."}`);
@@ -96,6 +104,10 @@ function renderMarkdownSection(section) {
         .join("\n"),
     );
   } else if (section.kind === "manuals") {
+    if (section.intro) {
+      lines.push(section.intro);
+    }
+
     lines.push(
       renderMarkdownList(section.items || [], (item) => {
         const details = [item.title];
@@ -145,7 +157,7 @@ function renderHtmlSection(section) {
       })
       .join("");
 
-    return `<section>${title}${gallery}</section>`;
+    return `<section>${title}${section.intro ? `<p>${escapeHtml(section.intro)}</p>` : ""}${gallery}</section>`;
   }
 
   if (section.kind === "text") {
@@ -203,7 +215,7 @@ function renderHtmlSection(section) {
       )
       .join("");
 
-    return `<section>${title}${items}</section>`;
+    return `<section>${title}${section.intro ? `<p>${escapeHtml(section.intro)}</p>` : ""}${items}</section>`;
   }
 
   if (section.kind === "steps") {
@@ -220,7 +232,7 @@ function renderHtmlSection(section) {
   }
 
   if (section.kind === "manuals") {
-    return `<section>${title}${renderHtmlList(
+    return `<section>${title}${section.intro ? `<p>${escapeHtml(section.intro)}</p>` : ""}${renderHtmlList(
       section.items || [],
       (item) =>
         `${renderHtmlExternalLink(item.title, item.url)}${

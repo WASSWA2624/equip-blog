@@ -1237,8 +1237,14 @@ function normalizeMediaCandidate(
       sanitizeExternalUrl(candidate?.sourceUrl || candidate?.url) ||
       sourceReference?.url ||
       undefined,
+    sectionAffinity: Array.isArray(candidate?.sectionAffinity)
+      ? candidate.sectionAffinity.map((value) => collapseWhitespace(value)).filter(Boolean)
+      : collapseWhitespace(candidate?.sectionAffinity)
+        ? [collapseWhitespace(candidate.sectionAffinity)]
+        : [],
     storageDriver: collapseWhitespace(candidate?.storageDriver) || undefined,
     storageKey: collapseWhitespace(candidate?.storageKey) || undefined,
+    title: collapseWhitespace(candidate?.title) || undefined,
     usageNotes: collapseWhitespace(candidate?.usageNotes) || undefined,
     width: Number.isInteger(candidate?.width) ? candidate.width : undefined,
   };

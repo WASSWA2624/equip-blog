@@ -54,4 +54,46 @@ describe("markdown rendering", () => {
     expect(html).toContain('href="https://example.com/manual.pdf"');
     expect(html).toContain(">Unsafe reference<");
   });
+
+  it("renders image-gallery and manual intros in markdown and html output", () => {
+    const article = {
+      excerpt: "Endoscopy excerpt",
+      sections: [
+        {
+          id: "operation_visual_guide",
+          images: [
+            {
+              alt: "Endoscopy tower",
+              caption: "Tower overview",
+              url: "https://example.com/endoscopy-tower.jpg",
+            },
+          ],
+          intro: "These visuals support the operating workflow.",
+          kind: "image_gallery",
+          title: "Operation visual guide",
+        },
+        {
+          id: "manuals_and_technical_documents",
+          intro: "Consult these documents for model-specific detail.",
+          items: [
+            {
+              title: "Processor manual",
+              url: "https://example.com/processor-manual.pdf",
+            },
+          ],
+          kind: "manuals",
+          title: "Manuals",
+        },
+      ],
+      title: "Endoscopy machine",
+    };
+
+    const markdown = buildMarkdownFromStructuredArticle(article);
+    const html = buildHtmlFromStructuredArticle(article);
+
+    expect(markdown).toContain("These visuals support the operating workflow.");
+    expect(markdown).toContain("Consult these documents for model-specific detail.");
+    expect(html).toContain("<p>These visuals support the operating workflow.</p>");
+    expect(html).toContain("<p>Consult these documents for model-specific detail.</p>");
+  });
 });

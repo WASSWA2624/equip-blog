@@ -2723,6 +2723,10 @@ function getArticleSectionLabel(section) {
     return "Model guide";
   }
 
+  if (section.kind === "image_gallery") {
+    return "Visual guide";
+  }
+
   if (section.kind === "list") {
     return "Key points";
   }
@@ -2805,8 +2809,8 @@ function getSectionEvidenceSummary(section) {
   }
 
   return sourceCount === 1
-    ? "Evidence base: 1 cited source. The prose below condenses that material into plain-language guidance."
-    : `Evidence base: ${sourceCount} cited sources. The prose below condenses those materials into plain-language guidance.`;
+    ? "Evidence base: 1 cited source."
+    : `Evidence base: ${sourceCount} cited sources.`;
 }
 
 function getDocumentMetaLabel(item, locale) {
@@ -3119,16 +3123,7 @@ function renderArticleSection(section, copy, { locale, presentation = "default" 
   }
 
   if (section.kind === "models_by_manufacturer") {
-    return (
-      <>
-        {section.intro ? (
-          <ArticleBody>
-            <p>{section.intro}</p>
-          </ArticleBody>
-        ) : null}
-        <ExpandableModelGroups groups={section.groups || []} />
-      </>
-    );
+    return <ExpandableModelGroups groups={section.groups || []} />;
   }
 
   if (section.kind === "faults") {

@@ -742,6 +742,165 @@ function getGenerationModeProfile(articleDepth) {
   };
 }
 
+function getResearchComplexityProfile(researchPayload) {
+  const componentCount = researchPayload.components?.length || 0;
+  const variantCount = researchPayload.variants?.length || 0;
+  const useCount = researchPayload.uses?.length || 0;
+  const manufacturerCount = researchPayload.manufacturers?.length || 0;
+  const modelCount = researchPayload.manufacturers?.reduce(
+    (count, manufacturer) => count + (manufacturer.models?.length || 0),
+    0,
+  ) || 0;
+  const faultCount = researchPayload.faults?.length || 0;
+  const maintenanceTaskCount = researchPayload.maintenanceTasks?.length || 0;
+  const manualCount = researchPayload.manuals?.length || 0;
+  const mediaCount = researchPayload.mediaCandidates?.length || 0;
+  const complexityScore =
+    componentCount +
+    variantCount +
+    useCount +
+    manufacturerCount +
+    modelCount +
+    faultCount +
+    maintenanceTaskCount +
+    manualCount +
+    Math.min(mediaCount, 3);
+  let tier = "standard";
+
+  if (complexityScore >= 26) {
+    tier = "advanced";
+  } else if (complexityScore >= 14) {
+    tier = "intermediate";
+  }
+
+  return {
+    complexityScore,
+    componentCount,
+    faultCount,
+    maintenanceTaskCount,
+    manualCount,
+    manufacturerCount,
+    mediaCount,
+    modelCount,
+    tier,
+    useCount,
+    variantCount,
+  };
+}
+
+function getAdaptiveGenerationProfile(articleDepth, researchPayload) {
+  const baseProfile = getGenerationModeProfile(articleDepth);
+  const complexityProfile = getResearchComplexityProfile(researchPayload);
+  const detailBonus =
+    complexityProfile.tier === "advanced" ? 2 : complexityProfile.tier === "intermediate" ? 1 : 0;
+
+  return {
+    ...baseProfile,
+    complexity: complexityProfile,
+    faqCount:
+      articleDepth === "fast" ? baseProfile.faqCount : Math.min(baseProfile.faqCount + detailBonus, 8),
+    overviewSentenceCount:
+      articleDepth === "fast"
+        ? baseProfile.overviewSentenceCount
+        : Math.min(baseProfile.overviewSentenceCount + detailBonus * 2, 10),
+  };
+}
+
+function createVisualGuideSection(id, title, intro, images = []) {
+  if (!images.length) {
+    return null;
+  }
+
+  return createSection(id, title, {
+    images,
+    intro,
+    kind: "image_gallery",
+    sourceReferenceIds: collectSourceReferenceIds(images),
+  });
+}
+
+function takeAffinitizedImages(images, sectionId, fallbackCount = 0, fallbackState = null) {
+  const matchedImages = (images || []).filter((image) => image?.sectionAffinity?.includes(sectionId));
+
+  if (matchedImages.length) {
+    return matchedImages;
+  }
+
+  if (!fallbackCount || !fallbackState) {
+    return [];
+  }
+
+  const fallbackImages = [];
+
+  for (const image of images || []) {
+    const fallbackKey = image?.sourceUrl || image?.publicUrl || image?.url || image?.alt || null;
+
+    if (!fallbackKey || fallbackState.usedKeys.has(fallbackKey)) {
+      continue;
+    }
+
+    fallbackState.usedKeys.add(fallbackKey);
+    fallbackImages.push(image);
+
+    if (fallbackImages.length >= fallbackCount) {
+      break;
+    }
+  }
+
+  return fallbackImages;
+}
+
+function buildVisualGuideSections(researchPayload, request) {
+  if (!request.includeImages) {
+    return {};
+  }
+
+  const images = [...(researchPayload.mediaCandidates || [])];
+  const fallbackState = {
+    usedKeys: new Set(),
+  };
+  const featuredImages = takeAffinitizedImages(images, "featured_image", 1, fallbackState);
+  const operationImages = takeAffinitizedImages(images, "operation_visual_guide", 1, fallbackState);
+  const componentsImages = takeAffinitizedImages(images, "components_visual_guide", 1, fallbackState);
+  const modelImages = takeAffinitizedImages(images, "model_visual_guide", 2, fallbackState);
+  const workflowImages = takeAffinitizedImages(images, "workflow_visual_guide", images.length, fallbackState);
+
+  return {
+    componentsVisualGuideSection: createVisualGuideSection(
+      "components_visual_guide",
+      "Components visual guide",
+      "These illustrations help readers connect major assemblies to the component descriptions so the hardware layout is easier to picture while reading.",
+      componentsImages,
+    ),
+    featuredImageSection: featuredImages.length
+      ? createVisualGuideSection(
+          "featured_image",
+          "Featured image",
+          "The lead visual frames the equipment as a complete working system before the article moves into operation, maintenance, and troubleshooting detail.",
+          featuredImages,
+        )
+      : null,
+    modelVisualGuideSection: createVisualGuideSection(
+      "model_visual_guide",
+      "Model visual guide",
+      "These visuals add concrete examples of the equipment family so readers can connect model names to recognizable real-world configurations.",
+      modelImages,
+    ),
+    operationVisualGuideSection: createVisualGuideSection(
+      "operation_visual_guide",
+      "Operation visual guide",
+      "Operation-focused visuals show the parts of the system that matter most during setup, image formation, and live use.",
+      operationImages,
+    ),
+    workflowVisualGuideSection: createVisualGuideSection(
+      "workflow_visual_guide",
+      "Workflow visual guide",
+      "Workflow visuals support the procedural sections by illustrating handling, display, or room-level context that affects safe use.",
+      workflowImages,
+    ),
+  };
+}
+
 function formatAudienceLabel(audience) {
   return audience.replace(/_/g, " ");
 }
@@ -947,7 +1106,7 @@ function assertNoReaderFacingDisclosure(article) {
 }
 
 function buildOverviewParagraphs(researchPayload, request) {
-  const profile = getGenerationModeProfile(request.articleDepth);
+  const profile = getAdaptiveGenerationProfile(request.articleDepth, researchPayload);
   const audiences = request.targetAudience.map(formatAudienceLabel).join(", ");
   const paragraphs = [
     researchPayload.definition?.summary ||
@@ -1012,7 +1171,50 @@ function buildOverviewParagraphs(researchPayload, request) {
     }
   }
 
+  if (profile.complexity.tier === "advanced") {
+    paragraphs.push(
+      `Because ${request.equipmentName} combines multiple subsystems, this article treats it as a coordinated platform rather than a single isolated device, with attention to imaging, accessories, maintenance, and workflow dependencies.`,
+    );
+  }
+
   return chunkList(paragraphs, profile.overviewSentenceCount);
+}
+
+function buildPrincipleOfOperationParagraphs(researchPayload, request) {
+  const profile = getAdaptiveGenerationProfile(request.articleDepth, researchPayload);
+  const paragraphs = [
+    researchPayload.operatingPrinciple?.summary ||
+      "The available references did not fully describe the operating principle for this equipment type.",
+    "For exact controls, configurations, and model-specific behavior, follow the official operator guide for the unit in use.",
+  ];
+
+  if (profile.complexity.componentCount >= 5) {
+    paragraphs.push(
+      "In practice, the operating principle depends on the coordinated performance of optics or sensing hardware, signal processing, user controls, and the supporting accessories that keep the procedure or workflow stable.",
+    );
+  }
+
+  if (profile.complexity.faultCount >= 3) {
+    paragraphs.push(
+      "That is why troubleshooting should be approached as a system-level exercise: image, motion, control, power, and accessory failures can each distort the final output in different ways.",
+    );
+  }
+
+  return paragraphs;
+}
+
+function buildExpertSectionDescription(entityName, description, complexityTier, emphasis) {
+  const normalizedDescription = collapseWhitespace(description);
+
+  if (!normalizedDescription) {
+    return entityName;
+  }
+
+  if (complexityTier !== "advanced") {
+    return normalizedDescription;
+  }
+
+  return `${normalizedDescription} ${emphasis}`;
 }
 
 function buildManufacturersSection(researchPayload) {
@@ -1050,8 +1252,6 @@ function buildModelsSection(researchPayload) {
           summary: model.summary,
         })),
     })),
-    intro:
-      "Models are grouped under their primary manufacturer so readers can compare commonly encountered options more easily.",
     kind: "models_by_manufacturer",
     sourceReferenceIds: collectSourceReferenceIds(
       researchPayload.manufacturers.flatMap((manufacturer) => manufacturer.models || []),
@@ -1184,19 +1384,20 @@ function buildSopSection(researchPayload, fixture) {
 }
 
 function buildFaqSection(researchPayload, request) {
-  const profile = getGenerationModeProfile(request.articleDepth);
+  const profile = getAdaptiveGenerationProfile(request.articleDepth, researchPayload);
+  const equipmentLabel = normalizeDisplayText(request.equipmentName) || researchPayload.equipment.name || "this equipment";
   const faqItems = [
     {
       answer:
         researchPayload.definition?.summary ||
-        "A microscope magnifies small specimens so they can be inspected safely and systematically.",
-      question: "What is a microscope used for?",
+        `${equipmentLabel} is used according to the verified references summarized in this guide.`,
+      question: `What is ${/^[aeiou]/i.test(equipmentLabel) ? "an" : "a"} ${equipmentLabel.toLowerCase()} used for?`,
     },
     {
       answer:
         researchPayload.operatingPrinciple?.summary ||
-        "A microscope combines illumination with optical magnification to enlarge specimen detail.",
-      question: "How does a microscope work?",
+        `${equipmentLabel} works according to the verified operating principle summarized in this guide.`,
+      question: `How does ${/^[aeiou]/i.test(equipmentLabel) ? "an" : "a"} ${equipmentLabel.toLowerCase()} work?`,
     },
     {
       answer:
@@ -1207,12 +1408,19 @@ function buildFaqSection(researchPayload, request) {
     {
       answer:
         "Daily cleaning of optical surfaces and scheduled preventive maintenance reduce unexpected failures and image-quality drift.",
-      question: "Why is routine microscope maintenance important?",
+      question: `Why is routine ${equipmentLabel.toLowerCase()} maintenance important?`,
     },
     {
       answer:
         "Use only the model-specific operator manual, approved cleaning materials, and institutional biomedical engineering procedures for deeper service actions.",
       question: "Which documents should staff follow before maintenance or repair?",
+    },
+    {
+      answer:
+        profile.complexity.tier === "advanced"
+          ? "Complex equipment should be interpreted as an integrated system, so image quality, accessories, maintenance condition, and procedural setup all need to be reviewed together rather than in isolation."
+          : "Read the equipment as a complete working system so setup, operation, and maintenance decisions stay connected.",
+      question: `How should complex ${equipmentLabel.toLowerCase()} systems be assessed?`,
     },
     {
       answer:
@@ -1263,7 +1471,8 @@ function buildDisclaimerSection(disclaimer) {
 
 function buildStructuredArticle({ disclaimer, fixture, providerConfig, request, researchPayload }) {
   const equipmentTitle = normalizeDisplayText(request.equipmentName) || researchPayload.equipment.name;
-  const profile = getGenerationModeProfile(request.articleDepth);
+  const profile = getAdaptiveGenerationProfile(request.articleDepth, researchPayload);
+  const visualGuideSections = buildVisualGuideSections(researchPayload, request);
   const title =
     request.articleDepth === "repair"
       ? `${equipmentTitle}: Troubleshooting, Faults, Maintenance, and Manuals`
@@ -1275,22 +1484,13 @@ function buildStructuredArticle({ disclaimer, fixture, providerConfig, request, 
     request.articleDepth === "fast"
       ? "This concise guide focuses on core operation, care, and safety points, with references for deeper follow-up."
       : profile.sectionDetailLevel === "comprehensive"
-        ? "This detailed guide explains how the equipment works, what its major parts do, where it is used, how to maintain it, which faults are commonly encountered, and which references or manuals support those points."
+        ? `This detailed guide explains how the equipment works, what its major parts do, where it is used, how to maintain it, which faults are commonly encountered, and which references or manuals support those points${profile.complexity.tier === "advanced" ? ", while treating the equipment as a multi-subsystem clinical platform rather than a simple standalone device" : ""}.`
         : "This guide covers definition, operation, maintenance, common faults, and supporting manuals while keeping safety notes and references easy to review.",
   ]
     .filter(Boolean)
     .join(" ");
-  const imageCandidates = request.includeImages ? researchPayload.mediaCandidates || [] : [];
   const baseSections = [
-    ...(imageCandidates.length
-      ? [
-          createSection("featured_image", "Featured image", {
-            images: imageCandidates,
-            kind: "image_gallery",
-            sourceReferenceIds: collectSourceReferenceIds(imageCandidates),
-          }),
-        ]
-      : []),
+    ...(visualGuideSections.featuredImageSection ? [visualGuideSections.featuredImageSection] : []),
     createSection("definition_and_overview", "Definition and overview", {
       kind: "text",
       paragraphs: buildOverviewParagraphs(researchPayload, request),
@@ -1298,30 +1498,42 @@ function buildStructuredArticle({ disclaimer, fixture, providerConfig, request, 
     }),
     createSection("principle_of_operation", "Principle of operation", {
       kind: "text",
-      paragraphs: [
-        researchPayload.operatingPrinciple?.summary ||
-          "The available references did not fully describe the operating principle for this equipment type.",
-        "For exact controls, configurations, and model-specific behavior, follow the official operator guide for the unit in use.",
-      ],
+      paragraphs: buildPrincipleOfOperationParagraphs(researchPayload, request),
       sourceReferenceIds: collectSourceReferenceIds([researchPayload.operatingPrinciple]),
     }),
+    ...(visualGuideSections.operationVisualGuideSection
+      ? [visualGuideSections.operationVisualGuideSection]
+      : []),
     createSection("components_and_parts", "Components and parts", {
       intro:
         "Component descriptions focus on what each part contributes to normal operation so the device can be understood as a working system instead of a list of names.",
       kind: "list",
       items: researchPayload.components.map((component) => ({
-        description: component.details || component.label,
+        description: buildExpertSectionDescription(
+          component.label,
+          component.details || component.label,
+          profile.complexity.tier,
+          "In expert review, this part is assessed in terms of how its condition changes image quality, control response, safety, or serviceability across the full system.",
+        ),
         sourceReferenceIds: component.sourceReferenceIds,
         title: component.label,
       })),
       sourceReferenceIds: collectSourceReferenceIds(researchPayload.components),
     }),
+    ...(visualGuideSections.componentsVisualGuideSection
+      ? [visualGuideSections.componentsVisualGuideSection]
+      : []),
     createSection("types_and_variants", "Types and variants", {
       intro:
         "Variant coverage highlights the practical differences that affect setup, viewing, workflow, or expected use context.",
       kind: "list",
       items: researchPayload.variants.map((variant) => ({
-        description: variant.details || variant.label,
+        description: buildExpertSectionDescription(
+          variant.label,
+          variant.details || variant.label,
+          profile.complexity.tier,
+          "Those differences matter because they change what operators, technicians, and support teams need to watch during setup and use.",
+        ),
         sourceReferenceIds: variant.sourceReferenceIds,
         title: variant.label,
       })),
@@ -1332,7 +1544,12 @@ function buildStructuredArticle({ disclaimer, fixture, providerConfig, request, 
         "Applications are described in concrete workflow terms so readers can connect the equipment to real clinical, laboratory, teaching, or service contexts.",
       kind: "list",
       items: researchPayload.uses.map((useCase) => ({
-        description: useCase.details || useCase.label,
+        description: buildExpertSectionDescription(
+          useCase.label,
+          useCase.details || useCase.label,
+          profile.complexity.tier,
+          "That workflow context helps explain why configuration choices, accessory readiness, and maintenance discipline directly affect outcomes.",
+        ),
         sourceReferenceIds: useCase.sourceReferenceIds,
         title: useCase.label,
       })),
@@ -1347,6 +1564,9 @@ function buildStructuredArticle({ disclaimer, fixture, providerConfig, request, 
 
   if (request.includeModels && researchPayload.manufacturers.some((manufacturer) => manufacturer.models?.length)) {
     optionalSections.push(buildModelsSection(researchPayload));
+    if (visualGuideSections.modelVisualGuideSection) {
+      optionalSections.push(visualGuideSections.modelVisualGuideSection);
+    }
   }
 
   if (request.includeFaults && researchPayload.faults.length) {
@@ -1368,6 +1588,9 @@ function buildStructuredArticle({ disclaimer, fixture, providerConfig, request, 
     }),
   );
   optionalSections.push(buildSopSection(researchPayload, fixture));
+  if (visualGuideSections.workflowVisualGuideSection) {
+    optionalSections.push(visualGuideSections.workflowVisualGuideSection);
+  }
 
   if (request.includeManualLinks && researchPayload.manuals.length) {
     optionalSections.push(
@@ -1582,6 +1805,7 @@ async function composeStructuredArticleWithOpenAiSdk({
   providerApiKey,
   providerConfig,
   request,
+  researchPayload,
 }) {
   const openai = createOpenAI({
     apiKey: providerApiKey,
@@ -1592,6 +1816,7 @@ async function composeStructuredArticleWithOpenAiSdk({
     [
       "Return a complete structured article object that satisfies the provided schema expectations.",
       `Use "${request.equipmentName}" as the target equipment name.`,
+      `Write like a domain expert for ${request.equipmentName}, with the judgment of a specialist who understands operation, maintenance, troubleshooting, and the practical differences between models or subsystems.`,
       "Do not hardcode microscope-specific content unless the requested equipment is actually a microscope.",
       `Keep sections in this order when present: ${generatedArticleSectionOrder.join(", ")}.`,
       "Always include the required sections: definition_and_overview, principle_of_operation, daily_care_and_maintenance, references, disclaimer.",
@@ -1600,6 +1825,13 @@ async function composeStructuredArticleWithOpenAiSdk({
       "Default to detailed, educational explanations that unpack how parts, workflow steps, maintenance tasks, and fault patterns relate to one another.",
       "When evidence exists, prefer fully populated sections over skeletal ones and explain the rationale behind safety, maintenance, and troubleshooting guidance.",
       "For text sections, write multi-paragraph explanations instead of single-sentence summaries unless the requested article depth is explicitly fast.",
+      `Scale the length and depth of the article to the equipment complexity. This request has approximately ${
+        getResearchComplexityProfile(researchPayload).complexityScore
+      } complexity points across components, models, faults, maintenance tasks, manuals, and visuals.`,
+      "If there are multiple subsystems or workflow dependencies, explain how they interact instead of describing each part in isolation.",
+      "When images are available, use as many relevant illustrative photos or trusted linked photo resources as the verified media set permits.",
+      "Distribute visuals across featured, operation, components, model, and workflow image-gallery sections instead of concentrating everything in a single image block.",
+      "Prefer official manufacturer, product, documentation, distributor, or clearly attributable editorial image sources, and preserve attribution, links, and license cues when provided.",
       "Write in a natural editorial voice that reads like a normal published equipment guide.",
       "Do not mention AI, automation, prompts, models, research payloads, internal workflows, or that the article was generated, drafted, compiled, or composed.",
       "If supporting evidence is missing, omit the claim or state the limitation plainly without referring to the generation process.",

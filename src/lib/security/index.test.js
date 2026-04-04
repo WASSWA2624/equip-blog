@@ -94,4 +94,39 @@ describe("security sanitizers", () => {
       },
     ]);
   });
+
+  it("preserves gallery images saved with sourceUrl or publicUrl", () => {
+    const sanitized = sanitizeStructuredContentJson({
+      sections: [
+        {
+          id: "components_visual_guide",
+          images: [
+            {
+              alt: "Source image",
+              sourceUrl: "https://upload.wikimedia.org/wikipedia/commons/b/b6/Flexible_endoscope.jpg",
+            },
+            {
+              alt: "Public image",
+              publicUrl: "https://cdn.example.com/endoscopy/components.jpg",
+            },
+          ],
+          kind: "image_gallery",
+          title: "Components visual guide",
+        },
+      ],
+    });
+
+    expect(sanitized.sections[0].images).toEqual([
+      {
+        alt: "Source image",
+        sourceUrl: "https://upload.wikimedia.org/wikipedia/commons/b/b6/Flexible_endoscope.jpg",
+        url: "https://upload.wikimedia.org/wikipedia/commons/b/b6/Flexible_endoscope.jpg",
+      },
+      {
+        alt: "Public image",
+        publicUrl: "https://cdn.example.com/endoscopy/components.jpg",
+        url: "https://cdn.example.com/endoscopy/components.jpg",
+      },
+    ]);
+  });
 });

@@ -77,7 +77,7 @@ function sanitizeStructuredSection(section) {
   if (Array.isArray(section.images)) {
     nextSection.images = section.images
       .map((image) => {
-        const safeUrl = sanitizeMediaUrl(image?.url);
+        const safeUrl = sanitizeMediaUrl(image?.url || image?.publicUrl || image?.sourceUrl);
 
         if (!safeUrl) {
           return null;
@@ -85,6 +85,8 @@ function sanitizeStructuredSection(section) {
 
         return {
           ...image,
+          publicUrl: image?.publicUrl ? sanitizeMediaUrl(image.publicUrl) : image?.publicUrl,
+          sourceUrl: image?.sourceUrl ? sanitizeMediaUrl(image.sourceUrl) : image?.sourceUrl,
           url: safeUrl,
         };
       })

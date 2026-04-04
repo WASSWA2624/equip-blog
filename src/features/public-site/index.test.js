@@ -416,6 +416,18 @@ describe("public site data", () => {
                 title: "Definition and overview",
               },
               {
+                id: "components_visual_guide",
+                images: [
+                  {
+                    alt: "Microscope focus controls",
+                    caption: "Focus controls and stage arrangement",
+                    sourceUrl: "https://cdn.example.com/microscope-controls.jpg",
+                  },
+                ],
+                kind: "image_gallery",
+                title: "Components visual guide",
+              },
+              {
                 groups: [
                   {
                     manufacturer: "Northfield Optics",
@@ -549,6 +561,7 @@ describe("public site data", () => {
     });
     expect(pageData.article.bodySections.map((section) => section.id)).toEqual([
       "definition_and_overview",
+      "components_visual_guide",
       "uses_and_applications",
       "commonly_encountered_models",
       "manuals_and_technical_documents",
@@ -556,6 +569,17 @@ describe("public site data", () => {
       "references",
       "disclaimer",
     ]);
+    expect(pageData.article.bodySections.find((section) => section.id === "components_visual_guide"))
+      .toMatchObject({
+        images: [
+          expect.objectContaining({
+            caption: "Focus controls and stage arrangement",
+            href: "https://cdn.example.com/microscope-controls.jpg",
+            renderInline: true,
+            url: "https://cdn.example.com/microscope-controls.jpg",
+          }),
+        ],
+      });
     expect(pageData.article.bodySections.find((section) => section.id === "definition_and_overview"))
       .toMatchObject({
         sourceReferenceIds: ["ref_definition_1"],
