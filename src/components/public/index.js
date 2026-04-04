@@ -3589,7 +3589,7 @@ export function PublicPostPage({ locale, messages, pageData }) {
                     Now reading: <strong>{activeSectionLabel}</strong>
                   </SidebarStatusNote>
                 ) : null}
-                <SidebarNavigatorBody ref={navigatorBodyRef}>
+                <SidebarNavigatorBody data-guide-navigator-body="true" ref={navigatorBodyRef}>
                   <TocList>
                     {sectionLinks.map((section) => (
                       <TocItem $active={section.id === activeSectionId} key={section.id}>
