@@ -1353,16 +1353,48 @@ const PostLeadGrid = styled.div`
 
   @media (min-width: 980px) {
     align-items: start;
-    column-gap: clamp(0.95rem, 2vw, 1.35rem);
-    grid-template-columns: minmax(0, 1.08fr) minmax(250px, 0.72fr);
+    column-gap: clamp(1rem, 2.2vw, 1.45rem);
+    grid-template-columns: minmax(0, 1.04fr) minmax(260px, 0.78fr);
   }
 `;
 
 const PostDeckBlock = styled.div`
   align-content: start;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(246, 249, 253, 0.92)),
+    radial-gradient(circle at top right, rgba(63, 115, 154, 0.1), transparent 58%);
+  border: 1px solid rgba(16, 32, 51, 0.08);
+  box-shadow:
+    0 18px 36px rgba(19, 34, 58, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.74);
   display: grid;
   gap: 0.68rem;
   min-width: 0;
+  overflow: hidden;
+  padding: clamp(0.78rem, 1.8vw, 0.95rem);
+  position: relative;
+
+  &::before {
+    background: linear-gradient(180deg, rgba(36, 75, 115, 0.9), rgba(63, 115, 154, 0.4));
+    content: "";
+    inset: 0 auto 0 0;
+    position: absolute;
+    width: 3px;
+  }
+
+  > * {
+    position: relative;
+    z-index: 1;
+  }
+`;
+
+const PostDeckEyebrow = styled.p`
+  color: rgba(52, 76, 104, 0.74);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  margin: 0;
+  text-transform: uppercase;
 `;
 
 const PostKicker = styled.p`
@@ -1429,11 +1461,17 @@ const PostMetaGrid = styled.div`
 `;
 
 const PostHeroUtilityBand = styled.div`
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(245, 248, 252, 0.92)),
+    radial-gradient(circle at top right, rgba(63, 115, 154, 0.08), transparent 56%);
+  border-top: 1px solid rgba(16, 32, 51, 0.08);
   display: grid;
   gap: 0.7rem;
+  margin-top: 0.1rem;
+  padding-top: 0.95rem;
 
   @media (min-width: 980px) {
-    align-items: end;
+    align-items: center;
     column-gap: clamp(0.85rem, 2vw, 1.25rem);
     grid-template-columns: minmax(0, 1fr) auto;
   }
@@ -1446,22 +1484,17 @@ const PostHeroContext = styled.div`
 `;
 
 const MetaPill = styled.span`
-  align-items: center;
-  background: rgba(255, 255, 255, 0.76);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 253, 0.92)),
+    radial-gradient(circle at top right, rgba(63, 115, 154, 0.08), transparent 60%);
   border: 1px solid rgba(16, 32, 51, 0.1);
   border-radius: 0;
   box-shadow: 0 10px 28px rgba(19, 34, 58, 0.04);
   color: rgba(62, 75, 95, 0.9);
-  display: inline-flex;
-  font-size: 0.88rem;
-  gap: 0.28rem;
-  padding: 0.55rem 0.9rem;
-
-  strong {
-    color: #17253d;
-    font-size: 0.89rem;
-    font-weight: 800;
-  }
+  display: grid;
+  gap: 0.16rem;
+  min-width: min(13rem, 100%);
+  padding: 0.62rem 0.88rem;
 `;
 
 const PostHeroChip = styled(Chip)`
@@ -1470,6 +1503,37 @@ const PostHeroChip = styled(Chip)`
   border-radius: 0;
   box-shadow: 0 10px 24px rgba(19, 34, 58, 0.04);
   padding: 0.34rem 0.72rem;
+`;
+
+const MetaPillLabel = styled.span`
+  color: rgba(75, 88, 109, 0.76);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  line-height: 1.1;
+  text-transform: uppercase;
+`;
+
+const MetaPillValue = styled.strong`
+  color: #17253d;
+  font-size: 0.98rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+`;
+
+const PostTaxonomyRail = styled.div`
+  display: grid;
+  gap: 0.45rem;
+`;
+
+const PostTaxonomyLabel = styled.p`
+  color: rgba(61, 76, 99, 0.72);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  margin: 0;
+  text-transform: uppercase;
 `;
 
 const HeroActionRow = styled.div`
@@ -3381,6 +3445,7 @@ export function PublicPostPage({ locale, messages, pageData }) {
               <PostLeadGrid>
                 <PostTitle>{displayTitle}</PostTitle>
                 <PostDeckBlock>
+                  <PostDeckEyebrow>Reading brief</PostDeckEyebrow>
                   <PostDeck>{article.excerpt}</PostDeck>
                   {heroSignals.length ? (
                     <HeroSignalRow>
@@ -3396,34 +3461,37 @@ export function PublicPostPage({ locale, messages, pageData }) {
                   <PostMetaGrid>
                     {article.publishedAt ? (
                       <MetaPill>
-                        {copy.publishedLabel}
-                        <strong>{formatDateLabel(locale, article.publishedAt)}</strong>
+                        <MetaPillLabel>{copy.publishedLabel}</MetaPillLabel>
+                        <MetaPillValue>{formatDateLabel(locale, article.publishedAt)}</MetaPillValue>
                       </MetaPill>
                     ) : null}
                     {article.updatedAt ? (
                       <MetaPill>
-                        {copy.updatedLabel}
-                        <strong>{formatDateLabel(locale, article.updatedAt)}</strong>
+                        <MetaPillLabel>{copy.updatedLabel}</MetaPillLabel>
+                        <MetaPillValue>{formatDateLabel(locale, article.updatedAt)}</MetaPillValue>
                       </MetaPill>
                     ) : null}
                     <MetaPill>
-                      {copy.authorLabel}
-                      <strong>{article.authorName}</strong>
+                      <MetaPillLabel>{copy.authorLabel}</MetaPillLabel>
+                      <MetaPillValue>{article.authorName}</MetaPillValue>
                     </MetaPill>
                   </PostMetaGrid>
                   {article.categories.length || article.manufacturers.length ? (
-                    <ChipRow>
-                      {article.categories.map((category) => (
-                        <PostHeroChip href={category.path} key={category.slug}>
-                          {category.name}
-                        </PostHeroChip>
-                      ))}
-                      {article.manufacturers.map((manufacturer) => (
-                        <PostHeroChip href={manufacturer.path} key={manufacturer.slug}>
-                          {manufacturer.name}
-                        </PostHeroChip>
-                      ))}
-                    </ChipRow>
+                    <PostTaxonomyRail>
+                      <PostTaxonomyLabel>Equipment network</PostTaxonomyLabel>
+                      <ChipRow>
+                        {article.categories.map((category) => (
+                          <PostHeroChip href={category.path} key={category.slug}>
+                            {category.name}
+                          </PostHeroChip>
+                        ))}
+                        {article.manufacturers.map((manufacturer) => (
+                          <PostHeroChip href={manufacturer.path} key={manufacturer.slug}>
+                            {manufacturer.name}
+                          </PostHeroChip>
+                        ))}
+                      </ChipRow>
+                    </PostTaxonomyRail>
                   ) : null}
                 </PostHeroContext>
                 <HeroActionRow>
