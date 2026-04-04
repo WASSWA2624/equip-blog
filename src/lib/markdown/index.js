@@ -31,6 +31,10 @@ function renderHtmlExternalLink(label, url) {
   return safeUrl ? `<a href="${escapeHtml(safeUrl)}">${safeLabel}</a>` : safeLabel;
 }
 
+function resolveImageSourceUrl(image) {
+  return image?.url || image?.sourceUrl || image?.publicUrl || "";
+}
+
 function renderMarkdownSection(section) {
   const lines = [`## ${section.title}`];
 
@@ -40,7 +44,19 @@ function renderMarkdownSection(section) {
     }
 
     for (const image of section.images || []) {
-      lines.push(`![${image.alt || image.caption || section.title}](${image.url})`);
+      const imageAlt = image.alt || image.caption || section.title;
+      const imageUrl = getRenderableImageUrl(resolveImageSourceUrl(image), {
+        alt: imageAlt,
+        caption: image.caption || section.title,
+        height: image.height,
+        width: image.width,
+      });
+
+      if (!imageUrl) {
+        continue;
+      }
+
+      lines.push(`![${imageAlt}](${imageUrl})`);
 
       if (image.caption) {
         lines.push(`_${image.caption}_`);
@@ -144,12 +160,16 @@ function renderHtmlSection(section) {
     const gallery = (section.images || [])
       .map((image) => {
         const imageAlt = image.alt || image.caption || section.title;
-        const imageUrl = getRenderableImageUrl(image.url, {
+        const imageUrl = getRenderableImageUrl(resolveImageSourceUrl(image), {
           alt: imageAlt,
           caption: image.caption || section.title,
           height: image.height,
           width: image.width,
         });
+
+        if (!imageUrl) {
+          return "";
+        }
 
         return `<figure><img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(
           imageAlt,

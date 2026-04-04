@@ -96,4 +96,33 @@ describe("markdown rendering", () => {
     expect(html).toContain("<p>These visuals support the operating workflow.</p>");
     expect(html).toContain("<p>Consult these documents for model-specific detail.</p>");
   });
+
+  it("renders image galleries from sourceUrl fallback fields", () => {
+    const article = {
+      excerpt: "Microscope excerpt",
+      sections: [
+        {
+          id: "featured_image",
+          images: [
+            {
+              alt: "Bench microscope",
+              caption: "Prepared for inspection",
+              sourceUrl: "https://fixtures.example/images/microscope-bench.jpg",
+            },
+          ],
+          kind: "image_gallery",
+          title: "Featured image",
+        },
+      ],
+      title: "Microscope",
+    };
+
+    const markdown = buildMarkdownFromStructuredArticle(article);
+    const html = buildHtmlFromStructuredArticle(article);
+
+    expect(markdown).not.toContain("(undefined)");
+    expect(markdown).toContain("![Bench microscope](data:image/svg+xml;charset=UTF-8,");
+    expect(html).not.toContain('src="undefined"');
+    expect(html).toContain('src="data:image/svg+xml;charset=UTF-8,');
+  });
 });
