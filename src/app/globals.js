@@ -13,9 +13,11 @@ const GlobalStyles = createGlobalStyle`
   body {
     margin: 0;
     min-height: 100%;
+    background-color: ${({ theme }) => theme.colors.bg};
     background:
-      radial-gradient(circle at top, rgba(0, 95, 115, 0.12), transparent 35%),
-      linear-gradient(180deg, #f8fbff 0%, #eef4f7 100%);
+      radial-gradient(circle at top left, rgba(77, 123, 255, 0.16), transparent 28%),
+      radial-gradient(circle at 88% 12%, rgba(31, 79, 143, 0.12), transparent 24%),
+      linear-gradient(180deg, #f9fbff 0%, #eef4ff 48%, #e7eef9 100%);
     color: ${({ theme }) => theme.colors.text};
     font-family: var(--font-ui), "Segoe UI", sans-serif;
     text-rendering: optimizeLegibility;
@@ -30,6 +32,11 @@ const GlobalStyles = createGlobalStyle`
   a {
     color: inherit;
     text-decoration: none;
+  }
+
+  ::selection {
+    background: rgba(77, 123, 255, 0.22);
+    color: ${({ theme }) => theme.colors.text};
   }
 
   button,

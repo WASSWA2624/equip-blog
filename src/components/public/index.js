@@ -470,9 +470,38 @@ const Figure = styled.figure`
   ${({ $presentation, $orientation }) =>
     $presentation === "atlas" &&
     css`
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 248, 252, 0.95)),
+        radial-gradient(circle at top right, rgba(63, 115, 154, 0.1), transparent 56%);
+      border: 1px solid rgba(18, 37, 60, 0.1);
+      box-shadow:
+        0 22px 46px rgba(18, 37, 60, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.82);
+      gap: 0.72rem;
+      grid-template-rows: auto minmax(0, 1fr);
+      height: 100%;
+      overflow: hidden;
+      padding: clamp(0.62rem, 1.3vw, 0.82rem);
+      position: relative;
+      width: 100%;
+
+      &::before {
+        background: linear-gradient(90deg, rgba(24, 59, 99, 0.9), rgba(63, 115, 154, 0.38));
+        content: "";
+        height: 3px;
+        left: 0;
+        position: absolute;
+        right: 0;
+        top: 0;
+      }
+
       @media (min-width: 980px) {
-        grid-column: span
-          ${$orientation === "portrait" ? 5 : $orientation === "square" ? 6 : 7};
+        flex:
+          ${$orientation === "portrait"
+            ? "0 1 calc(37% - 0.6rem)"
+            : $orientation === "square"
+              ? "0 1 calc(46% - 0.6rem)"
+              : "1 1 calc(63% - 0.6rem)"};
       }
     `}
 `;
@@ -513,12 +542,12 @@ const FigureFrame = styled.div`
     $presentation === "atlas" &&
     css`
       background:
-        linear-gradient(180deg, rgba(247, 250, 253, 0.98), rgba(232, 239, 245, 0.98)),
-        radial-gradient(circle at top right, rgba(36, 75, 115, 0.1), transparent 48%);
-      border-color: rgba(18, 37, 60, 0.12);
+        linear-gradient(180deg, rgba(250, 252, 255, 0.98), rgba(235, 242, 248, 0.98)),
+        radial-gradient(circle at top right, rgba(36, 75, 115, 0.08), transparent 48%);
+      border-color: rgba(18, 37, 60, 0.1);
       box-shadow:
-        0 18px 42px rgba(18, 37, 60, 0.08),
-        inset 0 1px 0 rgba(255, 255, 255, 0.86);
+        0 12px 28px rgba(18, 37, 60, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.88);
       isolation: isolate;
       position: relative;
 
@@ -591,6 +620,21 @@ const FigureCaption = styled.figcaption`
   font-size: 0.86rem;
   line-height: 1.36;
   max-width: 54ch;
+`;
+
+const FigureMeta = styled.div`
+  display: grid;
+  align-content: start;
+  gap: 0.48rem;
+
+  ${({ $presentation }) =>
+    $presentation === "atlas" &&
+    css`
+      border-top: 1px solid rgba(18, 37, 60, 0.08);
+      gap: 0.52rem;
+      min-height: 100%;
+      padding-top: 0.72rem;
+    `}
 `;
 
 const FigureBadgeRow = styled.div`
@@ -1824,6 +1868,7 @@ const PostImagePanel = styled.section`
         linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(243, 247, 251, 0.94)),
         radial-gradient(circle at top right, rgba(63, 115, 154, 0.12), transparent 44%);
       border-color: rgba(18, 37, 60, 0.1);
+      padding: clamp(0.78rem, 1.8vw, 1rem);
       position: relative;
 
       &::before {
@@ -1845,28 +1890,84 @@ const PostImagePanel = styled.section`
 `;
 
 const MediaPanelHeader = styled.div`
-  align-items: end;
+  display: grid;
+  gap: 0.72rem;
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.85rem;
+  position: relative;
+
+  &::after {
+    background: linear-gradient(90deg, rgba(18, 37, 60, 0.12), rgba(18, 37, 60, 0.03));
+    content: "";
+    height: 1px;
+    inset: auto 0 0;
+    position: absolute;
+  }
+
+  @media (min-width: 980px) {
+    align-items: end;
+    column-gap: clamp(0.9rem, 1.9vw, 1.2rem);
+    grid-template-columns: minmax(0, 0.95fr) minmax(20rem, 0.9fr);
+  }
+`;
+
+const MediaPanelTitleGroup = styled.div`
+  display: grid;
+  gap: 0.42rem;
+`;
+
+const MediaPanelTitleRow = styled.div`
+  align-items: center;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem 0.9rem;
-  justify-content: space-between;
-  margin-bottom: 0.55rem;
+  gap: 0.55rem 0.7rem;
 `;
 
 const MediaPanelTitle = styled.p`
   color: #16243b;
-  font-size: 0.9rem;
+  font-size: 0.96rem;
   font-weight: 800;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   margin: 0;
   text-transform: uppercase;
 `;
 
+const MediaPanelCount = styled.span`
+  align-items: center;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(241, 246, 251, 0.92)),
+    radial-gradient(circle at top right, rgba(63, 115, 154, 0.12), transparent 58%);
+  border: 1px solid rgba(16, 32, 51, 0.1);
+  color: rgba(30, 60, 91, 0.9);
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  min-height: 1.95rem;
+  padding: 0.22rem 0.62rem;
+  text-transform: uppercase;
+`;
+
+const MediaPanelLead = styled.p`
+  color: rgba(58, 71, 92, 0.9);
+  font-size: 1rem;
+  line-height: 1.42;
+  margin: 0;
+  max-width: 40ch;
+`;
+
 const MediaPanelMeta = styled.p`
   color: rgba(70, 84, 106, 0.9);
-  font-size: 0.88rem;
-  line-height: 1.38;
+  font-size: 0.9rem;
+  justify-self: start;
+  line-height: 1.46;
   margin: 0;
+  max-width: 56ch;
+
+  @media (min-width: 980px) {
+    justify-self: end;
+    text-align: right;
+  }
 `;
 
 const PostLayout = styled.div`
@@ -1915,14 +2016,6 @@ const SidebarColumn = styled.aside`
   }
 `;
 
-const SidebarShareWrap = styled.div`
-  display: grid;
-
-  @media (min-width: 1100px) {
-    order: 1;
-  }
-`;
-
 const HeroImageGrid = styled.div`
   align-items: start;
   display: grid;
@@ -1935,8 +2028,12 @@ const HeroImageGrid = styled.div`
   ${({ $presentation }) =>
     $presentation === "atlas" &&
     css`
+      align-items: start;
+      gap: clamp(0.8rem, 1.8vw, 1.05rem);
+
       @media (min-width: 980px) {
-        grid-template-columns: repeat(12, minmax(0, 1fr));
+        display: flex;
+        flex-wrap: wrap;
       }
     `}
 `;
@@ -1960,28 +2057,6 @@ const SidebarNavigatorPanel = styled(SidebarPanel)`
 const SidebarNavigatorBody = styled.div`
   display: grid;
   gap: 0.5rem;
-
-  @media (min-width: 1100px) {
-    max-height: min(44vh, 23rem);
-    overflow-x: hidden;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    padding-right: 0.12rem;
-    scrollbar-gutter: stable;
-    scrollbar-width: thin;
-
-    &::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background: rgba(36, 75, 115, 0.2);
-    }
-
-    &::-webkit-scrollbar-track {
-      background: transparent;
-    }
-  }
 `;
 
 const SidebarEquipmentPanel = styled(SidebarPanel)`
@@ -2950,13 +3025,17 @@ function InlinePhotoFigure({
           imageContent
         )}
       </FigureFrame>
-      {presentation === "atlas" ? (
-        <FigureBadgeRow>
-          <FigureBadge>{getVisualBadgeLabel(resolvedImage)}</FigureBadge>
-          {resolvedImage.licenseType ? <FigureBadge>{resolvedImage.licenseType}</FigureBadge> : null}
-        </FigureBadgeRow>
+      {presentation === "atlas" || resolvedImage.caption ? (
+        <FigureMeta $presentation={presentation}>
+          {presentation === "atlas" ? (
+            <FigureBadgeRow>
+              <FigureBadge>{getVisualBadgeLabel(resolvedImage)}</FigureBadge>
+              {resolvedImage.licenseType ? <FigureBadge>{resolvedImage.licenseType}</FigureBadge> : null}
+            </FigureBadgeRow>
+          ) : null}
+          {resolvedImage.caption ? <FigureCaption>{resolvedImage.caption}</FigureCaption> : null}
+        </FigureMeta>
       ) : null}
-      {resolvedImage.caption ? <FigureCaption>{resolvedImage.caption}</FigureCaption> : null}
     </Figure>
   );
 }
@@ -3188,10 +3267,13 @@ export function PublicPostPage({ locale, messages, pageData }) {
     presentation === "atlas"
       ? "Real photos and supporting visuals are arranged inline so the article reads like an illustrated study guide."
       : null;
+  const mediaPanelLead =
+    presentation === "atlas"
+      ? "Key reference photos are staged as a compact visual spread so readers can scan the instrument and its real-world use without losing the reading flow."
+      : null;
   const firstSectionId = sectionLinks[0]?.id || "";
   const sectionLinkKey = sectionLinks.map((section) => section.id).join("|");
   const readingResumeStorageKey = getReadingResumeStorageKey(article.path);
-  const navigatorBodyRef = useRef(null);
   const sidebarColumnRef = useRef(null);
   const tocLinkRefs = useRef(new Map());
   const previousWindowScrollDirectionRef = useRef("down");
@@ -3369,28 +3451,33 @@ export function PublicPostPage({ locale, messages, pageData }) {
     }
 
     const activeTocLink = tocLinkRefs.current.get(activeSectionId);
-    const navigatorElement = navigatorBodyRef.current;
+    const sidebarElement = sidebarColumnRef.current;
 
-    if (!activeTocLink || !navigatorElement) {
+    if (!activeTocLink || !sidebarElement) {
       return;
     }
 
-    const navigatorRect = navigatorElement.getBoundingClientRect();
+    const sidebarRect = sidebarElement.getBoundingClientRect();
     const linkRect = activeTocLink.getBoundingClientRect();
-    const centeredOffset =
-      navigatorElement.scrollTop +
-      (linkRect.top - navigatorRect.top) -
-      navigatorElement.clientHeight / 2 +
-      linkRect.height / 2;
-    const nextScrollTop = Math.max(
+    const insetTop = 20;
+    const insetBottom = 28;
+    let nextScrollTop = sidebarElement.scrollTop;
+
+    if (linkRect.top < sidebarRect.top + insetTop) {
+      nextScrollTop += linkRect.top - (sidebarRect.top + insetTop);
+    } else if (linkRect.bottom > sidebarRect.bottom - insetBottom) {
+      nextScrollTop += linkRect.bottom - (sidebarRect.bottom - insetBottom);
+    }
+
+    const clampedScrollTop = Math.max(
       0,
-      Math.min(centeredOffset, navigatorElement.scrollHeight - navigatorElement.clientHeight),
+      Math.min(nextScrollTop, sidebarElement.scrollHeight - sidebarElement.clientHeight),
     );
 
-    if (Math.abs(navigatorElement.scrollTop - nextScrollTop) > 6) {
-      navigatorElement.scrollTo({
+    if (Math.abs(sidebarElement.scrollTop - clampedScrollTop) > 6) {
+      sidebarElement.scrollTo({
         behavior: "smooth",
-        top: nextScrollTop,
+        top: clampedScrollTop,
       });
     }
   }, [activeSectionId]);
@@ -3531,6 +3618,8 @@ export function PublicPostPage({ locale, messages, pageData }) {
                 ) : null}
               </HeroSnapshotCard>
 
+              <ShareActions article={article} copy={copy} variant="compact" />
+
               {heroSectionLinks.length ? (
                 <HeroSectionNavCard $presentation={presentation}>
                   <HeroSnapshotEyebrow>{heroNavEyebrow}</HeroSnapshotEyebrow>
@@ -3561,7 +3650,13 @@ export function PublicPostPage({ locale, messages, pageData }) {
             <PostImagePanel $presentation={presentation}>
               {presentation === "atlas" ? (
                 <MediaPanelHeader>
-                  <MediaPanelTitle>{mediaPanelTitle}</MediaPanelTitle>
+                  <MediaPanelTitleGroup>
+                    <MediaPanelTitleRow>
+                      <MediaPanelTitle>{mediaPanelTitle}</MediaPanelTitle>
+                      <MediaPanelCount>{`${inlineHeroImages.length} visual${inlineHeroImages.length === 1 ? "" : "s"}`}</MediaPanelCount>
+                    </MediaPanelTitleRow>
+                    {mediaPanelLead ? <MediaPanelLead>{mediaPanelLead}</MediaPanelLead> : null}
+                  </MediaPanelTitleGroup>
                   {mediaPanelMeta ? <MediaPanelMeta>{mediaPanelMeta}</MediaPanelMeta> : null}
                 </MediaPanelHeader>
               ) : null}
@@ -3645,10 +3740,6 @@ export function PublicPostPage({ locale, messages, pageData }) {
           </ArticleColumn>
 
           <SidebarColumn ref={sidebarColumnRef}>
-            <SidebarShareWrap>
-              <ShareActions article={article} copy={copy} />
-            </SidebarShareWrap>
-
             {sectionLinks.length ? (
               <SidebarNavigatorPanel>
                 <SidebarTitle>Guide navigator</SidebarTitle>
@@ -3657,7 +3748,7 @@ export function PublicPostPage({ locale, messages, pageData }) {
                     Now reading: <strong>{activeSectionLabel}</strong>
                   </SidebarStatusNote>
                 ) : null}
-                <SidebarNavigatorBody data-guide-navigator-body="true" ref={navigatorBodyRef}>
+                <SidebarNavigatorBody data-guide-navigator-body="true">
                   <TocList>
                     {sectionLinks.map((section) => (
                       <TocItem $active={section.id === activeSectionId} key={section.id}>

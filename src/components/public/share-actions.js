@@ -18,6 +18,13 @@ const Panel = styled.section`
   padding: clamp(0.95rem, 2.4vw, 1.18rem);
   position: relative;
 
+  ${({ $compact }) =>
+    $compact &&
+    css`
+      gap: 0.72rem;
+      padding: 0.82rem 0.85rem 0.88rem;
+    `}
+
   &::before {
     background: linear-gradient(90deg, rgba(24, 59, 99, 0.94), rgba(63, 115, 154, 0.42));
     content: "";
@@ -32,6 +39,12 @@ const Panel = styled.section`
 const SectionHeader = styled.div`
   display: grid;
   gap: 0.22rem;
+
+  ${({ $compact }) =>
+    $compact &&
+    css`
+      gap: 0.16rem;
+    `}
 `;
 
 const SectionEyebrow = styled.p`
@@ -49,6 +62,13 @@ const SectionTitle = styled.h2`
   letter-spacing: -0.04em;
   line-height: 1.08;
   margin: 0;
+
+  ${({ $compact }) =>
+    $compact &&
+    css`
+      font-size: 1.02rem;
+      line-height: 1.02;
+    `}
 `;
 
 const SectionDescription = styled.p`
@@ -56,6 +76,13 @@ const SectionDescription = styled.p`
   font-size: 0.94rem;
   line-height: 1.48;
   margin: 0;
+
+  ${({ $compact }) =>
+    $compact &&
+    css`
+      font-size: 0.8rem;
+      line-height: 1.34;
+    `}
 `;
 
 const ShareButtonRow = styled.div`
@@ -65,6 +92,16 @@ const ShareButtonRow = styled.div`
   @media (min-width: 460px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  ${({ $compact }) =>
+    $compact &&
+    css`
+      gap: 0.46rem;
+
+      @media (min-width: 560px) {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    `}
 `;
 
 const shareTileStyles = css`
@@ -103,6 +140,13 @@ const shareTileStyles = css`
     outline: 2px solid ${({ $accent }) => $accent || "#244b73"};
     outline-offset: 2px;
   }
+
+  ${({ $compact }) =>
+    $compact &&
+    css`
+      min-height: 56px;
+      padding: 0.52rem 0.58rem;
+    `}
 `;
 
 const ShareLink = styled.a`
@@ -120,6 +164,13 @@ const ShareTileContent = styled.span`
   gap: 0.72rem;
   grid-template-columns: auto minmax(0, 1fr) auto;
   width: 100%;
+
+  ${({ $compact }) =>
+    $compact &&
+    css`
+      gap: 0.46rem;
+      grid-template-columns: auto minmax(0, 1fr);
+    `}
 `;
 
 const ShareIconBadge = styled.span`
@@ -134,6 +185,13 @@ const ShareIconBadge = styled.span`
   height: 2.55rem;
   justify-content: center;
   width: 2.55rem;
+
+  ${({ $compact }) =>
+    $compact &&
+    css`
+      height: 2rem;
+      width: 2rem;
+    `}
 `;
 
 const ShareTextGroup = styled.span`
@@ -148,6 +206,13 @@ const ShareLabel = styled.span`
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1.1;
+
+  ${({ $compact }) =>
+    $compact &&
+    css`
+      font-size: 0.9rem;
+      line-height: 1.04;
+    `}
 `;
 
 const ShareMeta = styled.span`
@@ -156,6 +221,12 @@ const ShareMeta = styled.span`
   font-weight: 600;
   letter-spacing: 0.01em;
   line-height: 1.24;
+
+  ${({ $compact }) =>
+    $compact &&
+    css`
+      display: none;
+    `}
 `;
 
 const ShareArrow = styled.span`
@@ -166,6 +237,12 @@ const ShareArrow = styled.span`
   font-weight: 700;
   justify-content: center;
   line-height: 1;
+
+  ${({ $compact }) =>
+    $compact &&
+    css`
+      display: none;
+    `}
 `;
 
 const ShareIconSvg = styled.svg`
@@ -271,7 +348,8 @@ function ShareIcon({ network }) {
   );
 }
 
-export default function ShareActions({ article, copy }) {
+export default function ShareActions({ article, copy, variant = "default" }) {
+  const isCompact = variant === "compact";
   const [copied, setCopied] = useState(false);
   const title = encodeURIComponent(article.title);
   const url = encodeURIComponent(article.url);
@@ -349,17 +427,20 @@ export default function ShareActions({ article, copy }) {
   }
 
   return (
-    <Panel>
-      <SectionHeader>
+    <Panel $compact={isCompact}>
+      <SectionHeader $compact={isCompact}>
         <SectionEyebrow>Share</SectionEyebrow>
-        <SectionTitle>{copy.shareTitle}</SectionTitle>
-        <SectionDescription>{copy.shareDescription}</SectionDescription>
+        <SectionTitle $compact={isCompact}>{copy.shareTitle}</SectionTitle>
+        <SectionDescription $compact={isCompact}>
+          {isCompact ? "Share or save this guide." : copy.shareDescription}
+        </SectionDescription>
       </SectionHeader>
-      <ShareButtonRow>
+      <ShareButtonRow $compact={isCompact}>
         {shareLinks.map((link) => (
           <ShareLink
             $accent={link.accent}
             $border={link.border}
+            $compact={isCompact}
             $hoverBorder={link.hoverBorder}
             $surface={link.surface}
             $surfaceStrong={link.surfaceStrong}
@@ -368,44 +449,53 @@ export default function ShareActions({ article, copy }) {
             rel="noreferrer"
             target="_blank"
           >
-            <ShareTileContent>
+            <ShareTileContent $compact={isCompact}>
               <ShareIconBadge
                 $accent={link.accent}
                 $border={link.border}
+                $compact={isCompact}
                 $surface={link.surface}
               >
                 <ShareIcon network={link.network} />
               </ShareIconBadge>
               <ShareTextGroup>
-                <ShareLabel>{link.label}</ShareLabel>
-                <ShareMeta>{link.meta}</ShareMeta>
+                <ShareLabel $compact={isCompact}>{link.label}</ShareLabel>
+                <ShareMeta $compact={isCompact}>{link.meta}</ShareMeta>
               </ShareTextGroup>
-              <ShareArrow aria-hidden="true">{"->"}</ShareArrow>
+              <ShareArrow $compact={isCompact} aria-hidden="true">{"->"}</ShareArrow>
             </ShareTileContent>
           </ShareLink>
         ))}
         <ShareButton
           $accent={copyAccent}
           $border={copyBorder}
+          $compact={isCompact}
           $hoverBorder={copyHoverBorder}
           $surface={copySurface}
           $surfaceStrong={copySurfaceStrong}
           onClick={handleCopyLink}
           type="button"
         >
-          <ShareTileContent>
+          <ShareTileContent $compact={isCompact}>
             <ShareIconBadge
               $accent={copyAccent}
               $border={copyBorder}
+              $compact={isCompact}
               $surface={copySurface}
             >
               <ShareIcon network={copied ? "check" : "copy"} />
             </ShareIconBadge>
             <ShareTextGroup>
-              <ShareLabel>{copied ? copy.copiedLink : copy.copyLink}</ShareLabel>
-              <ShareMeta>{copied ? "Ready to paste" : "Keep URL handy"}</ShareMeta>
+              <ShareLabel $compact={isCompact}>
+                {copied ? copy.copiedLink : copy.copyLink}
+              </ShareLabel>
+              <ShareMeta $compact={isCompact}>
+                {copied ? "Ready to paste" : "Keep URL handy"}
+              </ShareMeta>
             </ShareTextGroup>
-            <ShareArrow aria-hidden="true">{copied ? "OK" : "->"}</ShareArrow>
+            <ShareArrow $compact={isCompact} aria-hidden="true">
+              {copied ? "OK" : "->"}
+            </ShareArrow>
           </ShareTileContent>
         </ShareButton>
       </ShareButtonRow>
