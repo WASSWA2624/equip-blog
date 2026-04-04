@@ -1001,7 +1001,7 @@ src/
     <new-locale>.json
   prisma/
     schema.prisma
-  middleware.js
+  proxy.js
 ```
 
 Release 1 only requires `messages/en.json`. Future locales follow the same `messages/<locale>.json` pattern.

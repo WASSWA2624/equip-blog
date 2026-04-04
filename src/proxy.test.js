@@ -11,7 +11,7 @@ function createBaseEnv() {
 
 const originalEnv = process.env;
 
-describe("middleware locale routing", () => {
+describe("proxy locale routing", () => {
   beforeEach(() => {
     vi.resetModules();
     process.env = {
@@ -25,8 +25,8 @@ describe("middleware locale routing", () => {
   });
 
   it("redirects locale-prefixed admin pages back to /admin", async () => {
-    const { middleware } = await import("./middleware");
-    const response = middleware(
+    const { proxy } = await import("./proxy");
+    const response = proxy(
       new NextRequest("https://example.com/en/admin/posts/drafts?tab=review"),
     );
 
@@ -37,16 +37,16 @@ describe("middleware locale routing", () => {
   });
 
   it("normalizes supported locale prefixes to lowercase", async () => {
-    const { middleware } = await import("./middleware");
-    const response = middleware(new NextRequest("https://example.com/EN/about?ref=nav"));
+    const { proxy } = await import("./proxy");
+    const response = proxy(new NextRequest("https://example.com/EN/about?ref=nav"));
 
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toBe("https://example.com/en/about?ref=nav");
   });
 
   it("redirects anonymous admin page requests to the login screen", async () => {
-    const { middleware } = await import("./middleware");
-    const response = middleware(new NextRequest("https://example.com/admin/posts/drafts"));
+    const { proxy } = await import("./proxy");
+    const response = proxy(new NextRequest("https://example.com/admin/posts/drafts"));
 
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toBe(
@@ -55,8 +55,8 @@ describe("middleware locale routing", () => {
   });
 
   it("returns 401 for anonymous protected admin APIs", async () => {
-    const { middleware } = await import("./middleware");
-    const response = middleware(new NextRequest("https://example.com/api/posts"));
+    const { proxy } = await import("./proxy");
+    const response = proxy(new NextRequest("https://example.com/api/posts"));
 
     expect(response.status).toBe(401);
     await expect(response.json()).resolves.toMatchObject({

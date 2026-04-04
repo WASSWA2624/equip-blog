@@ -18,7 +18,7 @@ Date: 2026-04-03
 ## Admin Pages QA
 
 - Required admin pages exist in the build output: login, dashboard, generate, drafts, published posts, post editor, categories, manufacturers, media, comments, SEO, localization, job logs, prompts, providers, and sources.
-- Protected admin pages are gated in [src/app/admin/layout.js](../../src/app/admin/layout.js), [src/lib/auth/rbac.js](../../src/lib/auth/rbac.js), and [src/middleware.js](../../src/middleware.js).
+- Protected admin pages are gated in [src/app/admin/layout.js](../../src/app/admin/layout.js), [src/lib/auth/rbac.js](../../src/lib/auth/rbac.js), and [src/proxy.js](../../src/proxy.js).
 - Admin navigation only exposes allowed destinations per role through [src/components/layout/admin-shell.js](../../src/components/layout/admin-shell.js).
 - Draft editing, provider management, media management, source configuration, localization, and moderation all have dedicated admin screens under [src/components/admin](../../src/components/admin/).
 
@@ -42,10 +42,9 @@ Date: 2026-04-03
 - `npm run lint`: passed.
 - `npm run build`: passed.
 
-## Non-Blocking Build Warnings
+## Build Status
 
-- Next.js warns that the `middleware` file convention is deprecated in favor of `proxy`. The current middleware remains functional and continues to protect Release 1 routes.
-- Turbopack warns about NFT tracing through [next.config.mjs](../../next.config.mjs) and the media storage import chain. The production build still completed successfully and enumerated all required routes.
+- The current production build completes without the earlier Next.js `middleware` deprecation warning or the Turbopack NFT tracing warning.
 
 ## Final Sign-Off
 

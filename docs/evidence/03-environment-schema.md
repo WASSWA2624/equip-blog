@@ -49,4 +49,4 @@
 
 ## Unresolved Risks
 
-- `next build` reports a pre-existing Next.js warning that `src/middleware.js` should migrate to the newer `proxy` convention. This step did not change middleware behavior.
+- No additional unresolved risks were identified in this step.

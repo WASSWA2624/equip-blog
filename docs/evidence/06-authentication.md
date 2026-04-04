@@ -13,7 +13,7 @@
 - Created [src/lib/auth/index.test.js](../../src/lib/auth/index.test.js)
 - Updated [src/features/auth/index.js](../../src/features/auth/index.js)
 - Updated [src/lib/validation/api-placeholders.js](../../src/lib/validation/api-placeholders.js)
-- Updated [src/middleware.js](../../src/middleware.js)
+- Updated [src/proxy.js](../../src/proxy.js)
 - Updated [src/app/admin/layout.js](../../src/app/admin/layout.js)
 - Updated [src/app/admin/login/page.js](../../src/app/admin/login/page.js)
 - Created [src/components/auth/admin-login-screen.js](../../src/components/auth/admin-login-screen.js)
@@ -51,7 +51,7 @@
 - `curl.exe -i -H "Cookie: equip_admin_session=<valid-token>" http://127.0.0.1:3000/api/posts`
 - `curl.exe -i -H "Cookie: equip_admin_session=tampered-session-token" http://127.0.0.1:3000/api/posts`
 - `node - < inline script to expire a live session row >`
-- `git diff --check -- prisma/schema.prisma prisma/seed.js prisma/migrations/20260402233000_add_admin_sessions/migration.sql src/lib/prisma/index.js src/lib/auth src/middleware.js src/app/admin/layout.js src/app/admin/login/page.js src/components/auth src/components/layout/admin-shell.js src/app/api docs/evidence`
+- `git diff --check -- prisma/schema.prisma prisma/seed.js prisma/migrations/20260402233000_add_admin_sessions/migration.sql src/lib/prisma/index.js src/lib/auth src/proxy.js src/app/admin/layout.js src/app/admin/login/page.js src/components/auth src/components/layout/admin-shell.js src/app/api docs/evidence`
 
 ## Automated Checks Run
 
@@ -62,13 +62,13 @@
 - `npm test`
 - `npm run lint`
 - `npm run build`
-- `git diff --check -- prisma/schema.prisma prisma/seed.js prisma/migrations/20260402233000_add_admin_sessions/migration.sql src/lib/prisma/index.js src/lib/auth src/middleware.js src/app/admin/layout.js src/app/admin/login/page.js src/components/auth src/components/layout/admin-shell.js src/app/api docs/evidence`
+- `git diff --check -- prisma/schema.prisma prisma/seed.js prisma/migrations/20260402233000_add_admin_sessions/migration.sql src/lib/prisma/index.js src/lib/auth src/proxy.js src/app/admin/layout.js src/app/admin/login/page.js src/components/auth src/components/layout/admin-shell.js src/app/api docs/evidence`
 
 ## Manual Verification Notes
 
 - Added DB-backed admin sessions through the new `AdminSession` model, an opaque session cookie, expiry checks, logout invalidation, and auth audit events for login success, login failure, logout, and rejected expired sessions.
 - The login page at `/admin/login` now renders a real email/password form and redirects authenticated admins away from the login screen back to the requested admin route.
-- Admin page access is blocked in middleware and enforced again in the server-side admin layout so cookie presence alone is not enough for access.
+- Admin page access is blocked in the proxy and enforced again in the server-side admin layout so cookie presence alone is not enough for access.
 - Admin API scaffolds now require an authenticated admin session before returning their placeholder responses.
 - Password hashing now uses explicit scrypt parameters in both runtime auth and Prisma seed code, and reseeding refreshes the admin user's hash so the seeded credentials remain valid after auth changes.
 - Live smoke test against the built app confirmed:
@@ -80,5 +80,4 @@
 
 ## Unresolved Risks
 
-- `next build` still reports the pre-existing Next.js warning that the `src/middleware.js` file convention is deprecated in favor of `proxy`. The auth logic works, but the file should be renamed when the repo addresses that framework migration.
 - This step authenticates active admin users and protects the admin surface, but route-by-route role restrictions remain intentionally deferred to [dev-plan/07_authorization_rbac.md](../../dev-plan/07_authorization_rbac.md).

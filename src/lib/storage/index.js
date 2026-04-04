@@ -31,7 +31,9 @@ function resolveAbsoluteBasePath(basePath) {
     throw new Error("Local media base path is not configured.");
   }
 
-  return path.isAbsolute(basePath) ? basePath : path.resolve(process.cwd(), basePath);
+  return path.isAbsolute(basePath)
+    ? basePath
+    : path.resolve(/* turbopackIgnore: true */ process.cwd(), basePath);
 }
 
 function createLocalStorageAbsolutePath(basePath, key) {

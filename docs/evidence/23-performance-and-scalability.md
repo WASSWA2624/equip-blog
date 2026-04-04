@@ -79,6 +79,4 @@ Measured against `next start` on local production output, using the seeded admin
 ### Build notes
 
 - Next.js now reports the locale home route as SSG with a 5 minute revalidation window.
-- The build still reports two pre-existing platform warnings outside this step's scope:
-  - `middleware` file convention deprecation in favor of `proxy`
-  - Turbopack NFT tracing warning rooted in the media storage route import chain
+- The build no longer reports the earlier Turbopack NFT tracing warning rooted in the media storage route import chain.

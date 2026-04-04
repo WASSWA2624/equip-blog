@@ -24,7 +24,7 @@ function createForwardResponse(request, routeKind) {
   });
 }
 
-export function middleware(request) {
+export function proxy(request) {
   const { pathname, search } = request.nextUrl;
   const requestPath = `${pathname}${search}`;
   const sessionToken = request.cookies.get(SESSION_COOKIE_NAME)?.value;
