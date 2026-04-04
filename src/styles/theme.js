@@ -1,14 +1,14 @@
 export const lightTheme = {
   colors: {
-    accent: "#4d7bff",
-    bg: "#f4f8ff",
-    border: "#c9d7eb",
+    accent: "#3f7ae0",
+    bg: "#edf3fb",
+    border: "#b8c8de",
     danger: "#b42318",
-    muted: "#5c6f89",
-    primary: "#1f4f8f",
+    muted: "#54657f",
+    primary: "#1b4f93",
     success: "#157347",
-    surface: "#ecf3fd",
-    text: "#13233c",
+    surface: "#f8fbff",
+    text: "#152844",
   },
   radius: {
     lg: "16px",

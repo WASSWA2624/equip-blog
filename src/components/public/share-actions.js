@@ -5,12 +5,12 @@ import styled, { css } from "styled-components";
 
 const Panel = styled.section`
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 250, 255, 0.95)),
-    radial-gradient(circle at top right, rgba(36, 75, 115, 0.1), transparent 56%);
-  border: 1px solid rgba(16, 32, 51, 0.08);
+    linear-gradient(180deg, rgba(var(--theme-bg-rgb), 0.98), rgba(var(--theme-surface-rgb), 0.95)),
+    radial-gradient(circle at top right, rgba(var(--theme-primary-rgb), 0.1), transparent 56%);
+  border: 1px solid rgba(var(--theme-border-rgb), 0.72);
   border-radius: 0;
   box-shadow:
-    0 24px 54px rgba(22, 40, 64, 0.09),
+    0 24px 54px rgba(var(--theme-primary-rgb), 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.72);
   display: grid;
   gap: 0.9rem;
@@ -26,7 +26,11 @@ const Panel = styled.section`
     `}
 
   &::before {
-    background: linear-gradient(90deg, rgba(24, 59, 99, 0.94), rgba(63, 115, 154, 0.42));
+    background: linear-gradient(
+      90deg,
+      rgba(var(--theme-primary-rgb), 0.94),
+      rgba(var(--theme-accent-rgb), 0.42)
+    );
     content: "";
     height: 3px;
     left: 0;
@@ -48,7 +52,7 @@ const SectionHeader = styled.div`
 `;
 
 const SectionEyebrow = styled.p`
-  color: rgba(40, 72, 104, 0.74);
+  color: rgba(var(--theme-primary-rgb), 0.74);
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.18em;
@@ -57,7 +61,7 @@ const SectionEyebrow = styled.p`
 `;
 
 const SectionTitle = styled.h2`
-  color: #16243b;
+  color: var(--theme-text);
   font-size: clamp(1.15rem, 3vw, 1.35rem);
   letter-spacing: -0.04em;
   line-height: 1.08;
@@ -72,7 +76,7 @@ const SectionTitle = styled.h2`
 `;
 
 const SectionDescription = styled.p`
-  color: rgba(72, 84, 108, 0.92);
+  color: rgba(var(--theme-muted-rgb), 0.92);
   font-size: 0.94rem;
   line-height: 1.48;
   margin: 0;
@@ -115,7 +119,7 @@ const shareTileStyles = css`
   box-shadow:
     0 10px 22px rgba(19, 34, 58, 0.05),
     inset 0 1px 0 rgba(255, 255, 255, 0.72);
-  color: #173454;
+  color: var(--theme-text);
   display: inline-flex;
   font-weight: 800;
   justify-content: flex-start;
@@ -137,7 +141,7 @@ const shareTileStyles = css`
   }
 
   &:focus-visible {
-    outline: 2px solid ${({ $accent }) => $accent || "#244b73"};
+    outline: 2px solid ${({ $accent }) => $accent || "var(--theme-primary)"};
     outline-offset: 2px;
   }
 
@@ -201,7 +205,7 @@ const ShareTextGroup = styled.span`
 `;
 
 const ShareLabel = styled.span`
-  color: #18304f;
+  color: var(--theme-text);
   font-size: 1rem;
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -216,7 +220,7 @@ const ShareLabel = styled.span`
 `;
 
 const ShareMeta = styled.span`
-  color: rgba(74, 86, 108, 0.84);
+  color: rgba(var(--theme-muted-rgb), 0.84);
   font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.01em;
@@ -231,7 +235,7 @@ const ShareMeta = styled.span`
 
 const ShareArrow = styled.span`
   align-items: center;
-  color: rgba(36, 75, 115, 0.54);
+  color: rgba(var(--theme-primary-rgb), 0.54);
   display: inline-flex;
   font-size: 1rem;
   font-weight: 700;
@@ -410,11 +414,19 @@ export default function ShareActions({ article, copy, variant = "default" }) {
       surfaceStrong: "rgba(217, 119, 6, 0.08)",
     },
   ];
-  const copyAccent = copied ? "#15803D" : "#244B73";
-  const copyBorder = copied ? "rgba(21, 128, 61, 0.18)" : "rgba(36, 75, 115, 0.14)";
-  const copyHoverBorder = copied ? "rgba(21, 128, 61, 0.28)" : "rgba(36, 75, 115, 0.24)";
-  const copySurface = copied ? "rgba(21, 128, 61, 0.12)" : "rgba(36, 75, 115, 0.09)";
-  const copySurfaceStrong = copied ? "rgba(21, 128, 61, 0.08)" : "rgba(36, 75, 115, 0.08)";
+  const copyAccent = copied ? "#15803D" : "var(--theme-primary)";
+  const copyBorder = copied
+    ? "rgba(21, 128, 61, 0.18)"
+    : "rgba(var(--theme-primary-rgb), 0.14)";
+  const copyHoverBorder = copied
+    ? "rgba(21, 128, 61, 0.28)"
+    : "rgba(var(--theme-primary-rgb), 0.24)";
+  const copySurface = copied
+    ? "rgba(21, 128, 61, 0.12)"
+    : "rgba(var(--theme-primary-rgb), 0.09)";
+  const copySurfaceStrong = copied
+    ? "rgba(21, 128, 61, 0.08)"
+    : "rgba(var(--theme-primary-rgb), 0.08)";
 
   async function handleCopyLink() {
     try {

@@ -42,12 +42,13 @@ const SearchForm = styled.form`
 
 const SearchInputWrap = styled.div`
   align-items: center;
-  background: rgba(250, 252, 255, 0.98);
-  border: 1px solid rgba(24, 39, 66, 0.12);
+  background:
+    linear-gradient(180deg, rgba(var(--theme-surface-rgb), 0.99), rgba(var(--theme-bg-rgb), 0.97));
+  border: 1px solid rgba(var(--theme-border-rgb), 0.96);
   border-radius: 999px;
   box-shadow:
-    0 10px 22px rgba(16, 32, 51, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.78);
+    0 10px 22px rgba(var(--theme-primary-rgb), 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.86);
   display: flex;
   gap: 0.55rem;
   min-height: 42px;
@@ -55,16 +56,16 @@ const SearchInputWrap = styled.div`
   transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
 
   &:focus-within {
-    border-color: rgba(36, 75, 115, 0.28);
+    border-color: rgba(var(--theme-primary-rgb), 0.46);
     box-shadow:
-      0 14px 30px rgba(36, 75, 115, 0.08),
-      0 0 0 3px rgba(36, 75, 115, 0.08);
+      0 14px 30px rgba(var(--theme-primary-rgb), 0.09),
+      0 0 0 3px rgba(var(--theme-primary-rgb), 0.12);
     transform: translateY(-1px);
   }
 `;
 
 const SearchIcon = styled.span`
-  border: 2px solid rgba(74, 90, 117, 0.72);
+  border: 2px solid rgba(var(--theme-muted-rgb), 0.72);
   border-radius: 999px;
   display: inline-block;
   flex: 0 0 auto;
@@ -73,7 +74,7 @@ const SearchIcon = styled.span`
   width: 0.82rem;
 
   &::after {
-    background: rgba(74, 90, 117, 0.72);
+    background: rgba(var(--theme-muted-rgb), 0.72);
     border-radius: 999px;
     content: "";
     height: 2px;
@@ -88,7 +89,7 @@ const SearchIcon = styled.span`
 const SearchInput = styled.input`
   background: transparent;
   border: none;
-  color: #182742;
+  color: var(--theme-text);
   flex: 1 1 auto;
   font-size: 0.92rem;
   min-width: 0;
@@ -96,39 +97,45 @@ const SearchInput = styled.input`
   padding: 0;
 
   &::placeholder {
-    color: rgba(87, 99, 122, 0.8);
+    color: rgba(var(--theme-muted-rgb), 0.8);
   }
 `;
 
 const SearchSubmitButton = styled.button`
-  background: linear-gradient(180deg, #2b537d, #203f61);
-  border: none;
+  background: linear-gradient(180deg, #255ca3, #194882);
+  border: 1px solid rgba(17, 51, 92, 0.18);
   border-radius: 999px;
   color: #fff;
+  box-shadow:
+    0 8px 18px rgba(var(--theme-primary-rgb), 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
   cursor: pointer;
   flex: 0 0 auto;
   font-size: 0.78rem;
   font-weight: 800;
   min-height: 32px;
-  min-width: 42px;
-  padding: 0 0.72rem;
-  transition: filter 160ms ease, transform 160ms ease;
+  min-width: 52px;
+  padding: 0 0.82rem;
+  transition: filter 160ms ease, transform 160ms ease, box-shadow 160ms ease;
 
   &:hover {
     filter: brightness(1.04);
+    box-shadow:
+      0 10px 22px rgba(var(--theme-primary-rgb), 0.22),
+      inset 0 1px 0 rgba(255, 255, 255, 0.18);
     transform: translateY(-1px);
   }
 `;
 
 const SearchDropdown = styled.div`
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(247, 250, 255, 0.98)),
-    radial-gradient(circle at top right, rgba(36, 75, 115, 0.08), transparent 55%);
-  border: 1px solid rgba(24, 39, 66, 0.08);
+    linear-gradient(180deg, rgba(var(--theme-bg-rgb), 0.99), rgba(var(--theme-surface-rgb), 0.98)),
+    radial-gradient(circle at top right, rgba(var(--theme-primary-rgb), 0.08), transparent 55%);
+  border: 1px solid rgba(var(--theme-border-rgb), 0.7);
   border-radius: 18px;
   box-shadow:
-    0 26px 52px rgba(16, 32, 51, 0.14),
-    0 2px 8px rgba(16, 32, 51, 0.05);
+    0 26px 52px rgba(var(--theme-primary-rgb), 0.14),
+    0 2px 8px rgba(var(--theme-text-rgb), 0.05);
   display: grid;
   gap: 0.55rem;
   left: 0;
@@ -140,7 +147,7 @@ const SearchDropdown = styled.div`
 `;
 
 const SearchState = styled.div`
-  color: rgba(74, 90, 117, 0.92);
+  color: rgba(var(--theme-muted-rgb), 0.92);
   font-size: 0.84rem;
   line-height: 1.5;
   padding: 0.5rem 0.55rem;
@@ -153,10 +160,12 @@ const SearchResultList = styled.div`
 
 const SearchResultButton = styled.button`
   align-items: start;
-  background: ${({ $active }) => ($active ? "rgba(36, 75, 115, 0.1)" : "transparent")};
-  border: 1px solid ${({ $active }) => ($active ? "rgba(36, 75, 115, 0.18)" : "transparent")};
+  background: ${({ $active }) =>
+    $active ? "rgba(var(--theme-primary-rgb), 0.1)" : "transparent"};
+  border: 1px solid
+    ${({ $active }) => ($active ? "rgba(var(--theme-primary-rgb), 0.18)" : "transparent")};
   border-radius: 14px;
-  color: #182742;
+  color: var(--theme-text);
   cursor: pointer;
   display: grid;
   gap: 0.16rem;
@@ -170,8 +179,8 @@ const SearchResultButton = styled.button`
     transform 160ms ease;
 
   &:hover {
-    background: rgba(36, 75, 115, 0.07);
-    border-color: rgba(36, 75, 115, 0.14);
+    background: rgba(var(--theme-primary-rgb), 0.08);
+    border-color: rgba(var(--theme-primary-rgb), 0.14);
     transform: translateY(-1px);
   }
 `;
@@ -191,10 +200,10 @@ const SearchResultTitle = styled.span`
 `;
 
 const SearchResultBadge = styled.span`
-  background: rgba(36, 75, 115, 0.08);
-  border: 1px solid rgba(36, 75, 115, 0.12);
+  background: rgba(var(--theme-primary-rgb), 0.08);
+  border: 1px solid rgba(var(--theme-primary-rgb), 0.12);
   border-radius: 999px;
-  color: #244b73;
+  color: var(--theme-primary);
   flex: 0 0 auto;
   font-size: 0.7rem;
   font-weight: 800;
@@ -204,17 +213,17 @@ const SearchResultBadge = styled.span`
 `;
 
 const SearchResultDescription = styled.span`
-  color: rgba(74, 90, 117, 0.92);
+  color: rgba(var(--theme-muted-rgb), 0.92);
   font-size: 0.8rem;
   line-height: 1.45;
 `;
 
 const SearchFooterButton = styled.button`
   align-items: center;
-  background: rgba(36, 75, 115, 0.06);
-  border: 1px solid rgba(36, 75, 115, 0.1);
+  background: rgba(var(--theme-primary-rgb), 0.06);
+  border: 1px solid rgba(var(--theme-primary-rgb), 0.1);
   border-radius: 14px;
-  color: #244b73;
+  color: var(--theme-primary);
   cursor: pointer;
   display: inline-flex;
   font-size: 0.86rem;
@@ -225,8 +234,8 @@ const SearchFooterButton = styled.button`
   transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
 
   &:hover {
-    background: rgba(36, 75, 115, 0.1);
-    border-color: rgba(36, 75, 115, 0.16);
+    background: rgba(var(--theme-primary-rgb), 0.1);
+    border-color: rgba(var(--theme-primary-rgb), 0.16);
     transform: translateY(-1px);
   }
 `;

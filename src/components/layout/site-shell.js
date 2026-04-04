@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 
 import EquipLogo from "@/components/common/equip-logo";
@@ -26,8 +26,9 @@ function normalizePathname(pathname) {
 function isNavigationActive(pathname, href) {
   const currentPath = normalizePathname(pathname);
   const targetPath = normalizePathname(href);
+  const targetSegments = targetPath.split("/").filter(Boolean);
 
-  if (targetPath === "/") {
+  if (targetPath === "/" || targetSegments.length <= 1) {
     return currentPath === targetPath;
   }
 
@@ -60,10 +61,12 @@ const Shell = styled.div`
 `;
 
 const Header = styled.header`
-  background: rgba(255, 255, 255, 0.94);
+  background:
+    linear-gradient(180deg, rgba(var(--theme-surface-rgb), 0.98), rgba(var(--theme-bg-rgb), 0.96)),
+    radial-gradient(circle at top left, rgba(var(--theme-accent-rgb), 0.06), transparent 32%);
   backdrop-filter: blur(18px);
-  border-bottom: 1px solid rgba(16, 32, 51, 0.07);
-  box-shadow: 0 14px 42px rgba(16, 32, 51, 0.04);
+  border-bottom: 1px solid rgba(var(--theme-border-rgb), 0.88);
+  box-shadow: 0 14px 42px rgba(var(--theme-primary-rgb), 0.07);
   position: sticky;
   top: 0;
   z-index: 30;
@@ -134,7 +137,7 @@ const BrandLink = styled(Link)`
 `;
 
 const BrandTitle = styled.span`
-  color: #182742;
+  color: var(--theme-text);
   font-size: clamp(1.55rem, 4vw, 2.1rem);
   font-weight: 800;
   letter-spacing: -0.05em;
@@ -143,7 +146,7 @@ const BrandTitle = styled.span`
 `;
 
 const ContextLabel = styled.span`
-  color: #182742;
+  color: var(--theme-text);
   display: none;
   font-size: 0.9rem;
   font-weight: 700;
@@ -178,7 +181,8 @@ const PrimaryNav = styled.nav`
 `;
 
 const PrimaryNavLink = styled(Link)`
-  color: ${({ $active }) => ($active ? "#182742" : "rgba(24, 39, 66, 0.96)")};
+  color: ${({ $active }) =>
+    $active ? "var(--theme-text)" : "rgba(var(--theme-text-rgb), 0.92)"};
   font-size: 0.92rem;
   font-weight: ${({ $active }) => ($active ? 800 : 700)};
   letter-spacing: -0.02em;
@@ -187,7 +191,7 @@ const PrimaryNavLink = styled(Link)`
   white-space: nowrap;
 
   &::after {
-    background: #244b73;
+    background: var(--theme-primary);
     border-radius: 999px;
     bottom: -0.38rem;
     content: "";
@@ -202,7 +206,7 @@ const PrimaryNavLink = styled(Link)`
   }
 
   &:hover {
-    color: #244b73;
+    color: var(--theme-primary);
   }
 
   &:hover::after {
@@ -217,10 +221,17 @@ const MenuWrap = styled.div`
 
 const MoreButton = styled.button`
   align-items: center;
-  background: ${({ $open }) => ($open ? "rgba(36, 75, 115, 0.12)" : "rgba(36, 75, 115, 0.06)")};
-  border: 1px solid ${({ $open }) => ($open ? "rgba(36, 75, 115, 0.22)" : "rgba(36, 75, 115, 0.12)")};
+  background: ${({ $open }) =>
+    $open
+      ? "rgba(var(--theme-primary-rgb), 0.14)"
+      : "rgba(var(--theme-primary-rgb), 0.08)"};
+  border: 1px solid
+    ${({ $open }) =>
+      $open
+        ? "rgba(var(--theme-primary-rgb), 0.24)"
+        : "rgba(var(--theme-primary-rgb), 0.14)"};
   border-radius: 999px;
-  color: #182742;
+  color: var(--theme-text);
   cursor: pointer;
   display: inline-grid;
   height: 34px;
@@ -235,8 +246,8 @@ const MoreButton = styled.button`
   width: 34px;
 
   &:hover {
-    background: rgba(36, 75, 115, 0.12);
-    border-color: rgba(36, 75, 115, 0.22);
+    background: rgba(var(--theme-primary-rgb), 0.14);
+    border-color: rgba(var(--theme-primary-rgb), 0.24);
     transform: translateY(-1px);
   }
 `;
@@ -258,13 +269,13 @@ const MoreButtonDot = styled.span`
 
 const MoreMenuPanel = styled.div`
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(247, 250, 255, 0.98)),
-    radial-gradient(circle at top right, rgba(36, 75, 115, 0.08), transparent 48%);
-  border: 1px solid rgba(16, 32, 51, 0.08);
+    linear-gradient(180deg, rgba(var(--theme-bg-rgb), 0.99), rgba(var(--theme-surface-rgb), 0.98)),
+    radial-gradient(circle at top right, rgba(var(--theme-primary-rgb), 0.08), transparent 48%);
+  border: 1px solid rgba(var(--theme-border-rgb), 0.7);
   border-radius: 18px;
   box-shadow:
-    0 22px 52px rgba(16, 32, 51, 0.14),
-    0 2px 8px rgba(16, 32, 51, 0.05);
+    0 22px 52px rgba(var(--theme-primary-rgb), 0.16),
+    0 2px 8px rgba(var(--theme-text-rgb), 0.06);
   display: ${({ $open }) => ($open ? "grid" : "none")};
   gap: 0.8rem;
   min-width: min(320px, calc(100vw - 1.4rem));
@@ -288,14 +299,14 @@ const MoreMenuHeader = styled.div`
 `;
 
 const MoreMenuTitle = styled.span`
-  color: #182742;
+  color: var(--theme-text);
   font-size: 0.95rem;
   font-weight: 800;
   letter-spacing: -0.02em;
 `;
 
 const MoreMenuDescription = styled.span`
-  color: rgba(75, 90, 115, 0.92);
+  color: rgba(var(--theme-muted-rgb), 0.92);
   font-size: 0.78rem;
   line-height: 1.4;
 `;
@@ -311,7 +322,7 @@ const MoreMenuSection = styled.div`
 `;
 
 const MoreMenuSectionLabel = styled.span`
-  color: rgba(79, 93, 119, 0.9);
+  color: rgba(var(--theme-muted-rgb), 0.9);
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.16em;
@@ -326,10 +337,12 @@ const MoreMenuList = styled.div`
 
 const MoreMenuLink = styled(Link)`
   align-items: center;
-  background: ${({ $active }) => ($active ? "rgba(36, 75, 115, 0.1)" : "transparent")};
-  border: 1px solid ${({ $active }) => ($active ? "rgba(36, 75, 115, 0.18)" : "transparent")};
+  background: ${({ $active }) =>
+    $active ? "rgba(var(--theme-primary-rgb), 0.12)" : "transparent"};
+  border: 1px solid
+    ${({ $active }) => ($active ? "rgba(var(--theme-primary-rgb), 0.18)" : "transparent")};
   border-radius: 12px;
-  color: ${({ $active }) => ($active ? "#244b73" : "#182742")};
+  color: ${({ $active }) => ($active ? "var(--theme-primary)" : "var(--theme-text)")};
   display: flex;
   font-size: 0.93rem;
   font-weight: ${({ $active }) => ($active ? 800 : 700)};
@@ -343,15 +356,15 @@ const MoreMenuLink = styled(Link)`
     transform 160ms ease;
 
   &:hover {
-    background: rgba(36, 75, 115, 0.07);
-    border-color: rgba(36, 75, 115, 0.14);
-    color: #244b73;
+    background: rgba(var(--theme-primary-rgb), 0.08);
+    border-color: rgba(var(--theme-primary-rgb), 0.14);
+    color: var(--theme-primary);
     transform: translateY(-1px);
   }
 `;
 
 const MoreMenuItemMeta = styled.span`
-  color: rgba(79, 93, 119, 0.78);
+  color: rgba(var(--theme-muted-rgb), 0.78);
   font-size: 0.78rem;
   font-weight: 700;
 `;
@@ -363,9 +376,9 @@ const Content = styled.div`
 
 const Footer = styled.footer`
   background:
-    radial-gradient(circle at top left, rgba(120, 152, 190, 0.18), transparent 28%),
-    radial-gradient(circle at bottom right, rgba(92, 123, 160, 0.14), transparent 30%),
-    linear-gradient(180deg, #243f5d 0%, #203a56 100%);
+    radial-gradient(circle at top left, rgba(78, 145, 192, 0.22), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(29, 63, 102, 0.2), transparent 32%),
+    linear-gradient(180deg, #17314d 0%, #0f2236 100%);
   color: rgba(255, 255, 255, 0.96);
   margin-top: auto;
 `;
@@ -418,7 +431,7 @@ const FooterCopyStack = styled.div`
 `;
 
 const FooterBodyText = styled.p`
-  color: rgba(241, 245, 250, 0.9);
+  color: rgba(235, 241, 248, 0.82);
   font-size: clamp(0.98rem, 2vw, 1.04rem);
   line-height: 1.55;
   margin: 0;
@@ -431,7 +444,7 @@ const FooterNavSection = styled.div`
 `;
 
 const FooterSectionTitle = styled.span`
-  color: rgba(255, 255, 255, 0.92);
+  color: rgba(228, 236, 246, 0.8);
   font-size: 0.8rem;
   font-weight: 800;
   letter-spacing: 0.18em;
@@ -464,10 +477,11 @@ const FooterUtility = styled.div`
 `;
 
 const FooterAdvertiseButton = styled.button`
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 10px;
   color: rgba(255, 255, 255, 0.96);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
   cursor: pointer;
   font-size: 0.98rem;
   font-weight: 600;
@@ -476,14 +490,14 @@ const FooterAdvertiseButton = styled.button`
   transition: background 160ms ease, border-color 160ms ease;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.24);
   }
 `;
 
 const FooterBottom = styled.div`
   align-items: center;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
@@ -492,16 +506,17 @@ const FooterBottom = styled.div`
 `;
 
 const Copyright = styled.span`
-  color: rgba(242, 245, 249, 0.9);
+  color: rgba(230, 237, 245, 0.82);
   font-size: clamp(0.95rem, 2vw, 1rem);
 `;
 
 const FooterLocale = styled.button`
   align-items: center;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 10px;
   color: rgba(255, 255, 255, 0.96);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
   cursor: pointer;
   display: inline-flex;
   font-size: clamp(0.96rem, 2vw, 1rem);
@@ -521,6 +536,7 @@ export default function SiteShell({ children, locale, messages }) {
   const pathname = usePathname();
   const [menuOpenedForPath, setMenuOpenedForPath] = useState(null);
   const [isDesktopPrimaryNavVisible, setIsDesktopPrimaryNavVisible] = useState(false);
+  const menuWrapRef = useRef(null);
   const legalNavigation = messages.site.legalNavigation || {};
   const languageLabel = messages.meta?.language || locale.toUpperCase();
   const currentYear = new Date().getFullYear();
@@ -593,6 +609,26 @@ export default function SiteShell({ children, locale, messages }) {
     return () => mediaQueryList.removeListener(handleChange);
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined" || !isMenuOpen) {
+      return undefined;
+    }
+
+    const handlePointerDown = (event) => {
+      if (menuWrapRef.current?.contains(event.target)) {
+        return;
+      }
+
+      setMenuOpenedForPath(null);
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [isMenuOpen]);
+
   return (
     <Shell>
       <Header>
@@ -631,7 +667,7 @@ export default function SiteShell({ children, locale, messages }) {
               })}
             </PrimaryNav>
 
-            <MenuWrap>
+            <MenuWrap ref={menuWrapRef}>
               <MoreButton
                 aria-controls="public-navigation-overflow"
                 aria-expanded={isMenuOpen}

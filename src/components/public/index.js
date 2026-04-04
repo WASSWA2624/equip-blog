@@ -1309,7 +1309,7 @@ const BreadcrumbLink = styled(Link)`
   color: inherit;
 
   &:hover {
-    color: #244b73;
+    color: var(--theme-primary);
   }
 `;
 
@@ -1324,13 +1324,13 @@ const PostScene = styled.section`
 
 const PostHeroShell = styled.section`
   background:
-    radial-gradient(circle at top right, rgba(36, 75, 115, 0.14), transparent 34%),
-    radial-gradient(circle at bottom left, rgba(0, 95, 115, 0.11), transparent 42%),
-    linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(247, 250, 255, 0.95));
-  border: 1px solid rgba(16, 32, 51, 0.08);
+    radial-gradient(circle at top right, rgba(var(--theme-primary-rgb), 0.14), transparent 34%),
+    radial-gradient(circle at bottom left, rgba(var(--theme-accent-rgb), 0.11), transparent 42%),
+    linear-gradient(160deg, rgba(var(--theme-bg-rgb), 0.98), rgba(var(--theme-surface-rgb), 0.95));
+  border: 1px solid rgba(var(--theme-border-rgb), 0.68);
   border-radius: 0;
   box-shadow:
-    0 32px 90px rgba(19, 34, 58, 0.1),
+    0 32px 90px rgba(var(--theme-primary-rgb), 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.76);
   overflow: hidden;
   padding: clamp(0.95rem, 2.4vw, 1.35rem);
@@ -1339,14 +1339,18 @@ const PostHeroShell = styled.section`
     $presentation === "atlas" &&
     css`
       background:
-        linear-gradient(140deg, rgba(255, 255, 255, 0.98), rgba(243, 247, 251, 0.96)),
-        radial-gradient(circle at top right, rgba(63, 115, 154, 0.18), transparent 34%),
-        radial-gradient(circle at bottom left, rgba(196, 123, 48, 0.1), transparent 42%);
+        linear-gradient(140deg, rgba(var(--theme-bg-rgb), 0.98), rgba(var(--theme-surface-rgb), 0.96)),
+        radial-gradient(circle at top right, rgba(var(--theme-accent-rgb), 0.18), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(var(--theme-primary-rgb), 0.12), transparent 42%);
       isolation: isolate;
       position: relative;
 
       &::before {
-        background: linear-gradient(90deg, rgba(31, 62, 94, 0.95), rgba(63, 115, 154, 0.65));
+        background: linear-gradient(
+          90deg,
+          rgba(var(--theme-primary-rgb), 0.95),
+          rgba(var(--theme-accent-rgb), 0.65)
+        );
         content: "";
         height: 4px;
         left: 0;
@@ -1358,8 +1362,8 @@ const PostHeroShell = styled.section`
 
       &::after {
         background-image:
-          linear-gradient(rgba(31, 62, 94, 0.035) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(31, 62, 94, 0.035) 1px, transparent 1px);
+          linear-gradient(rgba(var(--theme-primary-rgb), 0.04) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(var(--theme-primary-rgb), 0.04) 1px, transparent 1px);
         background-size: 22px 22px;
         content: "";
         inset: 0;
@@ -1393,23 +1397,45 @@ const PostHeader = styled.div`
 
 const PostLeadGrid = styled.div`
   display: grid;
+  grid-template-areas:
+    "title"
+    "visual"
+    "deck";
   gap: clamp(0.72rem, 1.5vw, 0.95rem);
+
+  ${({ $hasVisual }) =>
+    !$hasVisual &&
+    css`
+      grid-template-areas:
+        "title"
+        "deck";
+    `}
 
   @media (min-width: 980px) {
     align-items: start;
     column-gap: clamp(1rem, 2.2vw, 1.45rem);
-    grid-template-columns: minmax(0, 1.04fr) minmax(260px, 0.78fr);
+    grid-template-columns: ${({ $hasVisual }) =>
+      $hasVisual ? "minmax(0, 1.06fr) minmax(220px, 0.74fr)" : "minmax(0, 1.04fr) minmax(260px, 0.78fr)"};
+    grid-template-areas: ${({ $hasVisual }) =>
+      $hasVisual ? `"title visual" "deck visual"` : `"title deck"`};
   }
+`;
+
+const PostTitleBlock = styled.div`
+  display: grid;
+  gap: 0.5rem;
+  grid-area: title;
+  min-width: 0;
 `;
 
 const PostDeckBlock = styled.div`
   align-content: start;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(246, 249, 253, 0.92)),
-    radial-gradient(circle at top right, rgba(63, 115, 154, 0.1), transparent 58%);
-  border: 1px solid rgba(16, 32, 51, 0.08);
+    linear-gradient(180deg, rgba(var(--theme-bg-rgb), 0.94), rgba(var(--theme-surface-rgb), 0.92)),
+    radial-gradient(circle at top right, rgba(var(--theme-accent-rgb), 0.1), transparent 58%);
+  border: 1px solid rgba(var(--theme-border-rgb), 0.7);
   box-shadow:
-    0 18px 36px rgba(19, 34, 58, 0.05),
+    0 18px 36px rgba(var(--theme-primary-rgb), 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.74);
   display: grid;
   gap: 0.68rem;
@@ -1419,7 +1445,11 @@ const PostDeckBlock = styled.div`
   position: relative;
 
   &::before {
-    background: linear-gradient(180deg, rgba(36, 75, 115, 0.9), rgba(63, 115, 154, 0.4));
+    background: linear-gradient(
+      180deg,
+      rgba(var(--theme-primary-rgb), 0.9),
+      rgba(var(--theme-accent-rgb), 0.4)
+    );
     content: "";
     inset: 0 auto 0 0;
     position: absolute;
@@ -1430,10 +1460,12 @@ const PostDeckBlock = styled.div`
     position: relative;
     z-index: 1;
   }
+
+  grid-area: deck;
 `;
 
 const PostDeckEyebrow = styled.p`
-  color: rgba(52, 76, 104, 0.74);
+  color: rgba(var(--theme-primary-rgb), 0.74);
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.18em;
@@ -1442,7 +1474,7 @@ const PostDeckEyebrow = styled.p`
 `;
 
 const PostKicker = styled.p`
-  color: rgba(31, 77, 108, 0.82);
+  color: rgba(var(--theme-primary-rgb), 0.82);
   font-size: 0.82rem;
   font-weight: 800;
   letter-spacing: 0.18em;
@@ -1451,7 +1483,7 @@ const PostKicker = styled.p`
 `;
 
 const PostTitle = styled.h1`
-  color: #16243b;
+  color: var(--theme-text);
   font-family: var(--font-editorial), Georgia, serif;
   font-size: clamp(1.85rem, 3.6vw, 2.55rem);
   font-weight: 600;
@@ -1464,6 +1496,41 @@ const PostTitle = styled.h1`
   @media (min-width: 980px) {
     max-width: none;
   }
+`;
+
+const PostLeadVisual = styled.div`
+  align-self: stretch;
+  display: grid;
+  gap: 0.45rem;
+  grid-area: visual;
+  min-width: 0;
+`;
+
+const PostLeadVisualFrame = styled.div`
+  background:
+    linear-gradient(180deg, rgba(var(--theme-bg-rgb), 0.96), rgba(var(--theme-surface-rgb), 0.96)),
+    radial-gradient(circle at top right, rgba(var(--theme-accent-rgb), 0.1), transparent 58%);
+  border: 1px solid rgba(var(--theme-border-rgb), 0.72);
+  box-shadow:
+    0 18px 36px rgba(var(--theme-primary-rgb), 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  overflow: hidden;
+  padding: 0.42rem;
+
+  ${FigureImage} {
+    aspect-ratio: 4 / 3;
+    border-radius: 0;
+    max-height: clamp(210px, 32vw, 320px);
+    object-fit: cover;
+    width: 100%;
+  }
+`;
+
+const PostLeadVisualCaption = styled.p`
+  color: rgba(var(--theme-muted-rgb), 0.84);
+  font-size: 0.82rem;
+  line-height: 1.38;
+  margin: 0;
 `;
 
 const PostDeck = styled.p`
@@ -1486,10 +1553,10 @@ const HeroSignalRow = styled.div`
 `;
 
 const HeroSignal = styled.span`
-  background: rgba(255, 255, 255, 0.74);
-  border: 1px solid rgba(16, 32, 51, 0.1);
+  background: rgba(var(--theme-bg-rgb), 0.78);
+  border: 1px solid rgba(var(--theme-border-rgb), 0.82);
   border-radius: 0;
-  color: rgba(32, 61, 90, 0.9);
+  color: rgba(var(--theme-primary-rgb), 0.9);
   display: inline-flex;
   font-size: 0.72rem;
   font-weight: 800;
@@ -1501,14 +1568,24 @@ const HeroSignal = styled.span`
 const PostMetaGrid = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 0.45rem;
+  align-items: center;
+  column-gap: 0.8rem;
+  row-gap: 0.14rem;
+  width: 100%;
+
+  @media (min-width: 760px) {
+    display: grid;
+    gap: 0.5rem 1rem;
+    grid-template-columns: repeat(3, minmax(0, max-content));
+    justify-content: space-between;
+  }
 `;
 
 const PostHeroUtilityBand = styled.div`
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(245, 248, 252, 0.92)),
-    radial-gradient(circle at top right, rgba(63, 115, 154, 0.08), transparent 56%);
-  border-top: 1px solid rgba(16, 32, 51, 0.08);
+    linear-gradient(180deg, rgba(var(--theme-bg-rgb), 0.9), rgba(var(--theme-surface-rgb), 0.92)),
+    radial-gradient(circle at top right, rgba(var(--theme-accent-rgb), 0.08), transparent 56%);
+  border-top: 1px solid rgba(var(--theme-border-rgb), 0.7);
   display: grid;
   gap: 0.7rem;
   margin-top: 0.1rem;
@@ -1528,47 +1605,63 @@ const PostHeroContext = styled.div`
 `;
 
 const MetaPill = styled.span`
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 253, 0.92)),
-    radial-gradient(circle at top right, rgba(63, 115, 154, 0.08), transparent 60%);
-  border: 1px solid rgba(16, 32, 51, 0.1);
-  border-radius: 0;
-  box-shadow: 0 10px 28px rgba(19, 34, 58, 0.04);
   color: rgba(62, 75, 95, 0.9);
-  display: grid;
-  gap: 0.16rem;
-  min-width: min(13rem, 100%);
-  padding: 0.62rem 0.88rem;
+  display: inline-flex;
+  flex-wrap: nowrap;
+  gap: 0.26rem;
+  min-width: 0;
+  padding: 0;
+  white-space: nowrap;
 `;
 
 const PostHeroChip = styled(Chip)`
-  background: rgba(32, 74, 113, 0.08);
-  border-color: rgba(32, 74, 113, 0.12);
+  align-items: baseline;
+  background: transparent;
+  border: none;
   border-radius: 0;
-  box-shadow: 0 10px 24px rgba(19, 34, 58, 0.04);
-  padding: 0.34rem 0.72rem;
+  box-shadow: none;
+  color: var(--theme-primary);
+  display: inline-flex;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  padding: 0;
+  text-decoration: underline;
+  text-decoration-color: rgba(var(--theme-primary-rgb), 0.22);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+
+  &:hover {
+    color: rgba(var(--theme-primary-rgb), 0.9);
+    text-decoration-color: rgba(var(--theme-primary-rgb), 0.38);
+  }
 `;
 
 const MetaPillLabel = styled.span`
   color: rgba(75, 88, 109, 0.76);
-  font-size: 0.7rem;
+  font-size: 0.54rem;
   font-weight: 800;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   line-height: 1.1;
   text-transform: uppercase;
 `;
 
 const MetaPillValue = styled.strong`
-  color: #17253d;
-  font-size: 0.98rem;
+  color: var(--theme-text);
+  font-size: 0.72rem;
   font-weight: 800;
-  letter-spacing: -0.02em;
-  line-height: 1.12;
+  letter-spacing: -0.01em;
+  line-height: 1.05;
 `;
 
 const PostTaxonomyRail = styled.div`
   display: grid;
-  gap: 0.45rem;
+  gap: 0.3rem;
+
+  ${ChipRow} {
+    column-gap: 0.75rem;
+    row-gap: 0.22rem;
+  }
 `;
 
 const PostTaxonomyLabel = styled.p`
@@ -1583,49 +1676,71 @@ const PostTaxonomyLabel = styled.p`
 const HeroActionRow = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-
-  @media (min-width: 980px) {
-    justify-content: flex-end;
-  }
+  align-items: center;
+  gap: 0.5rem 0.9rem;
 `;
 
 const HeroPrimaryAction = styled.a`
   align-items: center;
-  background: linear-gradient(180deg, #274d74, #1f3e5e);
-  border-radius: 0;
-  box-shadow: 0 18px 40px rgba(31, 62, 94, 0.18);
-  color: #fff;
+  background: transparent;
+  color: var(--theme-primary);
   display: inline-flex;
+  font-size: 0.92rem;
   font-weight: 800;
   justify-content: center;
-  min-height: 42px;
-  padding: 0.64rem 1rem;
+  min-height: auto;
+  padding: 0;
+  text-decoration: underline;
+  text-decoration-color: rgba(var(--theme-primary-rgb), 0.26);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
   white-space: nowrap;
+
+  &:hover {
+    color: rgba(var(--theme-primary-rgb), 0.9);
+    text-decoration-color: rgba(var(--theme-primary-rgb), 0.4);
+  }
 `;
 
 const HeroSecondaryAction = styled(Link)`
   align-items: center;
-  background: rgba(255, 255, 255, 0.84);
-  border: 1px solid rgba(16, 32, 51, 0.12);
-  border-radius: 0;
-  color: #183b63;
+  color: var(--theme-primary);
   display: inline-flex;
+  font-size: 0.92rem;
   font-weight: 800;
   justify-content: center;
-  min-height: 42px;
-  padding: 0.64rem 0.95rem;
+  min-height: auto;
+  padding: 0;
+  text-decoration: underline;
+  text-decoration-color: rgba(var(--theme-primary-rgb), 0.26);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
   white-space: nowrap;
+
+  &:hover {
+    color: rgba(var(--theme-primary-rgb), 0.9);
+    text-decoration-color: rgba(var(--theme-primary-rgb), 0.4);
+  }
 `;
 
 const HeroGhostAction = styled(Link)`
   align-items: center;
-  color: rgba(45, 61, 84, 0.92);
+  color: rgba(var(--theme-muted-rgb), 0.96);
   display: inline-flex;
+  font-size: 0.92rem;
   font-weight: 700;
-  min-height: 42px;
-  padding: 0.2rem 0.1rem;
+  min-height: auto;
+  padding: 0;
+  text-decoration: underline;
+  text-decoration-color: rgba(var(--theme-muted-rgb), 0.2);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
   white-space: nowrap;
+
+  &:hover {
+    color: var(--theme-text);
+    text-decoration-color: rgba(var(--theme-text-rgb), 0.34);
+  }
 `;
 
 const PostHeroAside = styled.aside`
@@ -1635,9 +1750,9 @@ const PostHeroAside = styled.aside`
 
 const HeroSnapshotCard = styled.div`
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(248, 250, 255, 0.94)),
-    radial-gradient(circle at top right, rgba(36, 75, 115, 0.08), transparent 56%);
-  border: 1px solid rgba(16, 32, 51, 0.08);
+    linear-gradient(180deg, rgba(var(--theme-bg-rgb), 0.88), rgba(var(--theme-surface-rgb), 0.94)),
+    radial-gradient(circle at top right, rgba(var(--theme-primary-rgb), 0.08), transparent 56%);
+  border: 1px solid rgba(var(--theme-border-rgb), 0.7);
   border-radius: 0;
   display: grid;
   gap: 0.72rem;
@@ -1647,11 +1762,11 @@ const HeroSnapshotCard = styled.div`
     $presentation === "atlas" &&
     css`
       background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(243, 247, 251, 0.94)),
-        radial-gradient(circle at top right, rgba(63, 115, 154, 0.12), transparent 58%);
-      border-color: rgba(18, 37, 60, 0.11);
+        linear-gradient(180deg, rgba(var(--theme-bg-rgb), 0.92), rgba(var(--theme-surface-rgb), 0.94)),
+        radial-gradient(circle at top right, rgba(var(--theme-accent-rgb), 0.12), transparent 58%);
+      border-color: rgba(var(--theme-border-rgb), 0.78);
       box-shadow:
-        0 18px 42px rgba(18, 37, 60, 0.06),
+        0 18px 42px rgba(var(--theme-primary-rgb), 0.08),
         inset 0 1px 0 rgba(255, 255, 255, 0.82);
     `}
 `;
@@ -1663,7 +1778,7 @@ const HeroSectionNavCard = styled(HeroSnapshotCard)`
 `;
 
 const HeroSnapshotEyebrow = styled.p`
-  color: rgba(49, 74, 103, 0.74);
+  color: rgba(var(--theme-primary-rgb), 0.74);
   font-size: 0.74rem;
   font-weight: 800;
   letter-spacing: 0.18em;
@@ -1672,7 +1787,7 @@ const HeroSnapshotEyebrow = styled.p`
 `;
 
 const HeroSnapshotTitle = styled.h2`
-  color: #16243b;
+  color: var(--theme-text);
   font-size: clamp(0.98rem, 1.5vw, 1.08rem);
   letter-spacing: -0.03em;
   line-height: 1.18;
@@ -1680,20 +1795,20 @@ const HeroSnapshotTitle = styled.h2`
 `;
 
 const HeroSnapshotText = styled.p`
-  color: rgba(73, 86, 108, 0.94);
+  color: rgba(var(--theme-muted-rgb), 0.94);
   line-height: 1.56;
   margin: 0;
 `;
 
 const HeroResumeBlock = styled.div`
-  border-top: 1px solid rgba(16, 32, 51, 0.08);
+  border-top: 1px solid rgba(var(--theme-border-rgb), 0.7);
   display: grid;
   gap: 0.38rem;
   padding-top: 0.72rem;
 `;
 
 const HeroResumeLabel = styled.p`
-  color: rgba(58, 72, 95, 0.72);
+  color: rgba(var(--theme-primary-rgb), 0.72);
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.18em;
@@ -1704,14 +1819,14 @@ const HeroResumeLabel = styled.p`
 const HeroResumeLink = styled.a`
   align-items: center;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(246, 249, 253, 0.94)),
-    radial-gradient(circle at top right, rgba(63, 115, 154, 0.12), transparent 58%);
-  border: 1px solid rgba(36, 75, 115, 0.14);
+    linear-gradient(180deg, rgba(var(--theme-bg-rgb), 0.94), rgba(var(--theme-surface-rgb), 0.94)),
+    radial-gradient(circle at top right, rgba(var(--theme-accent-rgb), 0.12), transparent 58%);
+  border: 1px solid rgba(var(--theme-primary-rgb), 0.14);
   border-radius: 0;
   box-shadow:
-    0 12px 28px rgba(19, 34, 58, 0.05),
+    0 12px 28px rgba(var(--theme-primary-rgb), 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.74);
-  color: #183b63;
+  color: var(--theme-primary);
   display: inline-flex;
   font-weight: 800;
   justify-content: space-between;
@@ -1726,16 +1841,16 @@ const HeroResumeLink = styled.a`
     transform 160ms ease;
 
   &:hover {
-    border-color: rgba(36, 75, 115, 0.24);
+    border-color: rgba(var(--theme-primary-rgb), 0.24);
     box-shadow:
-      0 16px 32px rgba(19, 34, 58, 0.08),
+      0 16px 32px rgba(var(--theme-primary-rgb), 0.1),
       inset 0 1px 0 rgba(255, 255, 255, 0.8);
     transform: translateY(-1px);
   }
 `;
 
 const HeroResumeMeta = styled.span`
-  color: rgba(36, 75, 115, 0.72);
+  color: rgba(var(--theme-primary-rgb), 0.72);
   font-size: 0.74rem;
   font-weight: 800;
   letter-spacing: 0.16em;
@@ -1748,7 +1863,7 @@ const HeroResumeTitle = styled.span`
 `;
 
 const HeroResumeArrow = styled.span`
-  color: rgba(36, 75, 115, 0.58);
+  color: rgba(var(--theme-primary-rgb), 0.58);
   font-size: 1rem;
   line-height: 1;
 `;
@@ -1764,8 +1879,8 @@ const HeroStatsGrid = styled.dl`
 `;
 
 const HeroStatCard = styled.div`
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid rgba(16, 32, 51, 0.08);
+  background: rgba(var(--theme-bg-rgb), 0.82);
+  border: 1px solid rgba(var(--theme-border-rgb), 0.72);
   border-radius: 0;
   display: grid;
   gap: 0.22rem;
@@ -1776,9 +1891,9 @@ const HeroStatCard = styled.div`
     $presentation === "atlas" &&
     css`
       background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(242, 246, 250, 0.92)),
-        radial-gradient(circle at top right, rgba(63, 115, 154, 0.08), transparent 52%);
-      border-color: rgba(18, 37, 60, 0.1);
+        linear-gradient(180deg, rgba(var(--theme-bg-rgb), 0.88), rgba(var(--theme-surface-rgb), 0.92)),
+        radial-gradient(circle at top right, rgba(var(--theme-accent-rgb), 0.08), transparent 52%);
+      border-color: rgba(var(--theme-border-rgb), 0.78);
     `}
 `;
 
@@ -1792,7 +1907,7 @@ const HeroStatLabel = styled.dt`
 `;
 
 const HeroStatValue = styled.dd`
-  color: #17253d;
+  color: var(--theme-text);
   font-size: clamp(1rem, 2.2vw, 1.2rem);
   font-weight: 800;
   letter-spacing: -0.03em;
@@ -1852,11 +1967,11 @@ const SectionNavLabel = styled.span`
 `;
 
 const PostImagePanel = styled.section`
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(247, 250, 255, 0.93));
-  border: 1px solid rgba(16, 32, 51, 0.07);
+  background: linear-gradient(180deg, rgba(var(--theme-bg-rgb), 0.96), rgba(var(--theme-surface-rgb), 0.93));
+  border: 1px solid rgba(var(--theme-border-rgb), 0.7);
   border-radius: 0;
   box-shadow:
-    0 16px 38px rgba(19, 34, 58, 0.06),
+    0 16px 38px rgba(var(--theme-primary-rgb), 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.76);
   overflow: hidden;
   padding: clamp(0.5rem, 1.15vw, 0.68rem);
@@ -1865,16 +1980,16 @@ const PostImagePanel = styled.section`
     $presentation === "atlas" &&
     css`
       background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(243, 247, 251, 0.94)),
-        radial-gradient(circle at top right, rgba(63, 115, 154, 0.12), transparent 44%);
-      border-color: rgba(18, 37, 60, 0.1);
+        linear-gradient(180deg, rgba(var(--theme-bg-rgb), 0.97), rgba(var(--theme-surface-rgb), 0.94)),
+        radial-gradient(circle at top right, rgba(var(--theme-accent-rgb), 0.12), transparent 44%);
+      border-color: rgba(var(--theme-border-rgb), 0.78);
       padding: clamp(0.78rem, 1.8vw, 1rem);
       position: relative;
 
       &::before {
         background-image:
-          linear-gradient(rgba(18, 37, 60, 0.03) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(18, 37, 60, 0.03) 1px, transparent 1px);
+          linear-gradient(rgba(var(--theme-primary-rgb), 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(var(--theme-primary-rgb), 0.03) 1px, transparent 1px);
         background-size: 20px 20px;
         content: "";
         inset: 0;
@@ -1897,7 +2012,11 @@ const MediaPanelHeader = styled.div`
   position: relative;
 
   &::after {
-    background: linear-gradient(90deg, rgba(18, 37, 60, 0.12), rgba(18, 37, 60, 0.03));
+    background: linear-gradient(
+      90deg,
+      rgba(var(--theme-primary-rgb), 0.12),
+      rgba(var(--theme-primary-rgb), 0.03)
+    );
     content: "";
     height: 1px;
     inset: auto 0 0;
@@ -1924,7 +2043,7 @@ const MediaPanelTitleRow = styled.div`
 `;
 
 const MediaPanelTitle = styled.p`
-  color: #16243b;
+  color: var(--theme-text);
   font-size: 0.96rem;
   font-weight: 800;
   letter-spacing: 0.16em;
@@ -1935,10 +2054,10 @@ const MediaPanelTitle = styled.p`
 const MediaPanelCount = styled.span`
   align-items: center;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(241, 246, 251, 0.92)),
-    radial-gradient(circle at top right, rgba(63, 115, 154, 0.12), transparent 58%);
-  border: 1px solid rgba(16, 32, 51, 0.1);
-  color: rgba(30, 60, 91, 0.9);
+    linear-gradient(180deg, rgba(var(--theme-bg-rgb), 0.94), rgba(var(--theme-surface-rgb), 0.92)),
+    radial-gradient(circle at top right, rgba(var(--theme-accent-rgb), 0.12), transparent 58%);
+  border: 1px solid rgba(var(--theme-border-rgb), 0.82);
+  color: rgba(var(--theme-primary-rgb), 0.9);
   display: inline-flex;
   font-size: 0.72rem;
   font-weight: 800;
@@ -1949,7 +2068,7 @@ const MediaPanelCount = styled.span`
 `;
 
 const MediaPanelLead = styled.p`
-  color: rgba(58, 71, 92, 0.9);
+  color: rgba(var(--theme-muted-rgb), 0.9);
   font-size: 1rem;
   line-height: 1.42;
   margin: 0;
@@ -2059,34 +2178,6 @@ const SidebarNavigatorBody = styled.div`
   gap: 0.5rem;
 `;
 
-const SidebarEquipmentPanel = styled(SidebarPanel)`
-  overflow: hidden;
-  position: relative;
-
-  &::before {
-    background: linear-gradient(90deg, rgba(24, 59, 99, 0.92), rgba(63, 115, 154, 0.4));
-    content: "";
-    height: 3px;
-    left: 0;
-    position: absolute;
-    right: 0;
-    top: 0;
-  }
-
-  @media (min-width: 1100px) {
-    order: 2;
-  }
-`;
-
-const SidebarEyebrow = styled.p`
-  color: rgba(42, 72, 103, 0.72);
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.18em;
-  margin: 0;
-  text-transform: uppercase;
-`;
-
 const SidebarTitle = styled.h2`
   color: #16243b;
   font-size: 1.12rem;
@@ -2105,109 +2196,6 @@ const SidebarStatusNote = styled.p`
     color: #183b63;
     font-weight: 800;
   }
-`;
-
-const SidebarText = styled.p`
-  color: rgba(72, 84, 108, 0.94);
-  font-size: 0.98rem;
-  line-height: 1.5;
-  margin: 0;
-`;
-
-const SidebarSubheading = styled.p`
-  color: rgba(58, 71, 94, 0.76);
-  font-size: 0.74rem;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  margin: 0.1rem 0 0;
-  text-transform: uppercase;
-`;
-
-const SidebarManufacturerGrid = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.55rem;
-`;
-
-const SidebarManufacturerChip = styled(Link)`
-  align-items: center;
-  background:
-    linear-gradient(180deg, rgba(246, 249, 253, 0.96), rgba(235, 241, 247, 0.96)),
-    radial-gradient(circle at top right, rgba(63, 115, 154, 0.12), transparent 58%);
-  border: 1px solid rgba(36, 75, 115, 0.14);
-  border-radius: 0;
-  box-shadow:
-    0 10px 24px rgba(19, 34, 58, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.78);
-  color: #234a73;
-  display: inline-flex;
-  font-size: 0.94rem;
-  font-weight: 700;
-  gap: 0.45rem;
-  line-height: 1.2;
-  min-height: 2.45rem;
-  padding: 0.46rem 0.88rem;
-  transition:
-    border-color 160ms ease,
-    box-shadow 160ms ease,
-    transform 160ms ease;
-
-  &::before {
-    background: currentColor;
-    border-radius: 999px;
-    content: "";
-    display: block;
-    height: 0.38rem;
-    opacity: 0.46;
-    width: 0.38rem;
-  }
-
-  &:hover {
-    border-color: rgba(36, 75, 115, 0.24);
-    box-shadow:
-      0 14px 30px rgba(19, 34, 58, 0.08),
-      inset 0 1px 0 rgba(255, 255, 255, 0.8);
-    transform: translateY(-1px);
-  }
-`;
-
-const SidebarAction = styled(Link)`
-  align-items: center;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 249, 253, 0.96)),
-    radial-gradient(circle at top right, rgba(63, 115, 154, 0.12), transparent 56%);
-  border: 1px solid rgba(16, 32, 51, 0.12);
-  border-radius: 0;
-  color: #183b63;
-  display: inline-flex;
-  font-weight: 800;
-  justify-content: center;
-  letter-spacing: -0.02em;
-  min-height: 42px;
-  padding: 0.62rem 0.9rem;
-  transition:
-    border-color 160ms ease,
-    box-shadow 160ms ease,
-    transform 160ms ease;
-  width: 100%;
-
-  &:hover {
-    border-color: rgba(36, 75, 115, 0.2);
-    box-shadow:
-      0 16px 30px rgba(19, 34, 58, 0.08),
-      inset 0 1px 0 rgba(255, 255, 255, 0.82);
-    transform: translateY(-1px);
-  }
-`;
-
-const SidebarBackLink = styled(Link)`
-  color: rgba(53, 67, 90, 0.94);
-  display: inline-flex;
-  font-weight: 700;
-  text-decoration: underline;
-  text-decoration-color: rgba(53, 67, 90, 0.2);
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.16em;
 `;
 
 const TocList = styled.ol`
@@ -3242,6 +3230,8 @@ export function PublicPostPage({ locale, messages, pageData }) {
   const displayTitle = formatArticleDisplayTitle(article.title, article.equipment.name);
   const bodySections = article.bodySections || [];
   const inlineHeroImages = (article.heroImages || []).filter((image) => image.renderInline);
+  const featuredHeroImage = inlineHeroImages[0] || null;
+  const inlineGalleryImages = featuredHeroImage ? inlineHeroImages.slice(1) : inlineHeroImages;
   const linkedHeroImages = (article.heroImages || []).filter((image) => !image.renderInline);
   const sectionLinks = bodySections.filter((section) => section?.id && section?.title);
   const readingTimeMinutes = estimateReadingTimeMinutes(bodySections);
@@ -3529,8 +3519,40 @@ export function PublicPostPage({ locale, messages, pageData }) {
                 ))}
               </Breadcrumbs>
               <PostKicker>{displayEquipmentName}</PostKicker>
-              <PostLeadGrid>
-                <PostTitle>{displayTitle}</PostTitle>
+              <PostLeadGrid $hasVisual={Boolean(featuredHeroImage)}>
+                <PostTitleBlock>
+                  <PostTitle>{displayTitle}</PostTitle>
+                </PostTitleBlock>
+                {featuredHeroImage ? (
+                  <PostLeadVisual>
+                    <PostLeadVisualFrame>
+                      {featuredHeroImage.href ? (
+                        <FigureFrameLink
+                          href={featuredHeroImage.href}
+                          rel="noreferrer"
+                          target="_blank"
+                        >
+                          <ResponsiveImage
+                            image={featuredHeroImage}
+                            priority={true}
+                            sizes="(min-width: 980px) 24vw, 92vw"
+                            variant="card"
+                          />
+                        </FigureFrameLink>
+                      ) : (
+                        <ResponsiveImage
+                          image={featuredHeroImage}
+                          priority={true}
+                          sizes="(min-width: 980px) 24vw, 92vw"
+                          variant="card"
+                        />
+                      )}
+                    </PostLeadVisualFrame>
+                    {featuredHeroImage.caption ? (
+                      <PostLeadVisualCaption>{featuredHeroImage.caption}</PostLeadVisualCaption>
+                    ) : null}
+                  </PostLeadVisual>
+                ) : null}
                 <PostDeckBlock>
                   <PostDeckEyebrow>Reading brief</PostDeckEyebrow>
                   <PostDeck>{article.excerpt}</PostDeck>
@@ -3580,14 +3602,14 @@ export function PublicPostPage({ locale, messages, pageData }) {
                       </ChipRow>
                     </PostTaxonomyRail>
                   ) : null}
+                  <HeroActionRow>
+                    <HeroPrimaryAction href="#guide-content">Start reading</HeroPrimaryAction>
+                    <HeroSecondaryAction href={article.equipment.path}>
+                      {copy.browseEquipment}
+                    </HeroSecondaryAction>
+                    <HeroGhostAction href={backToBlogHref}>{copy.backToBlogAction}</HeroGhostAction>
+                  </HeroActionRow>
                 </PostHeroContext>
-                <HeroActionRow>
-                  <HeroPrimaryAction href="#guide-content">Start reading</HeroPrimaryAction>
-                  <HeroSecondaryAction href={article.equipment.path}>
-                    {copy.browseEquipment}
-                  </HeroSecondaryAction>
-                  <HeroGhostAction href={backToBlogHref}>{copy.backToBlogAction}</HeroGhostAction>
-                </HeroActionRow>
               </PostHeroUtilityBand>
             </PostHeader>
 
@@ -3646,14 +3668,14 @@ export function PublicPostPage({ locale, messages, pageData }) {
         </PostHeroShell>
 
         {article.heroImages.length ? (
-          inlineHeroImages.length ? (
+          inlineGalleryImages.length ? (
             <PostImagePanel $presentation={presentation}>
               {presentation === "atlas" ? (
                 <MediaPanelHeader>
                   <MediaPanelTitleGroup>
                     <MediaPanelTitleRow>
                       <MediaPanelTitle>{mediaPanelTitle}</MediaPanelTitle>
-                      <MediaPanelCount>{`${inlineHeroImages.length} visual${inlineHeroImages.length === 1 ? "" : "s"}`}</MediaPanelCount>
+                      <MediaPanelCount>{`${inlineGalleryImages.length} visual${inlineGalleryImages.length === 1 ? "" : "s"}`}</MediaPanelCount>
                     </MediaPanelTitleRow>
                     {mediaPanelLead ? <MediaPanelLead>{mediaPanelLead}</MediaPanelLead> : null}
                   </MediaPanelTitleGroup>
@@ -3661,7 +3683,7 @@ export function PublicPostPage({ locale, messages, pageData }) {
                 </MediaPanelHeader>
               ) : null}
               <HeroImageGrid $presentation={presentation}>
-                {inlineHeroImages.map((image, index) =>
+                {inlineGalleryImages.map((image, index) =>
                   renderInlinePhotoFigure(image, {
                     presentation,
                     priority: index === 0,
@@ -3774,28 +3796,6 @@ export function PublicPostPage({ locale, messages, pageData }) {
               </SidebarNavigatorPanel>
             ) : null}
 
-            <SidebarEquipmentPanel>
-              <SidebarEyebrow>Equipment page</SidebarEyebrow>
-              <SidebarTitle as={sectionLinks.length ? "h3" : "h2"}>{displayEquipmentName}</SidebarTitle>
-              <SidebarText>
-                This published guide belongs to the equipment landing page for{" "}
-                {displayEquipmentName}.
-              </SidebarText>
-              {article.manufacturers.length ? (
-                <>
-                  <SidebarSubheading>Manufacturers in this guide</SidebarSubheading>
-                  <SidebarManufacturerGrid>
-                  {article.manufacturers.map((manufacturer) => (
-                    <SidebarManufacturerChip href={manufacturer.path} key={manufacturer.slug}>
-                      {manufacturer.name}
-                    </SidebarManufacturerChip>
-                  ))}
-                  </SidebarManufacturerGrid>
-                </>
-              ) : null}
-              <SidebarAction href={article.equipment.path}>{copy.browseEquipment}</SidebarAction>
-              <SidebarBackLink href={backToBlogHref}>{copy.backToBlogAction}</SidebarBackLink>
-            </SidebarEquipmentPanel>
           </SidebarColumn>
         </PostLayout>
       </PostScene>
