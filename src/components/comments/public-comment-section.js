@@ -36,18 +36,18 @@ function getFieldErrors(payload) {
 
 const Panel = styled.section`
   background:
-    linear-gradient(160deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.9)),
-    radial-gradient(circle at top right, rgba(0, 95, 115, 0.16), transparent 40%);
+    linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.94)),
+    radial-gradient(circle at top right, rgba(0, 95, 115, 0.14), transparent 40%);
   border: 1px solid rgba(16, 32, 51, 0.08);
-  border-radius: ${({ theme }) => theme.radius.lg};
-  box-shadow: 0 22px 80px rgba(16, 32, 51, 0.08);
+  border-radius: 24px;
+  box-shadow: 0 26px 82px rgba(16, 32, 51, 0.08);
   display: grid;
   gap: ${({ theme }) => theme.spacing.md};
   overflow: hidden;
-  padding: ${({ theme }) => theme.spacing.lg};
+  padding: clamp(1rem, 3vw, 1.5rem);
 
   @media (min-width: 800px) {
-    padding: ${({ theme }) => theme.spacing.xl};
+    padding: clamp(1.35rem, 3vw, 1.75rem);
   }
 `;
 
@@ -57,12 +57,17 @@ const SectionHeader = styled.div`
 `;
 
 const SectionTitle = styled.h2`
-  font-size: clamp(1.45rem, 4vw, 2rem);
+  color: #16243b;
+  font-family: var(--font-editorial), Georgia, serif;
+  font-size: clamp(1.55rem, 4vw, 2.2rem);
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  line-height: 1.05;
   margin: 0;
 `;
 
 const SectionDescription = styled.p`
-  color: ${({ theme }) => theme.colors.muted};
+  color: rgba(72, 84, 108, 0.94);
   line-height: 1.7;
   margin: 0;
   max-width: 60ch;
@@ -103,7 +108,7 @@ const FieldLabel = styled.span`
 const Input = styled.input`
   background: rgba(255, 255, 255, 0.94);
   border: 1px solid rgba(16, 32, 51, 0.14);
-  border-radius: ${({ theme }) => theme.radius.md};
+  border-radius: 14px;
   color: ${({ theme }) => theme.colors.text};
   font: inherit;
   min-height: 48px;
@@ -113,7 +118,7 @@ const Input = styled.input`
 const Textarea = styled.textarea`
   background: rgba(255, 255, 255, 0.94);
   border: 1px solid rgba(16, 32, 51, 0.14);
-  border-radius: ${({ theme }) => theme.radius.md};
+  border-radius: 14px;
   color: ${({ theme }) => theme.colors.text};
   font: inherit;
   min-height: 140px;
@@ -142,9 +147,10 @@ const ButtonRow = styled.div`
 `;
 
 const PrimaryButton = styled.button`
-  background: ${({ theme }) => theme.colors.primary};
+  background: linear-gradient(180deg, #274d74, #1f3e5e);
   border: none;
   border-radius: 999px;
+  box-shadow: 0 18px 36px rgba(31, 62, 94, 0.18);
   color: white;
   cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
   font: inherit;
@@ -170,12 +176,15 @@ const CommentThread = styled.div`
 `;
 
 const CommentCard = styled.article`
-  background: rgba(255, 255, 255, 0.86);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 253, 0.96)),
+    radial-gradient(circle at top right, rgba(36, 75, 115, 0.05), transparent 52%);
   border: 1px solid rgba(16, 32, 51, 0.08);
-  border-radius: ${({ theme }) => theme.radius.md};
+  border-radius: 18px;
+  box-shadow: 0 12px 28px rgba(19, 34, 58, 0.04);
   display: grid;
   gap: ${({ theme }) => theme.spacing.sm};
-  padding: ${({ theme }) => theme.spacing.md};
+  padding: clamp(0.95rem, 2.2vw, 1.15rem);
 `;
 
 const MetaRow = styled.div`
@@ -187,14 +196,16 @@ const MetaRow = styled.div`
 `;
 
 const CommentText = styled.p`
-  color: ${({ theme }) => theme.colors.muted};
-  line-height: 1.72;
+  color: rgba(65, 78, 99, 0.98);
+  font-family: var(--font-editorial), Georgia, serif;
+  font-size: 1.03rem;
+  line-height: 1.82;
   margin: 0;
   white-space: pre-wrap;
 `;
 
 const ReplyThread = styled.div`
-  border-left: 2px solid rgba(0, 95, 115, 0.12);
+  border-left: 2px solid rgba(36, 75, 115, 0.16);
   display: grid;
   gap: ${({ theme }) => theme.spacing.sm};
   margin-left: ${({ theme }) => theme.spacing.md};
@@ -231,8 +242,10 @@ const PagerActions = styled.div`
 `;
 
 const PagerButton = styled(Link)`
+  background: rgba(255, 255, 255, 0.82);
   border: 1px solid rgba(16, 32, 51, 0.12);
   border-radius: 999px;
+  color: #183b63;
   font-weight: 700;
   padding: 0.55rem 0.95rem;
 `;

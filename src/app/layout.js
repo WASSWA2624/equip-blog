@@ -1,7 +1,21 @@
+import { Manrope, Newsreader } from "next/font/google";
+
 import AppProviders from "@/components/common/app-providers";
 import { env } from "@/lib/env/server";
 import { buildAbsoluteUrl } from "@/lib/seo";
 import StyledRegistry from "@/styles/styled-registry";
+
+const uiFont = Manrope({
+  display: "swap",
+  subsets: ["latin"],
+  variable: "--font-ui",
+});
+
+const editorialFont = Newsreader({
+  display: "swap",
+  subsets: ["latin"],
+  variable: "--font-editorial",
+});
 
 export const metadata = {
   applicationName: "Equip Blog",
@@ -49,7 +63,7 @@ export const viewport = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>
+      <body className={`${uiFont.variable} ${editorialFont.variable}`}>
         <StyledRegistry>
           <AppProviders>{children}</AppProviders>
         </StyledRegistry>

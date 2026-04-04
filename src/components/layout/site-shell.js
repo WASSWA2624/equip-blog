@@ -520,9 +520,7 @@ const FooterLocaleArrow = styled.span`
 export default function SiteShell({ children, locale, messages }) {
   const pathname = usePathname();
   const [menuOpenedForPath, setMenuOpenedForPath] = useState(null);
-  const [isDesktopPrimaryNavVisible, setIsDesktopPrimaryNavVisible] = useState(() =>
-    typeof window !== "undefined" ? window.matchMedia("(min-width: 720px)").matches : true,
-  );
+  const [isDesktopPrimaryNavVisible, setIsDesktopPrimaryNavVisible] = useState(false);
   const legalNavigation = messages.site.legalNavigation || {};
   const languageLabel = messages.meta?.language || locale.toUpperCase();
   const currentYear = new Date().getFullYear();

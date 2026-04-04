@@ -937,11 +937,18 @@ const RichText = styled.div`
 `;
 
 const BulletList = styled.ul`
-  color: ${({ theme }) => theme.colors.muted};
+  color: rgba(66, 79, 101, 0.96);
   display: grid;
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: 0.85rem;
+  font-family: var(--font-editorial), Georgia, serif;
+  font-size: clamp(1.05rem, 1.15vw, 1.14rem);
+  line-height: 1.82;
   margin: 0;
-  padding-left: 1.25rem;
+  padding-left: 1.35rem;
+
+  li::marker {
+    color: #2b5a82;
+  }
 `;
 
 export function PublicStaticPage({ locale, pageContent }) {
@@ -989,88 +996,756 @@ export function PublicStaticPage({ locale, pageContent }) {
 }
 
 const Breadcrumbs = styled.nav`
-  color: ${({ theme }) => theme.colors.muted};
+  align-items: center;
+  color: rgba(55, 71, 96, 0.74);
   display: flex;
   flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.sm};
-  font-size: 0.88rem;
+  gap: 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 `;
 
 const BreadcrumbLink = styled(Link)`
   color: inherit;
+
+  &:hover {
+    color: #244b73;
+  }
 `;
 
-const PostHeader = styled(HeroPanel)`
-  gap: clamp(0.9rem, 2vw, 1.25rem);
+const BreadcrumbSeparator = styled.span`
+  opacity: 0.45;
+`;
+
+const PostScene = styled.section`
+  display: grid;
+  gap: clamp(1.25rem, 2.8vw, 1.8rem);
+`;
+
+const PostHeroShell = styled.section`
+  background:
+    radial-gradient(circle at top right, rgba(36, 75, 115, 0.14), transparent 34%),
+    radial-gradient(circle at bottom left, rgba(0, 95, 115, 0.11), transparent 42%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(247, 250, 255, 0.95));
+  border: 1px solid rgba(16, 32, 51, 0.08);
+  border-radius: 30px;
+  box-shadow:
+    0 32px 90px rgba(19, 34, 58, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.76);
+  overflow: hidden;
+  padding: clamp(1.25rem, 4vw, 2.5rem);
+`;
+
+const PostHeroGrid = styled.div`
+  display: grid;
+  gap: clamp(1.25rem, 2.8vw, 1.85rem);
+
+  @media (min-width: 980px) {
+    align-items: start;
+    grid-template-columns: minmax(0, 1.45fr) minmax(260px, 0.8fr);
+  }
+`;
+
+const PostHeader = styled.div`
+  display: grid;
+  gap: clamp(0.95rem, 2vw, 1.2rem);
+`;
+
+const PostKicker = styled.p`
+  color: rgba(31, 77, 108, 0.82);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  margin: 0;
+  text-transform: uppercase;
+`;
+
+const PostTitle = styled.h1`
+  color: #16243b;
+  font-family: var(--font-editorial), Georgia, serif;
+  font-size: clamp(3rem, 8vw, 5.8rem);
+  font-weight: 600;
+  letter-spacing: -0.06em;
+  line-height: 0.94;
+  margin: 0;
+  max-width: 12ch;
+  text-wrap: balance;
+`;
+
+const PostDeck = styled.p`
+  color: rgba(54, 67, 88, 0.92);
+  font-family: var(--font-editorial), Georgia, serif;
+  font-size: clamp(1.2rem, 2.6vw, 1.5rem);
+  line-height: 1.58;
+  margin: 0;
+  max-width: 42ch;
+`;
+
+const PostMetaGrid = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+`;
+
+const MetaPill = styled.span`
+  align-items: center;
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid rgba(16, 32, 51, 0.1);
+  border-radius: 999px;
+  box-shadow: 0 10px 28px rgba(19, 34, 58, 0.04);
+  color: rgba(62, 75, 95, 0.9);
+  display: inline-flex;
+  font-size: 0.88rem;
+  gap: 0.28rem;
+  padding: 0.55rem 0.9rem;
+
+  strong {
+    color: #17253d;
+    font-size: 0.89rem;
+    font-weight: 800;
+  }
+`;
+
+const PostHeroChip = styled(Chip)`
+  background: rgba(32, 74, 113, 0.08);
+  border-color: rgba(32, 74, 113, 0.12);
+  box-shadow: 0 10px 24px rgba(19, 34, 58, 0.04);
+  padding: 0.46rem 0.88rem;
+`;
+
+const HeroActionRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+`;
+
+const HeroPrimaryAction = styled.a`
+  align-items: center;
+  background: linear-gradient(180deg, #274d74, #1f3e5e);
+  border-radius: 999px;
+  box-shadow: 0 18px 40px rgba(31, 62, 94, 0.18);
+  color: #fff;
+  display: inline-flex;
+  font-weight: 800;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0.78rem 1.25rem;
+`;
+
+const HeroSecondaryAction = styled(Link)`
+  align-items: center;
+  background: rgba(255, 255, 255, 0.84);
+  border: 1px solid rgba(16, 32, 51, 0.12);
+  border-radius: 999px;
+  color: #183b63;
+  display: inline-flex;
+  font-weight: 800;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0.78rem 1.15rem;
+`;
+
+const HeroGhostAction = styled(Link)`
+  align-items: center;
+  color: rgba(45, 61, 84, 0.92);
+  display: inline-flex;
+  font-weight: 700;
+  min-height: 48px;
+  padding: 0.2rem 0.1rem;
+`;
+
+const PostHeroAside = styled.aside`
+  display: grid;
+  gap: 0.95rem;
+`;
+
+const HeroSnapshotCard = styled.div`
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(248, 250, 255, 0.94)),
+    radial-gradient(circle at top right, rgba(36, 75, 115, 0.08), transparent 56%);
+  border: 1px solid rgba(16, 32, 51, 0.08);
+  border-radius: 24px;
+  display: grid;
+  gap: 0.95rem;
+  padding: clamp(1rem, 2.2vw, 1.2rem);
+`;
+
+const HeroSnapshotEyebrow = styled.p`
+  color: rgba(49, 74, 103, 0.74);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  margin: 0;
+  text-transform: uppercase;
+`;
+
+const HeroSnapshotTitle = styled.h2`
+  color: #16243b;
+  font-size: clamp(1.2rem, 3vw, 1.45rem);
+  letter-spacing: -0.03em;
+  line-height: 1.08;
+  margin: 0;
+`;
+
+const HeroSnapshotText = styled.p`
+  color: rgba(73, 86, 108, 0.94);
+  line-height: 1.7;
+  margin: 0;
+`;
+
+const HeroStatsGrid = styled.dl`
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+
+  @media (min-width: 560px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+`;
+
+const HeroStatCard = styled.div`
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(16, 32, 51, 0.08);
+  border-radius: 18px;
+  display: grid;
+  gap: 0.22rem;
+  min-height: 88px;
+  padding: 0.9rem;
+`;
+
+const HeroStatLabel = styled.dt`
+  color: rgba(72, 86, 109, 0.8);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  margin: 0;
+  text-transform: uppercase;
+`;
+
+const HeroStatValue = styled.dd`
+  color: #17253d;
+  font-size: clamp(1rem, 2.2vw, 1.2rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  margin: 0;
+`;
+
+const SectionNavList = styled.div`
+  display: grid;
+  gap: 0.55rem;
+`;
+
+const SectionNavLink = styled.a`
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(16, 32, 51, 0.08);
+  border-radius: 18px;
+  color: #17253d;
+  display: grid;
+  gap: 0.18rem;
+  padding: 0.8rem 0.9rem;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+
+  &:hover {
+    border-color: rgba(36, 75, 115, 0.2);
+    box-shadow: 0 14px 34px rgba(19, 34, 58, 0.07);
+    transform: translateY(-1px);
+  }
+`;
+
+const SectionNavIndex = styled.span`
+  color: rgba(76, 91, 114, 0.72);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+`;
+
+const SectionNavLabel = styled.span`
+  font-size: 0.97rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+`;
+
+const PostImagePanel = styled.section`
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(247, 250, 255, 0.93));
+  border: 1px solid rgba(16, 32, 51, 0.07);
+  border-radius: 28px;
+  box-shadow:
+    0 24px 64px rgba(19, 34, 58, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.76);
+  overflow: hidden;
+  padding: clamp(0.95rem, 2.6vw, 1.35rem);
 `;
 
 const PostLayout = styled.div`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: clamp(1.25rem, 2.8vw, 1.8rem);
 
   @media (min-width: 1100px) {
     align-items: start;
-    grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.7fr);
+    grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.78fr);
   }
 `;
 
 const ArticleColumn = styled.div`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: clamp(1.1rem, 2.4vw, 1.45rem);
 `;
 
 const SidebarColumn = styled.aside`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: clamp(1rem, 2.2vw, 1.25rem);
+
+  @media (min-width: 1100px) {
+    position: sticky;
+    top: 5.4rem;
+  }
 `;
 
 const HeroImageGrid = styled.div`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: clamp(0.85rem, 2vw, 1rem);
 
   @media (min-width: 720px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 `;
 
-const ArticleSection = styled(Panel)`
-  contain-intrinsic-size: 720px;
-  content-visibility: auto;
-  gap: ${({ theme }) => theme.spacing.sm};
+const SidebarPanel = styled(Panel)`
+  gap: 0.95rem;
+  padding: clamp(1rem, 2.2vw, 1.25rem);
+`;
+
+const SidebarTitle = styled.h2`
+  color: #16243b;
+  font-size: 1.12rem;
+  letter-spacing: -0.03em;
+  margin: 0;
+`;
+
+const SidebarText = styled.p`
+  color: rgba(72, 84, 108, 0.94);
+  line-height: 1.68;
+  margin: 0;
+`;
+
+const SidebarAction = styled(Link)`
+  align-items: center;
+  background: rgba(255, 255, 255, 0.84);
+  border: 1px solid rgba(16, 32, 51, 0.12);
+  border-radius: 999px;
+  color: #183b63;
+  display: inline-flex;
+  font-weight: 800;
+  justify-content: center;
+  min-height: 46px;
+  padding: 0.72rem 1rem;
+`;
+
+const SidebarBackLink = styled(Link)`
+  color: rgba(53, 67, 90, 0.94);
+  font-weight: 700;
+`;
+
+const ArticlePaper = styled.article`
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(250, 251, 255, 0.96)),
+    radial-gradient(circle at top right, rgba(36, 75, 115, 0.05), transparent 52%);
+  border: 1px solid rgba(16, 32, 51, 0.07);
+  border-radius: 28px;
+  box-shadow:
+    0 28px 70px rgba(19, 34, 58, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78);
+  display: grid;
+  padding: clamp(1.2rem, 4vw, 2.4rem);
+  scroll-margin-top: 5.8rem;
+`;
+
+const ArticleFlow = styled.div`
+  display: grid;
+  gap: clamp(2rem, 4vw, 3rem);
+
+  > section + section {
+    border-top: 1px solid rgba(16, 32, 51, 0.08);
+    padding-top: clamp(2rem, 4vw, 3rem);
+  }
+`;
+
+const StorySection = styled.section`
+  display: grid;
+  gap: clamp(0.95rem, 2vw, 1.2rem);
+  scroll-margin-top: 6rem;
+
+  ${({ $tone }) =>
+    $tone === "reference" &&
+    css`
+      background:
+        linear-gradient(180deg, rgba(243, 247, 255, 0.86), rgba(250, 251, 255, 0.98)),
+        radial-gradient(circle at top right, rgba(36, 75, 115, 0.08), transparent 48%);
+      border: 1px solid rgba(36, 75, 115, 0.12);
+      border-radius: 24px;
+      padding: clamp(1.1rem, 2.6vw, 1.45rem);
+    `}
+
+  ${({ $tone }) =>
+    $tone === "warning" &&
+    css`
+      background:
+        linear-gradient(180deg, rgba(255, 247, 238, 0.96), rgba(255, 251, 246, 0.99)),
+        radial-gradient(circle at top right, rgba(201, 123, 42, 0.1), transparent 52%);
+      border: 1px solid rgba(201, 123, 42, 0.18);
+      border-radius: 24px;
+      padding: clamp(1.1rem, 2.6vw, 1.45rem);
+    `}
+
+  ${({ $tone }) =>
+    $tone === "utility" &&
+    css`
+      background: rgba(245, 248, 252, 0.82);
+      border: 1px solid rgba(16, 32, 51, 0.08);
+      border-radius: 24px;
+      padding: clamp(1.05rem, 2.5vw, 1.35rem);
+    `}
+`;
+
+const StorySectionHeader = styled.div`
+  display: grid;
+  gap: 0.35rem;
+`;
+
+const SectionLabel = styled.span`
+  color: rgba(44, 76, 108, 0.74);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+`;
+
+const PostSectionTitle = styled.h2`
+  color: #16243b;
+  font-family: var(--font-editorial), Georgia, serif;
+  font-size: clamp(1.9rem, 3.2vw, 2.6rem);
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  line-height: 1.03;
+  margin: 0;
+  text-wrap: balance;
 `;
 
 const ArticleBody = styled.div`
-  color: ${({ theme }) => theme.colors.muted};
+  color: rgba(56, 68, 88, 0.96);
   display: grid;
-  gap: ${({ theme }) => theme.spacing.sm};
-  line-height: 1.62;
+  gap: 1rem;
+  font-family: var(--font-editorial), Georgia, serif;
+  font-size: clamp(1.12rem, 1.25vw, 1.24rem);
+  line-height: 1.88;
+
+  p {
+    margin: 0;
+  }
+
+  strong {
+    color: #17253d;
+  }
+
+  a {
+    color: #244b73;
+    text-decoration-color: rgba(36, 75, 115, 0.35);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
+  }
 `;
 
 const NumberedList = styled.ol`
-  color: ${({ theme }) => theme.colors.muted};
+  color: rgba(56, 68, 88, 0.96);
   display: grid;
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: 0.9rem;
+  font-family: var(--font-editorial), Georgia, serif;
+  font-size: clamp(1.08rem, 1.2vw, 1.18rem);
+  line-height: 1.82;
   margin: 0;
-  padding-left: 1.3rem;
+  padding-left: 1.45rem;
+
+  li::marker {
+    color: #244b73;
+    font-family: var(--font-ui), sans-serif;
+    font-weight: 800;
+  }
+`;
+
+const DetailCardGrid = styled.div`
+  display: grid;
+  gap: clamp(0.85rem, 2vw, 1rem);
+
+  @media (min-width: 720px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (min-width: 1180px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+`;
+
+const DetailCard = styled.article`
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(16, 32, 51, 0.08);
+  border-radius: 20px;
+  box-shadow: 0 12px 28px rgba(19, 34, 58, 0.04);
+  display: grid;
+  gap: 0.72rem;
+  padding: clamp(1rem, 2.2vw, 1.2rem);
+`;
+
+const DetailCardTitle = styled.h3`
+  color: #17253d;
+  font-size: 1.08rem;
+  letter-spacing: -0.03em;
+  line-height: 1.18;
+  margin: 0;
+`;
+
+const DetailCardText = styled.p`
+  color: rgba(72, 84, 108, 0.96);
+  line-height: 1.7;
+  margin: 0;
 `;
 
 const FaultGrid = styled.div`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: clamp(0.85rem, 2vw, 1rem);
 
   @media (min-width: 720px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 `;
 
-const FaultCard = styled.div`
-  background: rgba(0, 95, 115, 0.03);
+const FaultCard = styled.article`
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(246, 249, 252, 0.96)),
+    radial-gradient(circle at top right, rgba(0, 95, 115, 0.08), transparent 48%);
   border: 1px solid rgba(0, 95, 115, 0.12);
-  border-radius: ${({ theme }) => theme.radius.md};
+  border-radius: 22px;
   display: grid;
-  gap: ${({ theme }) => theme.spacing.sm};
-  padding: ${({ theme }) => theme.spacing.md};
+  gap: 0.85rem;
+  padding: clamp(1rem, 2.2vw, 1.25rem);
 `;
+
+const ResourceList = styled.ul`
+  color: rgba(56, 68, 88, 0.96);
+  display: grid;
+  gap: 0.7rem;
+  font-family: var(--font-editorial), Georgia, serif;
+  font-size: clamp(1.08rem, 1.18vw, 1.16rem);
+  line-height: 1.84;
+  margin: 0;
+  padding-left: 1.4rem;
+
+  li::marker {
+    color: rgba(36, 75, 115, 0.7);
+  }
+`;
+
+const ResourceItem = styled.li`
+  margin: 0;
+`;
+
+const ResourceLink = styled.a`
+  color: #183b63;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: rgba(24, 59, 99, 0.35);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
+`;
+
+const ResourceMeta = styled.span`
+  color: rgba(89, 100, 120, 0.88);
+  font-size: 0.95em;
+`;
+
+const ResourceGroup = styled.div`
+  display: grid;
+  gap: 0.9rem;
+`;
+
+const ResourceGroupTitle = styled.h3`
+  color: #17253d;
+  font-size: 1.02rem;
+  letter-spacing: -0.02em;
+  margin: 0;
+`;
+
+function collectSectionText(value, collected = []) {
+  if (typeof value === "string") {
+    const normalizedValue = value.trim();
+
+    if (normalizedValue) {
+      collected.push(normalizedValue);
+    }
+
+    return collected;
+  }
+
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      collectSectionText(entry, collected);
+    }
+
+    return collected;
+  }
+
+  if (value && typeof value === "object") {
+    for (const entry of Object.values(value)) {
+      collectSectionText(entry, collected);
+    }
+  }
+
+  return collected;
+}
+
+function estimateReadingTimeMinutes(sections = []) {
+  const words = collectSectionText(sections)
+    .join(" ")
+    .split(/\s+/)
+    .filter(Boolean).length;
+
+  return Math.max(4, Math.ceil(words / 215));
+}
+
+function countReferenceItems(sections = []) {
+  return sections.reduce((total, section) => {
+    if (
+      section?.id === "references" ||
+      section?.kind === "manuals" ||
+      section?.kind === "references"
+    ) {
+      return total + (section.items?.length || 0);
+    }
+
+    return total;
+  }, 0);
+}
+
+function getPostSectionAnchor(sectionId) {
+  return `section-${sectionId}`;
+}
+
+function getArticleSectionTone(section) {
+  if (section.id === "disclaimer") {
+    return "warning";
+  }
+
+  if (
+    section.id === "references" ||
+    section.kind === "manuals" ||
+    section.kind === "references"
+  ) {
+    return "reference";
+  }
+
+  if (
+    section.kind === "faults" ||
+    section.kind === "faq" ||
+    section.kind === "models_by_manufacturer" ||
+    section.kind === "image_gallery"
+  ) {
+    return "utility";
+  }
+
+  return "default";
+}
+
+function getArticleSectionLabel(section) {
+  if (section.id === "disclaimer") {
+    return "Safety boundary";
+  }
+
+  if (section.id === "references") {
+    return "Reference pack";
+  }
+
+  if (section.kind === "manuals") {
+    return "Manuals";
+  }
+
+  if (section.kind === "faults") {
+    return "Troubleshooting";
+  }
+
+  if (section.kind === "steps") {
+    return "Procedure";
+  }
+
+  if (section.kind === "faq") {
+    return "Common questions";
+  }
+
+  if (section.kind === "models_by_manufacturer") {
+    return "Model guide";
+  }
+
+  if (section.kind === "list") {
+    return "Key points";
+  }
+
+  return null;
+}
+
+function getImageResourceTitle(image, index) {
+  const candidate = image?.caption || image?.alt;
+
+  return candidate && `${candidate}`.trim() ? candidate : `Photo resource ${index + 1}`;
+}
+
+function getImageResourceMeta(image, label) {
+  const details = [];
+
+  if (image?.alt && image.alt !== label) {
+    details.push(image.alt);
+  }
+
+  if (image?.caption && image.caption !== label) {
+    details.push(image.caption);
+  }
+
+  return details.join(" ");
+}
+
+function renderImageResourceList(images = []) {
+  if (!images.length) {
+    return null;
+  }
+
+  return (
+    <ResourceList>
+      {images.map((image, index) => {
+        const label = getImageResourceTitle(image, index);
+        const meta = getImageResourceMeta(image, label);
+        const href = image.href || image.url || null;
+
+        return (
+          <ResourceItem key={`${href || label}-${index}`}>
+            {href ? (
+              <ResourceLink href={href} rel="noreferrer" target="_blank">
+                {label}
+              </ResourceLink>
+            ) : (
+              <strong>{label}</strong>
+            )}
+            {meta ? <ResourceMeta>{meta}</ResourceMeta> : null}
+          </ResourceItem>
+        );
+      })}
+    </ResourceList>
+  );
+}
 
 function renderArticleSection(section, copy) {
   if (section.kind === "text") {
@@ -1101,10 +1776,10 @@ function renderArticleSection(section, copy) {
 
   if (section.kind === "models_by_manufacturer") {
     return (
-      <Grid $columns="three">
+      <DetailCardGrid>
         {(section.groups || []).map((group) => (
-          <Card key={group.manufacturer}>
-            <PostCardTitle>{group.manufacturer}</PostCardTitle>
+          <DetailCard key={group.manufacturer}>
+            <DetailCardTitle>{group.manufacturer}</DetailCardTitle>
             <BulletList>
               {(group.models || []).map((model) => (
                 <li key={model.name}>
@@ -1114,9 +1789,9 @@ function renderArticleSection(section, copy) {
                 </li>
               ))}
             </BulletList>
-          </Card>
+          </DetailCard>
         ))}
-      </Grid>
+      </DetailCardGrid>
     );
   }
 
@@ -1125,7 +1800,7 @@ function renderArticleSection(section, copy) {
       <FaultGrid>
         {(section.items || []).map((fault) => (
           <FaultCard key={fault.title}>
-            <PostCardTitle>{fault.title}</PostCardTitle>
+            <DetailCardTitle>{fault.title}</DetailCardTitle>
             <ArticleBody>
               <p>
                 <strong>Cause:</strong> {fault.cause || "Not verified."}
@@ -1164,58 +1839,68 @@ function renderArticleSection(section, copy) {
 
   if (section.kind === "manuals" || section.kind === "references") {
     return (
-      <BulletList>
+      <ResourceList>
         {(section.items || []).map((item) => {
           const safeUrl = sanitizeExternalUrl(item.url);
 
           return (
-            <li key={`${item.title}-${item.url || "no-url"}`}>
+            <ResourceItem key={`${item.title}-${item.url || "no-url"}`}>
               {safeUrl ? (
-                <a href={safeUrl} rel="noreferrer" target="_blank">
+                <ResourceLink href={safeUrl} rel="noreferrer" target="_blank">
                   {item.title}
-                </a>
+                </ResourceLink>
               ) : (
-                item.title
+                <strong>{item.title}</strong>
               )}
-              {item.fileType || item.language
-                ? ` (${[item.fileType, item.language].filter(Boolean).join(" | ")})`
-                : ""}
-            </li>
+              {item.fileType || item.language ? (
+                <ResourceMeta>
+                  {[item.fileType, item.language].filter(Boolean).join(" | ")}
+                </ResourceMeta>
+              ) : null}
+            </ResourceItem>
           );
         })}
-      </BulletList>
+      </ResourceList>
     );
   }
 
   if (section.kind === "faq") {
     return (
-      <Grid $columns="three">
+      <DetailCardGrid>
         {(section.items || []).map((item) => (
-          <Card key={item.question}>
-            <PostCardTitle>{item.question}</PostCardTitle>
-            <PostCardText>{item.answer}</PostCardText>
-          </Card>
+          <DetailCard key={item.question}>
+            <DetailCardTitle>{item.question}</DetailCardTitle>
+            <DetailCardText>{item.answer}</DetailCardText>
+          </DetailCard>
         ))}
-      </Grid>
+      </DetailCardGrid>
     );
   }
 
   if (section.kind === "image_gallery") {
+    const inlineImages = (section.images || []).filter((image) => image.renderInline);
+    const linkedImages = (section.images || []).filter((image) => !image.renderInline);
+
     return (
-      <HeroImageGrid>
-        {(section.images || []).map((image) => (
-          <Figure key={image.url}>
-            <ResponsiveImage
-              image={{
-                ...image,
-                alt: image.alt || copy.relatedPostsTitle,
-              }}
-              sizes="(min-width: 720px) 46vw, 92vw"
-            />
-            {image.caption ? <FigureCaption>{image.caption}</FigureCaption> : null}
-          </Figure>
-        ))}
-      </HeroImageGrid>
+      <>
+        {inlineImages.length ? (
+          <HeroImageGrid>
+            {inlineImages.map((image) => (
+              <Figure key={image.url}>
+                <ResponsiveImage
+                  image={{
+                    ...image,
+                    alt: image.alt || copy.relatedPostsTitle,
+                  }}
+                  sizes="(min-width: 720px) 46vw, 92vw"
+                />
+                {image.caption ? <FigureCaption>{image.caption}</FigureCaption> : null}
+              </Figure>
+            ))}
+          </HeroImageGrid>
+        ) : null}
+        {linkedImages.length ? renderImageResourceList(linkedImages) : null}
+      </>
     );
   }
 
@@ -1225,121 +1910,246 @@ function renderArticleSection(section, copy) {
 export function PublicPostPage({ locale, messages, pageData }) {
   const copy = getCommonCopy(messages);
   const { article } = pageData;
+  const bodySections = article.bodySections || [];
+  const inlineHeroImages = (article.heroImages || []).filter((image) => image.renderInline);
+  const linkedHeroImages = (article.heroImages || []).filter((image) => !image.renderInline);
+  const sectionLinks = bodySections.filter((section) => section?.id && section?.title);
+  const readingTimeMinutes = estimateReadingTimeMinutes(bodySections);
+  const referenceItemCount = countReferenceItems(bodySections);
+  const backToBlogHref = article.breadcrumb[1]?.href || article.path;
+  const heroSectionLinks = sectionLinks.slice(0, 5);
+  const heroStats = [
+    {
+      label: "Estimated read",
+      value: `${readingTimeMinutes} min`,
+    },
+    {
+      label: "Guide sections",
+      value: `${bodySections.length}`,
+    },
+    {
+      label: "Sources cited",
+      value: `${referenceItemCount}`,
+    },
+    {
+      label: "Manufacturers",
+      value: `${article.manufacturers.length || 0}`,
+    },
+  ];
 
   return (
     <PageMain>
       <PublicViewTracker eventType="POST_VIEW" locale={locale} postId={article.id} />
-      <PostHeader>
-        <Breadcrumbs aria-label="Breadcrumb">
-          {article.breadcrumb.map((item, index) => (
-            <span key={item.href}>
-              {index > 0 ? " / " : ""}
-              <BreadcrumbLink href={item.href}>{item.label}</BreadcrumbLink>
-            </span>
-          ))}
-        </Breadcrumbs>
-        <Eyebrow>{article.equipment.name}</Eyebrow>
-        <Title>{article.title}</Title>
-        <Lead>{article.excerpt}</Lead>
-        <MetaRow>
-          {article.publishedAt ? (
-            <span>
-              {copy.publishedLabel}: {formatDateLabel(locale, article.publishedAt)}
-            </span>
-          ) : null}
-          {article.updatedAt ? (
-            <span>
-              {copy.updatedLabel}: {formatDateLabel(locale, article.updatedAt)}
-            </span>
-          ) : null}
-          <span>
-            {copy.authorLabel}: {article.authorName}
-          </span>
-        </MetaRow>
-        {article.categories.length || article.manufacturers.length ? (
-          <ChipRow>
-            {article.categories.map((category) => (
-              <Chip href={category.path} key={category.slug}>
-                {category.name}
-              </Chip>
-            ))}
-            {article.manufacturers.map((manufacturer) => (
-              <Chip href={manufacturer.path} key={manufacturer.slug}>
-                {manufacturer.name}
-              </Chip>
-            ))}
-          </ChipRow>
-        ) : null}
-      </PostHeader>
-
-      {article.heroImages.length ? (
-        <Panel>
-          <HeroImageGrid>
-            {article.heroImages.map((image, index) => (
-              <Figure key={image.url}>
-                <ResponsiveImage
-                  image={image}
-                  priority={index === 0}
-                  sizes="(min-width: 1100px) 50vw, 92vw"
-                />
-                {image.caption ? <FigureCaption>{image.caption}</FigureCaption> : null}
-              </Figure>
-            ))}
-          </HeroImageGrid>
-        </Panel>
-      ) : null}
-
-      <PostLayout>
-        <ArticleColumn>
-          {article.bodySections.map((section) => (
-            <ArticleSection key={section.id}>
-              <SectionHeader>
-                <SectionTitle>
-                  {section.id === "references" ? copy.referencesHeading : section.title}
-                </SectionTitle>
-              </SectionHeader>
-              {renderArticleSection(section, copy)}
-            </ArticleSection>
-          ))}
-
-          <Panel>
-            <SectionHeader>
-              <SectionTitle>{copy.relatedPostsTitle}</SectionTitle>
-              <SectionDescription>{copy.relatedPostsDescription}</SectionDescription>
-            </SectionHeader>
-            {article.relatedPosts.length ? (
-              <Grid $columns="three">
-                {article.relatedPosts.map((post) => (
-                  <PostCard copy={copy} key={post.slug} locale={locale} post={post} />
+      <PostScene>
+        <PostHeroShell>
+          <PostHeroGrid>
+            <PostHeader>
+              <Breadcrumbs aria-label="Breadcrumb">
+                {article.breadcrumb.map((item, index) => (
+                  <span key={item.href}>
+                    {index > 0 ? <BreadcrumbSeparator>/</BreadcrumbSeparator> : null}{" "}
+                    <BreadcrumbLink href={item.href}>{item.label}</BreadcrumbLink>
+                  </span>
                 ))}
-              </Grid>
-            ) : (
-              <EmptyState>
-                <EmptyTitle>{copy.emptyStateTitle}</EmptyTitle>
-                <SectionDescription>{copy.emptyStateDescription}</SectionDescription>
-              </EmptyState>
-            )}
-          </Panel>
+              </Breadcrumbs>
+              <PostKicker>{article.equipment.name}</PostKicker>
+              <PostTitle>{article.title}</PostTitle>
+              <PostDeck>{article.excerpt}</PostDeck>
+              <PostMetaGrid>
+                {article.publishedAt ? (
+                  <MetaPill>
+                    {copy.publishedLabel}
+                    <strong>{formatDateLabel(locale, article.publishedAt)}</strong>
+                  </MetaPill>
+                ) : null}
+                {article.updatedAt ? (
+                  <MetaPill>
+                    {copy.updatedLabel}
+                    <strong>{formatDateLabel(locale, article.updatedAt)}</strong>
+                  </MetaPill>
+                ) : null}
+                <MetaPill>
+                  {copy.authorLabel}
+                  <strong>{article.authorName}</strong>
+                </MetaPill>
+              </PostMetaGrid>
+              {article.categories.length || article.manufacturers.length ? (
+                <ChipRow>
+                  {article.categories.map((category) => (
+                    <PostHeroChip href={category.path} key={category.slug}>
+                      {category.name}
+                    </PostHeroChip>
+                  ))}
+                  {article.manufacturers.map((manufacturer) => (
+                    <PostHeroChip href={manufacturer.path} key={manufacturer.slug}>
+                      {manufacturer.name}
+                    </PostHeroChip>
+                  ))}
+                </ChipRow>
+              ) : null}
+              <HeroActionRow>
+                <HeroPrimaryAction href="#guide-content">Start reading</HeroPrimaryAction>
+                <HeroSecondaryAction href={article.equipment.path}>
+                  {copy.browseEquipment}
+                </HeroSecondaryAction>
+                <HeroGhostAction href={backToBlogHref}>{copy.backToBlogAction}</HeroGhostAction>
+              </HeroActionRow>
+            </PostHeader>
 
-          <PublicCommentSection article={article} copy={copy} locale={locale} />
-        </ArticleColumn>
+            <PostHeroAside>
+              <HeroSnapshotCard>
+                <HeroSnapshotEyebrow>Quick scan</HeroSnapshotEyebrow>
+                <HeroSnapshotTitle>What this guide covers</HeroSnapshotTitle>
+                <HeroSnapshotText>
+                  Use the quick stats and section links to move between the overview,
+                  troubleshooting, and reference material faster.
+                </HeroSnapshotText>
+                <HeroStatsGrid>
+                  {heroStats.map((entry) => (
+                    <HeroStatCard key={entry.label}>
+                      <HeroStatLabel>{entry.label}</HeroStatLabel>
+                      <HeroStatValue>{entry.value}</HeroStatValue>
+                    </HeroStatCard>
+                  ))}
+                </HeroStatsGrid>
+              </HeroSnapshotCard>
 
-        <SidebarColumn>
-          <ShareActions article={article} copy={copy} />
-          <Panel>
-            <SectionHeader>
-              <SectionTitle>{article.equipment.name}</SectionTitle>
-              <SectionDescription>
+              {heroSectionLinks.length ? (
+                <HeroSnapshotCard>
+                  <HeroSnapshotEyebrow>On this page</HeroSnapshotEyebrow>
+                  <HeroSnapshotTitle>Jump to a section</HeroSnapshotTitle>
+                  <SectionNavList>
+                    {heroSectionLinks.map((section, index) => (
+                      <SectionNavLink
+                        href={`#${getPostSectionAnchor(section.id)}`}
+                        key={section.id}
+                      >
+                        <SectionNavIndex>{`${index + 1}`.padStart(2, "0")}</SectionNavIndex>
+                        <SectionNavLabel>
+                          {section.id === "references" ? copy.referencesHeading : section.title}
+                        </SectionNavLabel>
+                      </SectionNavLink>
+                    ))}
+                  </SectionNavList>
+                </HeroSnapshotCard>
+              ) : null}
+            </PostHeroAside>
+          </PostHeroGrid>
+        </PostHeroShell>
+
+        {article.heroImages.length ? (
+          <PostImagePanel>
+            {inlineHeroImages.length ? (
+              <HeroImageGrid>
+                {inlineHeroImages.map((image, index) => (
+                  <Figure key={image.url}>
+                    <ResponsiveImage
+                      image={image}
+                      priority={index === 0}
+                      sizes="(min-width: 1100px) 50vw, 92vw"
+                    />
+                    {image.caption ? <FigureCaption>{image.caption}</FigureCaption> : null}
+                  </Figure>
+                ))}
+              </HeroImageGrid>
+            ) : null}
+            {linkedHeroImages.length ? (
+              <ResourceGroup>
+                <ResourceGroupTitle>Photo resources</ResourceGroupTitle>
+                {renderImageResourceList(linkedHeroImages)}
+              </ResourceGroup>
+            ) : null}
+          </PostImagePanel>
+        ) : null}
+
+        <PostLayout>
+          <ArticleColumn>
+            <ArticlePaper id="guide-content">
+              <ArticleFlow>
+                {bodySections.map((section) => (
+                  <StorySection
+                    id={getPostSectionAnchor(section.id)}
+                    key={section.id}
+                    $tone={getArticleSectionTone(section)}
+                  >
+                    <StorySectionHeader>
+                      {getArticleSectionLabel(section) ? (
+                        <SectionLabel>{getArticleSectionLabel(section)}</SectionLabel>
+                      ) : null}
+                      <PostSectionTitle>
+                        {section.id === "references" ? copy.referencesHeading : section.title}
+                      </PostSectionTitle>
+                    </StorySectionHeader>
+                    {renderArticleSection(section, copy)}
+                  </StorySection>
+                ))}
+              </ArticleFlow>
+            </ArticlePaper>
+
+            <Panel>
+              <SectionHeader>
+                <SectionTitle>{copy.relatedPostsTitle}</SectionTitle>
+                <SectionDescription>{copy.relatedPostsDescription}</SectionDescription>
+              </SectionHeader>
+              {article.relatedPosts.length ? (
+                <Grid $columns="three">
+                  {article.relatedPosts.map((post) => (
+                    <PostCard copy={copy} key={post.slug} locale={locale} post={post} />
+                  ))}
+                </Grid>
+              ) : (
+                <EmptyState>
+                  <EmptyTitle>{copy.emptyStateTitle}</EmptyTitle>
+                  <SectionDescription>{copy.emptyStateDescription}</SectionDescription>
+                </EmptyState>
+              )}
+            </Panel>
+
+            <PublicCommentSection article={article} copy={copy} locale={locale} />
+          </ArticleColumn>
+
+          <SidebarColumn>
+            <ShareActions article={article} copy={copy} />
+
+            {sectionLinks.length ? (
+              <SidebarPanel>
+                <SidebarTitle>Guide navigator</SidebarTitle>
+                <SidebarText>
+                  Use the section list to move through the article without losing your place.
+                </SidebarText>
+                <SectionNavList>
+                  {sectionLinks.map((section, index) => (
+                    <SectionNavLink href={`#${getPostSectionAnchor(section.id)}`} key={section.id}>
+                      <SectionNavIndex>{`${index + 1}`.padStart(2, "0")}</SectionNavIndex>
+                      <SectionNavLabel>
+                        {section.id === "references" ? copy.referencesHeading : section.title}
+                      </SectionNavLabel>
+                    </SectionNavLink>
+                  ))}
+                </SectionNavList>
+              </SidebarPanel>
+            ) : null}
+
+            <SidebarPanel>
+              <SidebarTitle>{article.equipment.name}</SidebarTitle>
+              <SidebarText>
                 This published guide belongs to the equipment landing page for {article.equipment.name}.
-              </SectionDescription>
-            </SectionHeader>
-            <ActionLink href={article.equipment.path}>{copy.browseEquipment}</ActionLink>
-          </Panel>
-          <Panel>
-            <ActionLink href={buildHref(article.breadcrumb[1].href)}>{copy.backToBlogAction}</ActionLink>
-          </Panel>
-        </SidebarColumn>
-      </PostLayout>
+              </SidebarText>
+              {article.manufacturers.length ? (
+                <ChipRow>
+                  {article.manufacturers.map((manufacturer) => (
+                    <PostHeroChip href={manufacturer.path} key={manufacturer.slug}>
+                      {manufacturer.name}
+                    </PostHeroChip>
+                  ))}
+                </ChipRow>
+              ) : null}
+              <SidebarAction href={article.equipment.path}>{copy.browseEquipment}</SidebarAction>
+              <SidebarBackLink href={backToBlogHref}>{copy.backToBlogAction}</SidebarBackLink>
+            </SidebarPanel>
+          </SidebarColumn>
+        </PostLayout>
+      </PostScene>
     </PageMain>
   );
 }

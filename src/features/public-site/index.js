@@ -8,6 +8,7 @@ import { env } from "@/lib/env/server";
 import { generatedArticleSectionOrder } from "@/lib/content/article-structure";
 import { getRenderableImageUrl } from "@/lib/media";
 import { normalizeDisplayText, normalizeEquipmentName } from "@/lib/normalization";
+import { sanitizeMediaUrl } from "@/lib/security";
 
 export const publicDataRevalidateSeconds = 300;
 export const publicListingPageSize = 12;
@@ -262,6 +263,28 @@ function getMediaUrl(media) {
   return media?.publicUrl || media?.sourceUrl || null;
 }
 
+function normalizeStorageDriver(value) {
+  return `${value || ""}`.trim().toLowerCase();
+}
+
+function isServerHostedMedia(media, url) {
+  const storageDriver = normalizeStorageDriver(media?.storageDriver);
+
+  if (storageDriver === "local" || storageDriver === "s3") {
+    return Boolean(media?.storageKey || media?.publicUrl || media?.localPath || url);
+  }
+
+  if (media?.storageKey || media?.localPath) {
+    return true;
+  }
+
+  return typeof url === "string" && url.startsWith("/uploads/");
+}
+
+function shouldRenderInlineImage(media, url) {
+  return Boolean(media?.isAiGenerated) && isServerHostedMedia(media, url);
+}
+
 function normalizeImageDimension(value) {
   const parsedValue = Number.parseInt(`${value ?? ""}`.trim(), 10);
 
@@ -320,14 +343,18 @@ function createMediaImage(media, fallbackAlt) {
   const rawUrl = getMediaUrl(media);
   const alt = media?.alt || media?.caption || fallbackAlt;
   const caption = media?.caption || null;
+  const href = sanitizeMediaUrl(rawUrl);
   const height = normalizeImageDimension(media?.height);
+  const renderInline = shouldRenderInlineImage(media, href);
   const width = normalizeImageDimension(media?.width);
-  const url = getRenderableImageUrl(rawUrl, {
-    alt,
-    caption,
-    height,
-    width,
-  });
+  const url = renderInline
+    ? getRenderableImageUrl(rawUrl, {
+        alt,
+        caption,
+        height,
+        width,
+      })
+    : href;
 
   if (!url) {
     return null;
@@ -338,25 +365,38 @@ function createMediaImage(media, fallbackAlt) {
     attributionText: media?.attributionText || null,
     caption,
     height,
+    href: href || null,
+    isAiGenerated: Boolean(media?.isAiGenerated),
     licenseType: media?.licenseType || null,
-    srcSet: rawUrl === url ? buildResponsiveImageSrcSet(media, rawUrl) : null,
+    renderInline,
+    srcSet: renderInline && rawUrl === url ? buildResponsiveImageSrcSet(media, rawUrl) : null,
+    storageDriver: media?.storageDriver || null,
+    storageKey: media?.storageKey || null,
     url,
     width,
   };
 }
 
 function createSectionImage(image, fallbackAlt) {
-  const rawUrl = typeof image?.url === "string" ? image.url.trim() : "";
+  const rawUrl =
+    (typeof image?.publicUrl === "string" && image.publicUrl.trim()) ||
+    (typeof image?.url === "string" && image.url.trim()) ||
+    (typeof image?.sourceUrl === "string" && image.sourceUrl.trim()) ||
+    "";
   const alt = image.alt || image.caption || fallbackAlt;
   const caption = image.caption || null;
+  const href = sanitizeMediaUrl(rawUrl);
   const height = normalizeImageDimension(image?.height);
+  const renderInline = shouldRenderInlineImage(image, href);
   const width = normalizeImageDimension(image?.width);
-  const url = getRenderableImageUrl(rawUrl, {
-    alt,
-    caption,
-    height,
-    width,
-  });
+  const url = renderInline
+    ? getRenderableImageUrl(rawUrl, {
+        alt,
+        caption,
+        height,
+        width,
+      })
+    : href;
 
   if (!url) {
     return null;
@@ -367,7 +407,12 @@ function createSectionImage(image, fallbackAlt) {
     attributionText: image.attributionText || null,
     caption,
     height,
+    href: href || null,
+    isAiGenerated: Boolean(image?.isAiGenerated),
     licenseType: image.licenseType || null,
+    renderInline,
+    storageDriver: image?.storageDriver || null,
+    storageKey: image?.storageKey || null,
     url,
     width,
   };
@@ -660,9 +705,13 @@ function createPublicMediaImageSelect() {
     attributionText: true,
     caption: true,
     height: true,
+    isAiGenerated: true,
     licenseType: true,
+    localPath: true,
     publicUrl: true,
     sourceUrl: true,
+    storageDriver: true,
+    storageKey: true,
     variants: {
       orderBy: {
         width: "asc",

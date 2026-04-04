@@ -17,11 +17,14 @@ const GlobalStyles = createGlobalStyle`
       radial-gradient(circle at top, rgba(0, 95, 115, 0.12), transparent 35%),
       linear-gradient(180deg, #f8fbff 0%, #eef4f7 100%);
     color: ${({ theme }) => theme.colors.text};
-    font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    font-family: var(--font-ui), "Segoe UI", sans-serif;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
   }
 
   body {
     min-height: 100vh;
+    overflow-x: hidden;
   }
 
   a {
