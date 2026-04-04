@@ -6,7 +6,6 @@ import { defaultLocale, isSupportedLocale, supportedLocales } from "@/features/i
 import { buildLocalizedPath, publicRouteSegments } from "@/features/i18n/routing";
 import { env } from "@/lib/env/server";
 import { generatedArticleSectionOrder } from "@/lib/content/article-structure";
-import { getRenderableImageUrl } from "@/lib/media";
 import { normalizeDisplayText, normalizeEquipmentName } from "@/lib/normalization";
 import { sanitizeMediaUrl } from "@/lib/security";
 
@@ -20,6 +19,12 @@ const articleSectionOrderIndex = new Map(
 );
 
 const publicEntityKinds = Object.freeze(["category", "manufacturer", "equipment"]);
+const fixtureMediaUrlMap = Object.freeze({
+  "https://fixtures.example/images/microscope-bench.jpg":
+    "https://upload.wikimedia.org/wikipedia/commons/c/cd/Microscope_Machine.jpg",
+  "https://fixtures.example/images/microscope-optics.jpg":
+    "https://upload.wikimedia.org/wikipedia/commons/d/d0/Laboratory_Microscope.jpg",
+});
 
 function serializeDate(value) {
   return value instanceof Date ? value.toISOString() : null;
@@ -305,30 +310,24 @@ function toAbsolutePublicUrl(path) {
   return `${env.app.url}${path}`;
 }
 
+function resolveFixtureMediaUrl(url) {
+  const normalizedUrl = typeof url === "string" ? url.trim() : "";
+
+  if (!normalizedUrl) {
+    return "";
+  }
+
+  return fixtureMediaUrlMap[normalizedUrl] || normalizedUrl;
+}
+
 function getMediaUrl(media) {
-  return media?.publicUrl || media?.sourceUrl || null;
-}
+  const rawUrl = media?.publicUrl || media?.sourceUrl || null;
 
-function normalizeStorageDriver(value) {
-  return `${value || ""}`.trim().toLowerCase();
-}
-
-function isServerHostedMedia(media, url) {
-  const storageDriver = normalizeStorageDriver(media?.storageDriver);
-
-  if (storageDriver === "local" || storageDriver === "s3") {
-    return Boolean(media?.storageKey || media?.publicUrl || media?.localPath || url);
-  }
-
-  if (media?.storageKey || media?.localPath) {
-    return true;
-  }
-
-  return typeof url === "string" && url.startsWith("/uploads/");
+  return rawUrl ? resolveFixtureMediaUrl(rawUrl) : null;
 }
 
 function shouldRenderInlineImage(media, url) {
-  return Boolean(media?.isAiGenerated) && isServerHostedMedia(media, url);
+  return Boolean(url);
 }
 
 function normalizeImageDimension(value) {
@@ -393,14 +392,7 @@ function createMediaImage(media, fallbackAlt) {
   const height = normalizeImageDimension(media?.height);
   const renderInline = shouldRenderInlineImage(media, href);
   const width = normalizeImageDimension(media?.width);
-  const url = renderInline
-    ? getRenderableImageUrl(rawUrl, {
-        alt,
-        caption,
-        height,
-        width,
-      })
-    : href;
+  const url = renderInline ? href : href;
 
   if (!url) {
     return null;
@@ -424,25 +416,19 @@ function createMediaImage(media, fallbackAlt) {
 }
 
 function createSectionImage(image, fallbackAlt) {
-  const rawUrl =
+  const rawUrl = resolveFixtureMediaUrl(
     (typeof image?.publicUrl === "string" && image.publicUrl.trim()) ||
     (typeof image?.url === "string" && image.url.trim()) ||
     (typeof image?.sourceUrl === "string" && image.sourceUrl.trim()) ||
-    "";
+    "",
+  );
   const alt = image.alt || image.caption || fallbackAlt;
   const caption = image.caption || null;
   const href = sanitizeMediaUrl(rawUrl);
   const height = normalizeImageDimension(image?.height);
   const renderInline = shouldRenderInlineImage(image, href);
   const width = normalizeImageDimension(image?.width);
-  const url = renderInline
-    ? getRenderableImageUrl(rawUrl, {
-        alt,
-        caption,
-        height,
-        width,
-      })
-    : href;
+  const url = renderInline ? href : href;
 
   if (!url) {
     return null;

@@ -179,7 +179,7 @@ const PageMain = styled.main`
 const Panel = styled.section`
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 255, 0.92));
   border: 1px solid rgba(16, 32, 51, 0.07);
-  border-radius: 22px;
+  border-radius: 18px;
   box-shadow:
     0 18px 40px rgba(22, 40, 64, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.72);
@@ -397,7 +397,7 @@ const Grid = styled.div`
 const Card = styled.article`
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 255, 0.92));
   border: 1px solid rgba(16, 32, 51, 0.07);
-  border-radius: 18px;
+  border-radius: 14px;
   box-shadow: 0 10px 24px rgba(22, 40, 64, 0.04);
   contain-intrinsic-size: 320px;
   content-visibility: auto;
@@ -424,7 +424,7 @@ const ChipRow = styled.div`
 const Chip = styled(Link)`
   background: rgba(32, 74, 113, 0.05);
   border: 1px solid rgba(32, 74, 113, 0.1);
-  border-radius: 999px;
+  border-radius: 14px;
   color: #244b73;
   display: inline-flex;
   font-size: 0.85rem;
@@ -446,7 +446,7 @@ const TitleLink = styled(Link)`
 
 const PostCardText = styled.p`
   color: rgba(72, 84, 108, 0.94);
-  line-height: 1.68;
+  line-height: 1.56;
   margin: 0;
 `;
 
@@ -457,31 +457,196 @@ const ActionLink = styled(Link)`
 
 const Figure = styled.figure`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: 0.38rem;
   margin: 0;
+
+  ${({ $presentation, $orientation }) =>
+    $presentation === "atlas" &&
+    css`
+      @media (min-width: 980px) {
+        grid-column: span
+          ${$orientation === "portrait" ? 5 : $orientation === "square" ? 6 : 7};
+      }
+    `}
+`;
+
+const FigureFrame = styled.div`
+  background: linear-gradient(180deg, rgba(248, 250, 253, 0.96), rgba(241, 245, 249, 0.98));
+  border: 1px solid rgba(16, 32, 51, 0.08);
+  border-radius: 14px;
+  display: grid;
+  justify-items: center;
+  overflow: hidden;
+  padding: clamp(0.26rem, 0.7vw, 0.4rem);
+
+  ${({ $orientation, $variant }) =>
+    $variant === "article" &&
+    $orientation === "portrait" &&
+    css`
+      margin-inline: auto;
+      width: min(100%, clamp(15rem, 27vw, 21rem));
+    `}
+
+  ${({ $orientation, $variant }) =>
+    $variant === "article" &&
+    $orientation === "square" &&
+    css`
+      margin-inline: auto;
+      width: min(100%, clamp(17rem, 34vw, 24rem));
+    `}
+
+  ${({ $orientation, $variant }) =>
+    $variant === "article" &&
+    $orientation === "landscape" &&
+    css`
+      width: 100%;
+    `}
+
+  ${({ $presentation }) =>
+    $presentation === "atlas" &&
+    css`
+      background:
+        linear-gradient(180deg, rgba(247, 250, 253, 0.98), rgba(232, 239, 245, 0.98)),
+        radial-gradient(circle at top right, rgba(36, 75, 115, 0.1), transparent 48%);
+      border-color: rgba(18, 37, 60, 0.12);
+      box-shadow:
+        0 18px 42px rgba(18, 37, 60, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.86);
+      isolation: isolate;
+      position: relative;
+
+      &::before {
+        background-image:
+          linear-gradient(rgba(18, 37, 60, 0.05) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(18, 37, 60, 0.05) 1px, transparent 1px);
+        background-position: center;
+        background-size: 18px 18px;
+        content: "";
+        inset: 0;
+        opacity: 0.34;
+        pointer-events: none;
+        position: absolute;
+        z-index: 0;
+      }
+
+      &::after {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.62), transparent 38%);
+        content: "";
+        inset: 0;
+        pointer-events: none;
+        position: absolute;
+        z-index: 0;
+      }
+
+      > * {
+        position: relative;
+        z-index: 1;
+      }
+    `}
+`;
+
+const FigureFrameLink = styled.a`
+  color: inherit;
+  display: grid;
+  height: 100%;
+  width: 100%;
 `;
 
 const FigureImage = styled.img`
-  aspect-ratio: 16 / 9;
+  aspect-ratio: ${({ $aspectRatio, $variant }) =>
+    $variant === "article" ? $aspectRatio || "4 / 3" : "16 / 9"};
   background: rgba(16, 32, 51, 0.04);
-  border-radius: 14px;
+  border-radius: ${({ $variant }) => ($variant === "article" ? "10px" : "14px")};
   display: block;
+  filter: ${({ $presentation, $variant }) =>
+    $presentation === "atlas" && $variant === "article"
+      ? "contrast(1.03) saturate(0.94)"
+      : "none"};
   height: auto;
-  object-fit: cover;
-  width: 100%;
+  margin: 0 auto;
+  max-height: ${({ $orientation, $variant }) =>
+    $variant !== "article"
+      ? "none"
+      : $orientation === "portrait"
+        ? "clamp(320px, 54vw, 620px)"
+        : $orientation === "square"
+          ? "clamp(280px, 48vw, 540px)"
+          : "clamp(260px, 58vw, 560px)"};
+  object-fit: ${({ $variant }) => ($variant === "article" ? "contain" : "cover")};
+  object-position: center;
+  max-width: 100%;
+  width: ${({ $orientation, $variant }) =>
+    $variant === "article" && $orientation === "portrait" ? "auto" : "100%"};
 `;
 
 const FigureCaption = styled.figcaption`
   color: rgba(80, 92, 115, 0.92);
-  font-size: 0.9rem;
-  line-height: 1.6;
+  font-size: 0.86rem;
+  line-height: 1.36;
+  max-width: 54ch;
 `;
+
+const FigureBadgeRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+`;
+
+const FigureBadge = styled.span`
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(16, 32, 51, 0.12);
+  border-radius: 999px;
+  color: rgba(31, 56, 86, 0.88);
+  display: inline-flex;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  padding: 0.28rem 0.6rem;
+  text-transform: uppercase;
+`;
+
+function getImageAspectRatio(image, variant) {
+  if (variant !== "article") {
+    return undefined;
+  }
+
+  const width = Number.parseInt(`${image?.width ?? ""}`.trim(), 10);
+  const height = Number.parseInt(`${image?.height ?? ""}`.trim(), 10);
+
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+    return undefined;
+  }
+
+  return `${width} / ${height}`;
+}
+
+function getImageOrientation(image) {
+  const width = Number.parseInt(`${image?.width ?? ""}`.trim(), 10);
+  const height = Number.parseInt(`${image?.height ?? ""}`.trim(), 10);
+
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+    return "landscape";
+  }
+
+  if (height >= width * 1.12) {
+    return "portrait";
+  }
+
+  if (width >= height * 1.12) {
+    return "landscape";
+  }
+
+  return "square";
+}
 
 function ResponsiveImage({
   image,
   loading = "lazy",
+  onMeasure,
   priority = false,
   sizes = "100vw",
+  presentation = "default",
+  variant = "card",
 }) {
   const fallbackSrc = createImagePlaceholderDataUrl({
     alt: image?.alt,
@@ -492,6 +657,8 @@ function ResponsiveImage({
   });
   const [failedSource, setFailedSource] = useState(null);
   const src = failedSource === image?.url ? fallbackSrc : image?.url || "";
+  const aspectRatio = getImageAspectRatio(image, variant);
+  const orientation = getImageOrientation(image);
 
   if (!src) {
     return null;
@@ -501,11 +668,42 @@ function ResponsiveImage({
 
   return (
     <FigureImage
+      $aspectRatio={aspectRatio}
+      $orientation={orientation}
+      $presentation={presentation}
+      $variant={variant}
       alt={image.alt}
       decoding="async"
       fetchPriority={priority ? "high" : "auto"}
       height={image.height || undefined}
       loading={priority ? "eager" : loading}
+      onLoad={(event) => {
+        if (typeof onMeasure === "function") {
+          const { naturalHeight, naturalWidth } = event.currentTarget;
+
+          if (
+            Number.isFinite(naturalWidth) &&
+            Number.isFinite(naturalHeight) &&
+            naturalWidth > 0 &&
+            naturalHeight > 0
+          ) {
+            onMeasure((currentValue) => {
+              if (
+                currentValue &&
+                currentValue.width === naturalWidth &&
+                currentValue.height === naturalHeight
+              ) {
+                return currentValue;
+              }
+
+              return {
+                height: naturalHeight,
+                width: naturalWidth,
+              };
+            });
+          }
+        }
+      }}
       onError={() => {
         if (!isFallbackSource) {
           setFailedSource(image?.url || "");
@@ -573,7 +771,7 @@ const SpotlightTitle = styled.h3`
 
 const SpotlightMeta = styled.p`
   color: ${({ theme }) => theme.colors.muted};
-  line-height: 1.65;
+  line-height: 1.54;
   margin: 0;
 `;
 
@@ -611,7 +809,7 @@ const PagerButton = styled(Link)`
   align-items: center;
   background: rgba(255, 255, 255, 0.86);
   border: 1px solid rgba(16, 32, 51, 0.12);
-  border-radius: 999px;
+  border-radius: 14px;
   display: inline-flex;
   font-weight: 700;
   justify-content: center;
@@ -639,7 +837,7 @@ const SearchInput = styled.input`
 const SearchButton = styled.button`
   background: linear-gradient(180deg, #2a537d, #203f61);
   border: none;
-  border-radius: 999px;
+  border-radius: 14px;
   color: #fff;
   cursor: pointer;
   font-weight: 700;
@@ -651,7 +849,7 @@ const SearchLink = styled(Link)`
   align-items: center;
   background: rgba(255, 255, 255, 0.86);
   border: 1px solid rgba(16, 32, 51, 0.12);
-  border-radius: 999px;
+  border-radius: 14px;
   color: ${({ theme }) => theme.colors.text};
   display: inline-flex;
   font-weight: 700;
@@ -1070,7 +1268,7 @@ const BreadcrumbSeparator = styled.span`
 
 const PostScene = styled.section`
   display: grid;
-  gap: clamp(1.25rem, 2.8vw, 1.8rem);
+  gap: clamp(0.9rem, 2vw, 1.25rem);
 `;
 
 const PostHeroShell = styled.section`
@@ -1079,27 +1277,67 @@ const PostHeroShell = styled.section`
     radial-gradient(circle at bottom left, rgba(0, 95, 115, 0.11), transparent 42%),
     linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(247, 250, 255, 0.95));
   border: 1px solid rgba(16, 32, 51, 0.08);
-  border-radius: 30px;
+  border-radius: 20px;
   box-shadow:
     0 32px 90px rgba(19, 34, 58, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.76);
   overflow: hidden;
-  padding: clamp(1.25rem, 4vw, 2.5rem);
+  padding: clamp(0.95rem, 2.4vw, 1.35rem);
+
+  ${({ $presentation }) =>
+    $presentation === "atlas" &&
+    css`
+      background:
+        linear-gradient(140deg, rgba(255, 255, 255, 0.98), rgba(243, 247, 251, 0.96)),
+        radial-gradient(circle at top right, rgba(63, 115, 154, 0.18), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(196, 123, 48, 0.1), transparent 42%);
+      isolation: isolate;
+      position: relative;
+
+      &::before {
+        background: linear-gradient(90deg, rgba(31, 62, 94, 0.95), rgba(63, 115, 154, 0.65));
+        content: "";
+        height: 4px;
+        left: 0;
+        position: absolute;
+        right: 0;
+        top: 0;
+        z-index: 0;
+      }
+
+      &::after {
+        background-image:
+          linear-gradient(rgba(31, 62, 94, 0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(31, 62, 94, 0.035) 1px, transparent 1px);
+        background-size: 22px 22px;
+        content: "";
+        inset: 0;
+        opacity: 0.55;
+        pointer-events: none;
+        position: absolute;
+        z-index: 0;
+      }
+
+      > * {
+        position: relative;
+        z-index: 1;
+      }
+    `}
 `;
 
 const PostHeroGrid = styled.div`
   display: grid;
-  gap: clamp(1.25rem, 2.8vw, 1.85rem);
+  gap: clamp(0.85rem, 1.8vw, 1.15rem);
 
   @media (min-width: 980px) {
     align-items: start;
-    grid-template-columns: minmax(0, 1.45fr) minmax(260px, 0.8fr);
+    grid-template-columns: minmax(0, 1.7fr) minmax(220px, 0.66fr);
   }
 `;
 
 const PostHeader = styled.div`
   display: grid;
-  gap: clamp(0.95rem, 2vw, 1.2rem);
+  gap: clamp(0.7rem, 1.4vw, 0.95rem);
 `;
 
 const PostKicker = styled.p`
@@ -1119,7 +1357,7 @@ const PostTitle = styled.h1`
   letter-spacing: -0.045em;
   line-height: 1.04;
   margin: 0;
-  max-width: 15ch;
+  max-width: 18ch;
   text-wrap: balance;
 `;
 
@@ -1127,22 +1365,41 @@ const PostDeck = styled.p`
   color: rgba(54, 67, 88, 0.92);
   font-family: var(--font-editorial), Georgia, serif;
   font-size: clamp(0.98rem, 1.65vw, 1.08rem);
-  line-height: 1.7;
+  line-height: 1.42;
   margin: 0;
-  max-width: 42ch;
+  max-width: 50ch;
+`;
+
+const HeroSignalRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.42rem;
+`;
+
+const HeroSignal = styled.span`
+  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid rgba(16, 32, 51, 0.1);
+  border-radius: 999px;
+  color: rgba(32, 61, 90, 0.9);
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  padding: 0.34rem 0.62rem;
+  text-transform: uppercase;
 `;
 
 const PostMetaGrid = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 0.65rem;
+  gap: 0.45rem;
 `;
 
 const MetaPill = styled.span`
   align-items: center;
   background: rgba(255, 255, 255, 0.76);
   border: 1px solid rgba(16, 32, 51, 0.1);
-  border-radius: 999px;
+  border-radius: 14px;
   box-shadow: 0 10px 28px rgba(19, 34, 58, 0.04);
   color: rgba(62, 75, 95, 0.9);
   display: inline-flex;
@@ -1161,39 +1418,39 @@ const PostHeroChip = styled(Chip)`
   background: rgba(32, 74, 113, 0.08);
   border-color: rgba(32, 74, 113, 0.12);
   box-shadow: 0 10px 24px rgba(19, 34, 58, 0.04);
-  padding: 0.46rem 0.88rem;
+  padding: 0.34rem 0.72rem;
 `;
 
 const HeroActionRow = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 0.7rem;
+  gap: 0.5rem;
 `;
 
 const HeroPrimaryAction = styled.a`
   align-items: center;
   background: linear-gradient(180deg, #274d74, #1f3e5e);
-  border-radius: 999px;
+  border-radius: 14px;
   box-shadow: 0 18px 40px rgba(31, 62, 94, 0.18);
   color: #fff;
   display: inline-flex;
   font-weight: 800;
   justify-content: center;
-  min-height: 48px;
-  padding: 0.78rem 1.25rem;
+  min-height: 42px;
+  padding: 0.64rem 1rem;
 `;
 
 const HeroSecondaryAction = styled(Link)`
   align-items: center;
   background: rgba(255, 255, 255, 0.84);
   border: 1px solid rgba(16, 32, 51, 0.12);
-  border-radius: 999px;
+  border-radius: 14px;
   color: #183b63;
   display: inline-flex;
   font-weight: 800;
   justify-content: center;
-  min-height: 48px;
-  padding: 0.78rem 1.15rem;
+  min-height: 42px;
+  padding: 0.64rem 0.95rem;
 `;
 
 const HeroGhostAction = styled(Link)`
@@ -1201,13 +1458,13 @@ const HeroGhostAction = styled(Link)`
   color: rgba(45, 61, 84, 0.92);
   display: inline-flex;
   font-weight: 700;
-  min-height: 48px;
+  min-height: 42px;
   padding: 0.2rem 0.1rem;
 `;
 
 const PostHeroAside = styled.aside`
   display: grid;
-  gap: 0.95rem;
+  gap: 0.7rem;
 `;
 
 const HeroSnapshotCard = styled.div`
@@ -1215,10 +1472,28 @@ const HeroSnapshotCard = styled.div`
     linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(248, 250, 255, 0.94)),
     radial-gradient(circle at top right, rgba(36, 75, 115, 0.08), transparent 56%);
   border: 1px solid rgba(16, 32, 51, 0.08);
-  border-radius: 24px;
+  border-radius: 18px;
   display: grid;
-  gap: 0.95rem;
-  padding: clamp(1rem, 2.2vw, 1.2rem);
+  gap: 0.72rem;
+  padding: clamp(0.8rem, 1.6vw, 0.95rem);
+
+  ${({ $presentation }) =>
+    $presentation === "atlas" &&
+    css`
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(243, 247, 251, 0.94)),
+        radial-gradient(circle at top right, rgba(63, 115, 154, 0.12), transparent 58%);
+      border-color: rgba(18, 37, 60, 0.11);
+      box-shadow:
+        0 18px 42px rgba(18, 37, 60, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.82);
+    `}
+`;
+
+const HeroSectionNavCard = styled(HeroSnapshotCard)`
+  @media (min-width: 1100px) {
+    display: none;
+  }
 `;
 
 const HeroSnapshotEyebrow = styled.p`
@@ -1240,13 +1515,13 @@ const HeroSnapshotTitle = styled.h2`
 
 const HeroSnapshotText = styled.p`
   color: rgba(73, 86, 108, 0.94);
-  line-height: 1.7;
+  line-height: 1.56;
   margin: 0;
 `;
 
 const HeroStatsGrid = styled.dl`
   display: grid;
-  gap: 0.75rem;
+  gap: 0.55rem;
   margin: 0;
 
   @media (min-width: 560px) {
@@ -1257,11 +1532,20 @@ const HeroStatsGrid = styled.dl`
 const HeroStatCard = styled.div`
   background: rgba(255, 255, 255, 0.82);
   border: 1px solid rgba(16, 32, 51, 0.08);
-  border-radius: 18px;
+  border-radius: 14px;
   display: grid;
   gap: 0.22rem;
-  min-height: 88px;
-  padding: 0.9rem;
+  min-height: 72px;
+  padding: 0.72rem;
+
+  ${({ $presentation }) =>
+    $presentation === "atlas" &&
+    css`
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(242, 246, 250, 0.92)),
+        radial-gradient(circle at top right, rgba(63, 115, 154, 0.08), transparent 52%);
+      border-color: rgba(18, 37, 60, 0.1);
+    `}
 `;
 
 const HeroStatLabel = styled.dt`
@@ -1284,17 +1568,17 @@ const HeroStatValue = styled.dd`
 
 const SectionNavList = styled.div`
   display: grid;
-  gap: 0.55rem;
+  gap: 0.4rem;
 `;
 
 const SectionNavLink = styled.a`
   background: rgba(255, 255, 255, 0.78);
   border: 1px solid rgba(16, 32, 51, 0.08);
-  border-radius: 18px;
+  border-radius: 14px;
   color: #17253d;
   display: grid;
-  gap: 0.18rem;
-  padding: 0.8rem 0.9rem;
+  gap: 0.12rem;
+  padding: 0.62rem 0.74rem;
   transition:
     border-color 160ms ease,
     box-shadow 160ms ease,
@@ -1316,7 +1600,7 @@ const SectionNavIndex = styled.span`
 `;
 
 const SectionNavLabel = styled.span`
-  font-size: 0.97rem;
+  font-size: 0.93rem;
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.3;
@@ -1325,63 +1609,164 @@ const SectionNavLabel = styled.span`
 const PostImagePanel = styled.section`
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(247, 250, 255, 0.93));
   border: 1px solid rgba(16, 32, 51, 0.07);
-  border-radius: 28px;
+  border-radius: 18px;
   box-shadow:
-    0 24px 64px rgba(19, 34, 58, 0.08),
+    0 16px 38px rgba(19, 34, 58, 0.06),
     inset 0 1px 0 rgba(255, 255, 255, 0.76);
   overflow: hidden;
-  padding: clamp(0.95rem, 2.6vw, 1.35rem);
+  padding: clamp(0.5rem, 1.15vw, 0.68rem);
+
+  ${({ $presentation }) =>
+    $presentation === "atlas" &&
+    css`
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(243, 247, 251, 0.94)),
+        radial-gradient(circle at top right, rgba(63, 115, 154, 0.12), transparent 44%);
+      border-color: rgba(18, 37, 60, 0.1);
+      position: relative;
+
+      &::before {
+        background-image:
+          linear-gradient(rgba(18, 37, 60, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(18, 37, 60, 0.03) 1px, transparent 1px);
+        background-size: 20px 20px;
+        content: "";
+        inset: 0;
+        opacity: 0.5;
+        pointer-events: none;
+        position: absolute;
+      }
+
+      > * {
+        position: relative;
+      }
+    `}
+`;
+
+const MediaPanelHeader = styled.div`
+  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.9rem;
+  justify-content: space-between;
+  margin-bottom: 0.55rem;
+`;
+
+const MediaPanelTitle = styled.p`
+  color: #16243b;
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  margin: 0;
+  text-transform: uppercase;
+`;
+
+const MediaPanelMeta = styled.p`
+  color: rgba(70, 84, 106, 0.9);
+  font-size: 0.88rem;
+  line-height: 1.38;
+  margin: 0;
 `;
 
 const PostLayout = styled.div`
   display: grid;
-  gap: clamp(1.25rem, 2.8vw, 1.8rem);
+  gap: clamp(0.95rem, 2vw, 1.2rem);
 
   @media (min-width: 1100px) {
     align-items: start;
-    grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.78fr);
+    grid-template-columns: minmax(0, 1.55fr) minmax(230px, 0.6fr);
   }
 `;
 
 const ArticleColumn = styled.div`
   display: grid;
-  gap: clamp(1.1rem, 2.4vw, 1.45rem);
+  gap: clamp(0.85rem, 1.8vw, 1rem);
 `;
 
 const SidebarColumn = styled.aside`
   display: grid;
-  gap: clamp(1rem, 2.2vw, 1.25rem);
+  gap: clamp(0.8rem, 1.8vw, 0.95rem);
 
   @media (min-width: 1100px) {
+    align-content: start;
+    max-height: calc(100vh - 6rem);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 0.2rem;
     position: sticky;
     top: 5.4rem;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(36, 75, 115, 0.24);
+      border-radius: 999px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+  }
+`;
+
+const SidebarShareWrap = styled.div`
+  display: grid;
+
+  @media (min-width: 1100px) {
+    order: 1;
   }
 `;
 
 const HeroImageGrid = styled.div`
+  align-items: start;
   display: grid;
-  gap: clamp(0.85rem, 2vw, 1rem);
+  gap: clamp(0.55rem, 1.2vw, 0.72rem);
 
   @media (min-width: 720px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  ${({ $presentation }) =>
+    $presentation === "atlas" &&
+    css`
+      @media (min-width: 980px) {
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+      }
+    `}
 `;
 
 const SidebarPanel = styled(Panel)`
-  gap: 0.95rem;
-  padding: clamp(1rem, 2.2vw, 1.25rem);
+  gap: 0.72rem;
+  padding: clamp(0.78rem, 1.7vw, 0.92rem);
+`;
+
+const SidebarNavigatorPanel = styled(SidebarPanel)`
+  @media (min-width: 1100px) {
+    order: 0;
+  }
+`;
+
+const SidebarEquipmentPanel = styled(SidebarPanel)`
+  @media (min-width: 1100px) {
+    order: 2;
+  }
 `;
 
 const SidebarTitle = styled.h2`
   color: #16243b;
-  font-size: 1.12rem;
+  font-size: 1.02rem;
   letter-spacing: -0.03em;
   margin: 0;
 `;
 
 const SidebarText = styled.p`
   color: rgba(72, 84, 108, 0.94);
-  line-height: 1.68;
+  line-height: 1.56;
   margin: 0;
 `;
 
@@ -1389,13 +1774,13 @@ const SidebarAction = styled(Link)`
   align-items: center;
   background: rgba(255, 255, 255, 0.84);
   border: 1px solid rgba(16, 32, 51, 0.12);
-  border-radius: 999px;
+  border-radius: 14px;
   color: #183b63;
   display: inline-flex;
   font-weight: 800;
   justify-content: center;
-  min-height: 46px;
-  padding: 0.72rem 1rem;
+  min-height: 42px;
+  padding: 0.62rem 0.9rem;
 `;
 
 const SidebarBackLink = styled(Link)`
@@ -1403,33 +1788,93 @@ const SidebarBackLink = styled(Link)`
   font-weight: 700;
 `;
 
+const TocList = styled.ol`
+  color: rgba(82, 94, 116, 0.88);
+  display: grid;
+  gap: 0.34rem;
+  list-style: decimal-leading-zero;
+  margin: 0;
+  padding-left: 1.4rem;
+
+  li::marker {
+    color: rgba(70, 84, 108, 0.72);
+    font-family: var(--font-ui), sans-serif;
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+  }
+`;
+
+const TocItem = styled.li`
+  margin: 0;
+  padding-left: 0.08rem;
+`;
+
+const TocLink = styled.a`
+  color: #203651;
+  display: inline;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.42;
+  text-decoration: none;
+
+  &:hover {
+    color: #244b73;
+    text-decoration: underline;
+    text-decoration-color: rgba(36, 75, 115, 0.35);
+    text-underline-offset: 0.16em;
+  }
+`;
+
 const ArticlePaper = styled.article`
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(250, 251, 255, 0.96)),
     radial-gradient(circle at top right, rgba(36, 75, 115, 0.05), transparent 52%);
   border: 1px solid rgba(16, 32, 51, 0.07);
-  border-radius: 28px;
+  border-radius: 18px;
   box-shadow:
     0 28px 70px rgba(19, 34, 58, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.78);
   display: grid;
-  padding: clamp(1.2rem, 4vw, 2.4rem);
+  padding: clamp(0.95rem, 2.2vw, 1.35rem);
   scroll-margin-top: 5.8rem;
+
+  ${({ $presentation }) =>
+    $presentation === "atlas" &&
+    css`
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(245, 248, 252, 0.96)),
+        radial-gradient(circle at top right, rgba(63, 115, 154, 0.08), transparent 46%);
+      border-color: rgba(18, 37, 60, 0.09);
+      position: relative;
+
+      &::before {
+        background: linear-gradient(90deg, rgba(31, 62, 94, 0.92), rgba(63, 115, 154, 0.36));
+        border-radius: 999px;
+        content: "";
+        height: 2px;
+        left: clamp(0.95rem, 2.2vw, 1.35rem);
+        position: absolute;
+        right: clamp(0.95rem, 2.2vw, 1.35rem);
+        top: 0.72rem;
+      }
+    `}
 `;
 
 const ArticleFlow = styled.div`
   display: grid;
-  gap: clamp(2rem, 4vw, 3rem);
+  gap: clamp(1.35rem, 2.8vw, 1.8rem);
 
   > section + section {
     border-top: 1px solid rgba(16, 32, 51, 0.08);
-    padding-top: clamp(2rem, 4vw, 3rem);
+    padding-top: clamp(1.35rem, 2.8vw, 1.8rem);
   }
 `;
 
 const StorySection = styled.section`
   display: grid;
-  gap: clamp(0.95rem, 2vw, 1.2rem);
+  gap: clamp(0.72rem, 1.4vw, 0.92rem);
   scroll-margin-top: 6rem;
 
   ${({ $tone }) =>
@@ -1439,8 +1884,8 @@ const StorySection = styled.section`
         linear-gradient(180deg, rgba(243, 247, 255, 0.86), rgba(250, 251, 255, 0.98)),
         radial-gradient(circle at top right, rgba(36, 75, 115, 0.08), transparent 48%);
       border: 1px solid rgba(36, 75, 115, 0.12);
-      border-radius: 24px;
-      padding: clamp(1.1rem, 2.6vw, 1.45rem);
+      border-radius: 18px;
+      padding: clamp(0.82rem, 1.8vw, 1rem);
     `}
 
   ${({ $tone }) =>
@@ -1450,8 +1895,8 @@ const StorySection = styled.section`
         linear-gradient(180deg, rgba(255, 247, 238, 0.96), rgba(255, 251, 246, 0.99)),
         radial-gradient(circle at top right, rgba(201, 123, 42, 0.1), transparent 52%);
       border: 1px solid rgba(201, 123, 42, 0.18);
-      border-radius: 24px;
-      padding: clamp(1.1rem, 2.6vw, 1.45rem);
+      border-radius: 18px;
+      padding: clamp(0.82rem, 1.8vw, 1rem);
     `}
 
   ${({ $tone }) =>
@@ -1459,14 +1904,29 @@ const StorySection = styled.section`
     css`
       background: rgba(245, 248, 252, 0.82);
       border: 1px solid rgba(16, 32, 51, 0.08);
-      border-radius: 24px;
-      padding: clamp(1.05rem, 2.5vw, 1.35rem);
+      border-radius: 18px;
+      padding: clamp(0.78rem, 1.7vw, 0.95rem);
     `}
 `;
 
 const StorySectionHeader = styled.div`
   display: grid;
-  gap: 0.35rem;
+  gap: 0.22rem;
+`;
+
+const StorySectionMetaRow = styled.div`
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.38rem 0.6rem;
+`;
+
+const StorySectionIndex = styled.span`
+  color: rgba(44, 76, 108, 0.72);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
 `;
 
 const SectionLabel = styled.span`
@@ -1480,7 +1940,7 @@ const SectionLabel = styled.span`
 const PostSectionTitle = styled.h2`
   color: #16243b;
   font-family: var(--font-editorial), Georgia, serif;
-  font-size: clamp(1.18rem, 1.9vw, 1.5rem);
+  font-size: clamp(1.08rem, 1.5vw, 1.32rem);
   font-weight: 600;
   letter-spacing: -0.035em;
   line-height: 1.12;
@@ -1491,10 +1951,10 @@ const PostSectionTitle = styled.h2`
 const ArticleBody = styled.div`
   color: rgba(56, 68, 88, 0.96);
   display: grid;
-  gap: 1rem;
+  gap: 0.72rem;
   font-family: var(--font-editorial), Georgia, serif;
   font-size: clamp(1.12rem, 1.25vw, 1.24rem);
-  line-height: 1.88;
+  line-height: 1.52;
 
   p {
     margin: 0;
@@ -1515,10 +1975,10 @@ const ArticleBody = styled.div`
 const NumberedList = styled.ol`
   color: rgba(56, 68, 88, 0.96);
   display: grid;
-  gap: 0.9rem;
+  gap: 0.58rem;
   font-family: var(--font-editorial), Georgia, serif;
   font-size: clamp(1.08rem, 1.2vw, 1.18rem);
-  line-height: 1.82;
+  line-height: 1.56;
   margin: 0;
   padding-left: 1.45rem;
 
@@ -1545,7 +2005,7 @@ const DetailCardGrid = styled.div`
 const DetailCard = styled.article`
   background: rgba(255, 255, 255, 0.78);
   border: 1px solid rgba(16, 32, 51, 0.08);
-  border-radius: 20px;
+  border-radius: 14px;
   box-shadow: 0 12px 28px rgba(19, 34, 58, 0.04);
   display: grid;
   gap: 0.72rem;
@@ -1562,7 +2022,7 @@ const DetailCardTitle = styled.h3`
 
 const DetailCardText = styled.p`
   color: rgba(72, 84, 108, 0.96);
-  line-height: 1.7;
+  line-height: 1.46;
   margin: 0;
 `;
 
@@ -1580,7 +2040,7 @@ const FaultCard = styled.article`
     linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(246, 249, 252, 0.96)),
     radial-gradient(circle at top right, rgba(0, 95, 115, 0.08), transparent 48%);
   border: 1px solid rgba(0, 95, 115, 0.12);
-  border-radius: 22px;
+  border-radius: 16px;
   display: grid;
   gap: 0.85rem;
   padding: clamp(1rem, 2.2vw, 1.25rem);
@@ -1589,10 +2049,10 @@ const FaultCard = styled.article`
 const ResourceList = styled.ul`
   color: rgba(56, 68, 88, 0.96);
   display: grid;
-  gap: 0.7rem;
+  gap: 0.5rem;
   font-family: var(--font-editorial), Georgia, serif;
   font-size: clamp(1.08rem, 1.18vw, 1.16rem);
-  line-height: 1.84;
+  line-height: 1.48;
   margin: 0;
   padding-left: 1.4rem;
 
@@ -1622,6 +2082,12 @@ const ResourceMeta = styled.span`
 const ResourceGroup = styled.div`
   display: grid;
   gap: 0.9rem;
+`;
+
+const FlatResourceStrip = styled.div`
+  display: grid;
+  gap: 0.55rem;
+  padding: 0 0.1rem;
 `;
 
 const ResourceGroupTitle = styled.h3`
@@ -1686,6 +2152,50 @@ function getPostSectionAnchor(sectionId) {
   return `section-${sectionId}`;
 }
 
+function getVisualBadgeLabel(image) {
+  if (image?.isAiGenerated) {
+    return "AI illustration";
+  }
+
+  if (image?.storageDriver === "external-source") {
+    return "Reference photo";
+  }
+
+  if (image?.storageDriver === "local" || image?.storageDriver === "s3") {
+    return "Stored visual";
+  }
+
+  return "Inline visual";
+}
+
+function buildHeroSignals({
+  bodySections,
+  inlineHeroImages,
+  linkedHeroImages,
+  referenceItemCount,
+}) {
+  const visualCount = inlineHeroImages.length + linkedHeroImages.length;
+  const signals = [];
+
+  if (visualCount) {
+    signals.push(`${visualCount} visual${visualCount === 1 ? "" : "s"}`);
+  }
+
+  if (bodySections.some((section) => section.kind === "steps")) {
+    signals.push("Procedure-led");
+  }
+
+  if (bodySections.some((section) => section.kind === "faults")) {
+    signals.push("Fault atlas");
+  }
+
+  if (referenceItemCount) {
+    signals.push("Reference-linked");
+  }
+
+  return signals.slice(0, 4);
+}
+
 function getArticleSectionTone(section) {
   if (section.id === "disclaimer") {
     return "warning";
@@ -1697,15 +2207,6 @@ function getArticleSectionTone(section) {
     section.kind === "references"
   ) {
     return "reference";
-  }
-
-  if (
-    section.kind === "faults" ||
-    section.kind === "faq" ||
-    section.kind === "models_by_manufacturer" ||
-    section.kind === "image_gallery"
-  ) {
-    return "utility";
   }
 
   return "default";
@@ -1796,7 +2297,78 @@ function renderImageResourceList(images = []) {
   );
 }
 
-function renderArticleSection(section, copy) {
+function InlinePhotoFigure({
+  image,
+  presentation = "default",
+  priority = false,
+  sizes = "100vw",
+}) {
+  const [measuredDimensions, setMeasuredDimensions] = useState(null);
+  const resolvedImage = measuredDimensions
+    ? {
+        ...image,
+        height: measuredDimensions.height,
+        width: measuredDimensions.width,
+      }
+    : image;
+  const orientation = getImageOrientation(resolvedImage);
+  const imageContent = (
+    <ResponsiveImage
+      image={resolvedImage}
+      onMeasure={setMeasuredDimensions}
+      presentation={presentation}
+      priority={priority}
+      sizes={sizes}
+      variant="article"
+    />
+  );
+
+  return (
+    <Figure $orientation={orientation} $presentation={presentation}>
+      <FigureFrame
+        $orientation={orientation}
+        $presentation={presentation}
+        $variant="article"
+      >
+        {resolvedImage.href ? (
+          <FigureFrameLink href={resolvedImage.href} rel="noreferrer" target="_blank">
+            {imageContent}
+          </FigureFrameLink>
+        ) : (
+          imageContent
+        )}
+      </FigureFrame>
+      {presentation === "atlas" ? (
+        <FigureBadgeRow>
+          <FigureBadge>{getVisualBadgeLabel(resolvedImage)}</FigureBadge>
+          {resolvedImage.licenseType ? <FigureBadge>{resolvedImage.licenseType}</FigureBadge> : null}
+        </FigureBadgeRow>
+      ) : null}
+      {resolvedImage.caption ? <FigureCaption>{resolvedImage.caption}</FigureCaption> : null}
+    </Figure>
+  );
+}
+
+function renderInlinePhotoFigure(
+  image,
+  { presentation = "default", priority = false, sizes = "100vw" } = {},
+) {
+  if (!image?.url) {
+    return null;
+  }
+
+  return (
+    <InlinePhotoFigure
+      image={image}
+      key={image.url}
+      presentation={presentation}
+      priority={priority}
+      sizes={sizes}
+    />
+  );
+}
+
+function renderArticleSection(section, copy, { presentation = "default" } = {}) {
   if (section.kind === "text") {
     return (
       <ArticleBody>
@@ -1933,19 +2505,19 @@ function renderArticleSection(section, copy) {
     return (
       <>
         {inlineImages.length ? (
-          <HeroImageGrid>
-            {inlineImages.map((image) => (
-              <Figure key={image.url}>
-                <ResponsiveImage
-                  image={{
-                    ...image,
-                    alt: image.alt || copy.relatedPostsTitle,
-                  }}
-                  sizes="(min-width: 720px) 46vw, 92vw"
-                />
-                {image.caption ? <FigureCaption>{image.caption}</FigureCaption> : null}
-              </Figure>
-            ))}
+          <HeroImageGrid $presentation={presentation}>
+            {inlineImages.map((image) =>
+              renderInlinePhotoFigure(
+                {
+                  ...image,
+                  alt: image.alt || copy.relatedPostsTitle,
+                },
+                {
+                  presentation,
+                  sizes: "(min-width: 720px) 46vw, 92vw",
+                },
+              ),
+            )}
           </HeroImageGrid>
         ) : null}
         {linkedImages.length ? renderImageResourceList(linkedImages) : null}
@@ -1959,6 +2531,10 @@ function renderArticleSection(section, copy) {
 export function PublicPostPage({ locale, messages, pageData }) {
   const copy = getCommonCopy(messages);
   const { article } = pageData;
+  const presentation =
+    article.equipment?.slug === "microscope" || article.path?.endsWith("/blog/microscope")
+      ? "atlas"
+      : "default";
   const displayEquipmentName = formatEquipmentDisplayName(article.equipment.name);
   const displayTitle = formatArticleDisplayTitle(article.title, article.equipment.name);
   const bodySections = article.bodySections || [];
@@ -1969,6 +2545,25 @@ export function PublicPostPage({ locale, messages, pageData }) {
   const referenceItemCount = countReferenceItems(bodySections);
   const backToBlogHref = article.breadcrumb[1]?.href || article.path;
   const heroSectionLinks = sectionLinks.slice(0, 5);
+  const heroSignals = buildHeroSignals({
+    bodySections,
+    inlineHeroImages,
+    linkedHeroImages,
+    referenceItemCount,
+  });
+  const heroSummaryEyebrow = presentation === "atlas" ? "System view" : "Quick scan";
+  const heroSummaryTitle = presentation === "atlas" ? "Atlas summary" : "What this guide covers";
+  const heroSummaryText =
+    presentation === "atlas"
+      ? "This microscope entry is staged as a compact visual brief so the overview, troubleshooting, and references stay in one reading flow."
+      : "Use the quick stats and section links to move between the overview, troubleshooting, and reference material faster.";
+  const heroNavEyebrow = presentation === "atlas" ? "Contents" : "On this page";
+  const heroNavTitle = presentation === "atlas" ? "Guide map" : "Jump to a section";
+  const mediaPanelTitle = presentation === "atlas" ? "Visual atlas" : "Featured visuals";
+  const mediaPanelMeta =
+    presentation === "atlas"
+      ? "Real photos and supporting visuals are arranged inline so the article reads like an illustrated study guide."
+      : null;
   const heroStats = [
     {
       label: "Estimated read",
@@ -1992,7 +2587,7 @@ export function PublicPostPage({ locale, messages, pageData }) {
     <PageMain>
       <PublicViewTracker eventType="POST_VIEW" locale={locale} postId={article.id} />
       <PostScene>
-        <PostHeroShell>
+        <PostHeroShell $presentation={presentation}>
           <PostHeroGrid>
             <PostHeader>
               <Breadcrumbs aria-label="Breadcrumb">
@@ -2006,6 +2601,13 @@ export function PublicPostPage({ locale, messages, pageData }) {
               <PostKicker>{displayEquipmentName}</PostKicker>
               <PostTitle>{displayTitle}</PostTitle>
               <PostDeck>{article.excerpt}</PostDeck>
+              {heroSignals.length ? (
+                <HeroSignalRow>
+                  {heroSignals.map((signal) => (
+                    <HeroSignal key={signal}>{signal}</HeroSignal>
+                  ))}
+                </HeroSignalRow>
+              ) : null}
               <PostMetaGrid>
                 {article.publishedAt ? (
                   <MetaPill>
@@ -2048,16 +2650,13 @@ export function PublicPostPage({ locale, messages, pageData }) {
             </PostHeader>
 
             <PostHeroAside>
-              <HeroSnapshotCard>
-                <HeroSnapshotEyebrow>Quick scan</HeroSnapshotEyebrow>
-                <HeroSnapshotTitle>What this guide covers</HeroSnapshotTitle>
-                <HeroSnapshotText>
-                  Use the quick stats and section links to move between the overview,
-                  troubleshooting, and reference material faster.
-                </HeroSnapshotText>
+              <HeroSnapshotCard $presentation={presentation}>
+                <HeroSnapshotEyebrow>{heroSummaryEyebrow}</HeroSnapshotEyebrow>
+                <HeroSnapshotTitle>{heroSummaryTitle}</HeroSnapshotTitle>
+                <HeroSnapshotText>{heroSummaryText}</HeroSnapshotText>
                 <HeroStatsGrid>
                   {heroStats.map((entry) => (
-                    <HeroStatCard key={entry.label}>
+                    <HeroStatCard $presentation={presentation} key={entry.label}>
                       <HeroStatLabel>{entry.label}</HeroStatLabel>
                       <HeroStatValue>{entry.value}</HeroStatValue>
                     </HeroStatCard>
@@ -2066,9 +2665,9 @@ export function PublicPostPage({ locale, messages, pageData }) {
               </HeroSnapshotCard>
 
               {heroSectionLinks.length ? (
-                <HeroSnapshotCard>
-                  <HeroSnapshotEyebrow>On this page</HeroSnapshotEyebrow>
-                  <HeroSnapshotTitle>Jump to a section</HeroSnapshotTitle>
+                <HeroSectionNavCard $presentation={presentation}>
+                  <HeroSnapshotEyebrow>{heroNavEyebrow}</HeroSnapshotEyebrow>
+                  <HeroSnapshotTitle>{heroNavTitle}</HeroSnapshotTitle>
                   <SectionNavList>
                     {heroSectionLinks.map((section, index) => (
                       <SectionNavLink
@@ -2082,56 +2681,69 @@ export function PublicPostPage({ locale, messages, pageData }) {
                       </SectionNavLink>
                     ))}
                   </SectionNavList>
-                </HeroSnapshotCard>
+                </HeroSectionNavCard>
               ) : null}
             </PostHeroAside>
           </PostHeroGrid>
         </PostHeroShell>
 
         {article.heroImages.length ? (
-          <PostImagePanel>
-            {inlineHeroImages.length ? (
-              <HeroImageGrid>
-                {inlineHeroImages.map((image, index) => (
-                  <Figure key={image.url}>
-                    <ResponsiveImage
-                      image={image}
-                      priority={index === 0}
-                      sizes="(min-width: 1100px) 50vw, 92vw"
-                    />
-                    {image.caption ? <FigureCaption>{image.caption}</FigureCaption> : null}
-                  </Figure>
-                ))}
+          inlineHeroImages.length ? (
+            <PostImagePanel $presentation={presentation}>
+              {presentation === "atlas" ? (
+                <MediaPanelHeader>
+                  <MediaPanelTitle>{mediaPanelTitle}</MediaPanelTitle>
+                  {mediaPanelMeta ? <MediaPanelMeta>{mediaPanelMeta}</MediaPanelMeta> : null}
+                </MediaPanelHeader>
+              ) : null}
+              <HeroImageGrid $presentation={presentation}>
+                {inlineHeroImages.map((image, index) =>
+                  renderInlinePhotoFigure(image, {
+                    presentation,
+                    priority: index === 0,
+                    sizes: "(min-width: 1100px) 50vw, 92vw",
+                  }),
+                )}
               </HeroImageGrid>
-            ) : null}
-            {linkedHeroImages.length ? (
-              <ResourceGroup>
-                <ResourceGroupTitle>Photo resources</ResourceGroupTitle>
-                {renderImageResourceList(linkedHeroImages)}
-              </ResourceGroup>
-            ) : null}
-          </PostImagePanel>
+              {linkedHeroImages.length ? (
+                <ResourceGroup>
+                  <ResourceGroupTitle>Photo resources</ResourceGroupTitle>
+                  {renderImageResourceList(linkedHeroImages)}
+                </ResourceGroup>
+              ) : null}
+            </PostImagePanel>
+          ) : linkedHeroImages.length ? (
+            <FlatResourceStrip>
+              <ResourceGroupTitle>Photo resources</ResourceGroupTitle>
+              {renderImageResourceList(linkedHeroImages)}
+            </FlatResourceStrip>
+          ) : null
         ) : null}
 
         <PostLayout>
           <ArticleColumn>
-            <ArticlePaper id="guide-content">
+            <ArticlePaper $presentation={presentation} id="guide-content">
               <ArticleFlow>
-                {bodySections.map((section) => (
+                {bodySections.map((section, index) => (
                   <StorySection
                     id={getPostSectionAnchor(section.id)}
                     key={section.id}
                     $tone={getArticleSectionTone(section)}
                   >
                     <StorySectionHeader>
-                      {getArticleSectionLabel(section) ? (
-                        <SectionLabel>{getArticleSectionLabel(section)}</SectionLabel>
-                      ) : null}
+                      <StorySectionMetaRow>
+                        <StorySectionIndex>{`${index + 1}`.padStart(2, "0")}</StorySectionIndex>
+                        {getArticleSectionLabel(section) ? (
+                          <SectionLabel>{getArticleSectionLabel(section)}</SectionLabel>
+                        ) : null}
+                      </StorySectionMetaRow>
                       <PostSectionTitle>
                         {section.id === "references" ? copy.referencesHeading : section.title}
                       </PostSectionTitle>
                     </StorySectionHeader>
-                    {renderArticleSection(section, copy)}
+                    {renderArticleSection(section, copy, {
+                      presentation,
+                    })}
                   </StorySection>
                 ))}
               </ArticleFlow>
@@ -2160,29 +2772,27 @@ export function PublicPostPage({ locale, messages, pageData }) {
           </ArticleColumn>
 
           <SidebarColumn>
-            <ShareActions article={article} copy={copy} />
+            <SidebarShareWrap>
+              <ShareActions article={article} copy={copy} />
+            </SidebarShareWrap>
 
             {sectionLinks.length ? (
-              <SidebarPanel>
+              <SidebarNavigatorPanel>
                 <SidebarTitle>Guide navigator</SidebarTitle>
-                <SidebarText>
-                  Use the section list to move through the article without losing your place.
-                </SidebarText>
-                <SectionNavList>
-                  {sectionLinks.map((section, index) => (
-                    <SectionNavLink href={`#${getPostSectionAnchor(section.id)}`} key={section.id}>
-                      <SectionNavIndex>{`${index + 1}`.padStart(2, "0")}</SectionNavIndex>
-                      <SectionNavLabel>
+                <TocList>
+                  {sectionLinks.map((section) => (
+                    <TocItem key={section.id}>
+                      <TocLink href={`#${getPostSectionAnchor(section.id)}`}>
                         {section.id === "references" ? copy.referencesHeading : section.title}
-                      </SectionNavLabel>
-                    </SectionNavLink>
+                      </TocLink>
+                    </TocItem>
                   ))}
-                </SectionNavList>
-              </SidebarPanel>
+                </TocList>
+              </SidebarNavigatorPanel>
             ) : null}
 
-            <SidebarPanel>
-              <SidebarTitle>{displayEquipmentName}</SidebarTitle>
+            <SidebarEquipmentPanel>
+              <SidebarTitle as={sectionLinks.length ? "h3" : "h2"}>{displayEquipmentName}</SidebarTitle>
               <SidebarText>
                 This published guide belongs to the equipment landing page for{" "}
                 {displayEquipmentName}.
@@ -2198,7 +2808,7 @@ export function PublicPostPage({ locale, messages, pageData }) {
               ) : null}
               <SidebarAction href={article.equipment.path}>{copy.browseEquipment}</SidebarAction>
               <SidebarBackLink href={backToBlogHref}>{copy.backToBlogAction}</SidebarBackLink>
-            </SidebarPanel>
+            </SidebarEquipmentPanel>
           </SidebarColumn>
         </PostLayout>
       </PostScene>

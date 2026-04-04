@@ -8,7 +8,7 @@ const Panel = styled.section`
     linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 250, 255, 0.95)),
     radial-gradient(circle at top right, rgba(36, 75, 115, 0.1), transparent 56%);
   border: 1px solid rgba(16, 32, 51, 0.08);
-  border-radius: 24px;
+  border-radius: 18px;
   box-shadow:
     0 24px 54px rgba(22, 40, 64, 0.09),
     inset 0 1px 0 rgba(255, 255, 255, 0.72);
@@ -34,7 +34,7 @@ const SectionTitle = styled.h2`
 const SectionDescription = styled.p`
   color: rgba(72, 84, 108, 0.92);
   font-size: 0.96rem;
-  line-height: 1.66;
+  line-height: 1.54;
   margin: 0;
 `;
 
@@ -51,7 +51,7 @@ const ShareLink = styled.a`
   align-items: center;
   background: rgba(255, 255, 255, 0.78);
   border: 1px solid rgba(16, 32, 51, 0.1);
-  border-radius: 16px;
+  border-radius: 12px;
   box-shadow: 0 12px 26px rgba(19, 34, 58, 0.04);
   color: #173454;
   display: inline-flex;
@@ -76,7 +76,7 @@ const ShareButton = styled.button`
     $copied ? "linear-gradient(180deg, #274d74, #1f3e5e)" : "rgba(255, 255, 255, 0.78)"};
   border: 1px solid
     ${({ $copied }) => ($copied ? "rgba(31, 62, 94, 0.24)" : "rgba(16, 32, 51, 0.1)")};
-  border-radius: 16px;
+  border-radius: 12px;
   box-shadow: ${({ $copied }) =>
     $copied ? "0 18px 36px rgba(31, 62, 94, 0.18)" : "0 12px 26px rgba(19, 34, 58, 0.04)"};
   color: ${({ $copied }) => ($copied ? "#fff" : "#173454")};

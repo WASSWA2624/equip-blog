@@ -488,7 +488,7 @@ describe("public site data", () => {
     });
     expect(pageData.article.heroImages[1]).toMatchObject({
       href: "https://cdn.example.com/microscope-secondary.jpg",
-      renderInline: false,
+      renderInline: true,
       url: "https://cdn.example.com/microscope-secondary.jpg",
     });
     expect(pageData.article.bodySections.map((section) => section.id)).toEqual([
