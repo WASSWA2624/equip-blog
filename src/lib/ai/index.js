@@ -11,8 +11,10 @@ import { detectDuplicateEquipmentPost } from "@/lib/generation/duplicates";
 import { generationStageOrder, generationTerminalStageIds } from "@/lib/generation/stages";
 import { buildMarkdownFromStructuredArticle, buildHtmlFromStructuredArticle } from "@/lib/markdown";
 import { createCanonicalEquipmentIdentity, normalizeDisplayText } from "@/lib/normalization";
+import { buildVerifiedResearchPayload } from "@/lib/research";
 import { buildSeoPayload } from "@/lib/seo";
 
+import { getFixtureByNormalizedEquipmentName } from "./fixture-data";
 import {
   findFallbackProviderConfig,
   formatProviderConfigLabel,
@@ -2057,6 +2059,29 @@ async function getSourceConfigs(prisma) {
 async function resolveResearchPayload(request, prisma) {
   const sourceConfigs = await getSourceConfigs(prisma);
   const equipmentIdentity = createCanonicalEquipmentIdentity(request.equipmentName);
+  const fixture = getFixtureByNormalizedEquipmentName(equipmentIdentity.normalizedName);
+
+  if (fixture?.researchInput) {
+    return {
+      fixture,
+      researchPayload: buildVerifiedResearchPayload(
+        {
+          ...fixture.researchInput,
+          equipment: {
+            aliases: fixture.researchInput.aliases || [],
+            name: request.equipmentName,
+          },
+          equipmentName: request.equipmentName,
+          locale: request.locale,
+          sourceConfigs,
+        },
+        {
+          now: new Date(),
+        },
+      ),
+    };
+  }
+
   const researchPayload = {
     components: [],
     definition: null,

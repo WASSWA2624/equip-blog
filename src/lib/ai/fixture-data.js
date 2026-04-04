@@ -1,3 +1,5 @@
+import { microscopeAcceptanceFixture } from "./fixture-data-microscope";
+
 export const endoscopyMachineAcceptanceFixture = Object.freeze({
   compositionNotes: Object.freeze({
     howToUseSteps: Object.freeze([
@@ -648,6 +650,15 @@ export const endoscopyMachineAcceptanceFixture = Object.freeze({
 });
 
 export function getFixtureByNormalizedEquipmentName(normalizedEquipmentName) {
+  if (
+    normalizedEquipmentName === "microscope" ||
+    normalizedEquipmentName === "compound microscope" ||
+    normalizedEquipmentName === "laboratory microscope" ||
+    normalizedEquipmentName === "optical microscope"
+  ) {
+    return microscopeAcceptanceFixture;
+  }
+
   if (
     normalizedEquipmentName === "endoscopy machine" ||
     normalizedEquipmentName === "endoscopy system" ||

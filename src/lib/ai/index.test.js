@@ -477,6 +477,42 @@ describe("AI composition pipeline", () => {
     expect(draft.providerExecutionMode).toBe("deterministic_fixture");
   });
 
+  it("hydrates microscope generation from the same fixture-backed resolver path", async () => {
+    const prisma = {
+      sourceConfig: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
+    };
+    const { composeDraftPackage } = await import("./index");
+
+    const draft = await composeDraftPackage(
+      createGenerationRequest({
+        equipmentName: "microscope",
+      }),
+      {
+        disclaimer: "English disclaimer",
+        promptLayers: createPromptLayers(),
+        providerConfig: {
+          id: "provider_cfg_default_generation",
+          model: "gpt-5.4",
+          provider: "openai",
+        },
+        providerOptions: {
+          useDeterministicFixture: true,
+        },
+      },
+      prisma,
+    );
+
+    expect(draft.providerExecutionMode).toBe("deterministic_fixture");
+    expect(
+      draft.article.sections.find((section) => section.id === "featured_image")?.images?.[0]?.sourceUrl,
+    ).toBe("https://fixtures.example/images/microscope-bench.jpg");
+    expect(
+      draft.article.sections.find((section) => section.id === "operation_visual_guide")?.images?.[0]?.sourceUrl,
+    ).toBe("https://fixtures.example/images/microscope-optics.jpg");
+  });
+
   it("retries with the configured fallback provider when the selected config fails", async () => {
     const baselinePrisma = {
       sourceConfig: {
