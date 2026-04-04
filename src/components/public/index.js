@@ -1114,10 +1114,10 @@ const PostKicker = styled.p`
 const PostTitle = styled.h1`
   color: #16243b;
   font-family: var(--font-editorial), Georgia, serif;
-  font-size: clamp(2.15rem, 4.8vw, 3.4rem);
+  font-size: clamp(1.9rem, 4vw, 2.8rem);
   font-weight: 600;
   letter-spacing: -0.045em;
-  line-height: 1;
+  line-height: 1.04;
   margin: 0;
   max-width: 15ch;
   text-wrap: balance;
@@ -1126,7 +1126,7 @@ const PostTitle = styled.h1`
 const PostDeck = styled.p`
   color: rgba(54, 67, 88, 0.92);
   font-family: var(--font-editorial), Georgia, serif;
-  font-size: clamp(1.02rem, 2vw, 1.18rem);
+  font-size: clamp(0.98rem, 1.65vw, 1.08rem);
   line-height: 1.7;
   margin: 0;
   max-width: 42ch;
@@ -1232,7 +1232,7 @@ const HeroSnapshotEyebrow = styled.p`
 
 const HeroSnapshotTitle = styled.h2`
   color: #16243b;
-  font-size: clamp(1rem, 2vw, 1.18rem);
+  font-size: clamp(0.98rem, 1.5vw, 1.08rem);
   letter-spacing: -0.03em;
   line-height: 1.18;
   margin: 0;
@@ -1480,7 +1480,7 @@ const SectionLabel = styled.span`
 const PostSectionTitle = styled.h2`
   color: #16243b;
   font-family: var(--font-editorial), Georgia, serif;
-  font-size: clamp(1.35rem, 2.4vw, 1.8rem);
+  font-size: clamp(1.18rem, 1.9vw, 1.5rem);
   font-weight: 600;
   letter-spacing: -0.035em;
   line-height: 1.12;
@@ -1959,6 +1959,8 @@ function renderArticleSection(section, copy) {
 export function PublicPostPage({ locale, messages, pageData }) {
   const copy = getCommonCopy(messages);
   const { article } = pageData;
+  const displayEquipmentName = formatEquipmentDisplayName(article.equipment.name);
+  const displayTitle = formatArticleDisplayTitle(article.title, article.equipment.name);
   const bodySections = article.bodySections || [];
   const inlineHeroImages = (article.heroImages || []).filter((image) => image.renderInline);
   const linkedHeroImages = (article.heroImages || []).filter((image) => !image.renderInline);
@@ -2001,8 +2003,8 @@ export function PublicPostPage({ locale, messages, pageData }) {
                   </span>
                 ))}
               </Breadcrumbs>
-              <PostKicker>{article.equipment.name}</PostKicker>
-              <PostTitle>{article.title}</PostTitle>
+              <PostKicker>{displayEquipmentName}</PostKicker>
+              <PostTitle>{displayTitle}</PostTitle>
               <PostDeck>{article.excerpt}</PostDeck>
               <PostMetaGrid>
                 {article.publishedAt ? (
@@ -2180,9 +2182,10 @@ export function PublicPostPage({ locale, messages, pageData }) {
             ) : null}
 
             <SidebarPanel>
-              <SidebarTitle>{article.equipment.name}</SidebarTitle>
+              <SidebarTitle>{displayEquipmentName}</SidebarTitle>
               <SidebarText>
-                This published guide belongs to the equipment landing page for {article.equipment.name}.
+                This published guide belongs to the equipment landing page for{" "}
+                {displayEquipmentName}.
               </SidebarText>
               {article.manufacturers.length ? (
                 <ChipRow>

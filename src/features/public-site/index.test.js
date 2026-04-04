@@ -308,7 +308,7 @@ describe("public site data", () => {
       equipment: {
         description: "Optical inspection equipment",
         id: "equipment_1",
-        name: "Microscope",
+        name: "microscope",
         slug: "microscope",
       },
       excerpt: "Fallback excerpt",
@@ -371,13 +371,13 @@ describe("public site data", () => {
             canonicalUrl: "https://example.com/en/blog/microscope-basics",
             keywordsJson: ["Microscope", "Maintenance"],
             metaDescription: "Microscope meta description",
-            metaTitle: "Microscope meta title",
+            metaTitle: "microscope meta title",
             noindex: false,
             ogDescription: "Microscope meta description",
             ogImage: null,
-            ogTitle: "Microscope meta title",
+            ogTitle: "microscope meta title",
             twitterDescription: "Microscope meta description",
-            twitterTitle: "Microscope meta title",
+            twitterTitle: "microscope meta title",
           },
           structuredContentJson: {
             sections: [
@@ -401,7 +401,7 @@ describe("public site data", () => {
               },
             ],
           },
-          title: "Microscope basics",
+          title: "microscope basics",
           updatedAt: new Date("2026-04-03T09:30:00.000Z"),
         },
       ],
@@ -447,7 +447,7 @@ describe("public site data", () => {
                 structuredContentJson: {
                   sections: [],
                 },
-                title: "Microscope maintenance",
+                title: "microscope maintenance",
               },
             ],
           }),
@@ -478,6 +478,8 @@ describe("public site data", () => {
       twitterDescription: "Microscope meta description",
       twitterTitle: "Microscope meta title",
     });
+    expect(pageData.article.equipment.name).toBe("Microscope");
+    expect(pageData.article.title).toBe("Microscope basics");
     expect(pageData.article.heroImages).toHaveLength(2);
     expect(pageData.article.heroImages[0]).toMatchObject({
       href: "/uploads/media/microscope-primary.png",

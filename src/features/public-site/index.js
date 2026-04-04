@@ -85,6 +85,52 @@ function normalizeSearchValue(value) {
   return normalizeEquipmentName(normalizeDisplayText(value) || "");
 }
 
+function formatEquipmentDisplayName(value) {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    return "";
+  }
+
+  if (/[A-Z]/.test(trimmedValue)) {
+    return trimmedValue;
+  }
+
+  const firstLetterIndex = trimmedValue.search(/[a-z]/i);
+
+  if (firstLetterIndex === -1) {
+    return trimmedValue;
+  }
+
+  return `${trimmedValue.slice(0, firstLetterIndex)}${trimmedValue
+    .charAt(firstLetterIndex)
+    .toUpperCase()}${trimmedValue.slice(firstLetterIndex + 1)}`;
+}
+
+function formatEquipmentAwareTitle(title, equipmentName) {
+  const normalizedTitle = typeof title === "string" ? title.trim() : "";
+  const normalizedEquipmentName = typeof equipmentName === "string" ? equipmentName.trim() : "";
+  const displayEquipmentName = formatEquipmentDisplayName(normalizedEquipmentName);
+
+  if (!normalizedTitle) {
+    return displayEquipmentName;
+  }
+
+  if (!normalizedEquipmentName || !displayEquipmentName) {
+    return normalizedTitle;
+  }
+
+  if (normalizedTitle.toLowerCase().startsWith(normalizedEquipmentName.toLowerCase())) {
+    return `${displayEquipmentName}${normalizedTitle.slice(normalizedEquipmentName.length)}`;
+  }
+
+  return normalizedTitle;
+}
+
 function stripHtml(value) {
   if (typeof value !== "string") {
     return "";
@@ -557,7 +603,7 @@ function createPublishedPostCard(post, locale) {
       slug: category.slug,
     })),
     equipment: {
-      name: post.equipment.name,
+      name: formatEquipmentDisplayName(post.equipment.name),
       path: buildLocalizedPath(cardLocale, publicRouteSegments.equipment(post.equipment.slug)),
       slug: post.equipment.slug,
     },
@@ -572,7 +618,7 @@ function createPublishedPostCard(post, locale) {
     path,
     publishedAt: serializeDate(post.publishedAt),
     slug: post.slug,
-    title: translation?.title || post.equipment.name,
+    title: formatEquipmentAwareTitle(translation?.title || post.equipment.name, post.equipment.name),
     updatedAt: serializeDate(post.updatedAt),
     url: toAbsolutePublicUrl(path),
   };
@@ -1935,7 +1981,7 @@ async function getPublishedPostPageDataInternal(
         pagination: commentsPagination,
       },
       equipment: {
-        name: post.equipment.name,
+        name: formatEquipmentDisplayName(post.equipment.name),
         path: buildLocalizedPath(resolvedLocale, publicRouteSegments.equipment(post.equipment.slug)),
         slug: post.equipment.slug,
       },
@@ -1959,10 +2005,21 @@ async function getPublishedPostPageDataInternal(
           "",
         ogImage: createMediaImage(
           translation.seoRecord?.ogImage,
-          translation.seoRecord?.ogTitle || translation.title,
+          formatEquipmentAwareTitle(
+            translation.seoRecord?.ogTitle || translation.title,
+            post.equipment.name,
+          ),
         ),
-        ogTitle: translation.seoRecord?.ogTitle || translation.seoRecord?.metaTitle || translation.title,
-        title: translation.seoRecord?.metaTitle || translation.title,
+        ogTitle: formatEquipmentAwareTitle(
+          translation.seoRecord?.ogTitle ||
+            translation.seoRecord?.metaTitle ||
+            translation.title,
+          post.equipment.name,
+        ),
+        title: formatEquipmentAwareTitle(
+          translation.seoRecord?.metaTitle || translation.title,
+          post.equipment.name,
+        ),
         twitterDescription:
           translation.seoRecord?.twitterDescription ||
           translation.seoRecord?.ogDescription ||
@@ -1970,17 +2027,19 @@ async function getPublishedPostPageDataInternal(
           translation.excerpt ||
           post.excerpt ||
           "",
-        twitterTitle:
+        twitterTitle: formatEquipmentAwareTitle(
           translation.seoRecord?.twitterTitle ||
-          translation.seoRecord?.ogTitle ||
-          translation.seoRecord?.metaTitle ||
-          translation.title,
+            translation.seoRecord?.ogTitle ||
+            translation.seoRecord?.metaTitle ||
+            translation.title,
+          post.equipment.name,
+        ),
       },
       availableLocales: dedupeStrings(post.translations.map((entry) => entry.locale)),
       path,
       publishedAt: serializeDate(post.publishedAt),
       relatedPosts,
-      title: translation.title,
+      title: formatEquipmentAwareTitle(translation.title, post.equipment.name),
       updatedAt: serializeDate(translation.updatedAt || post.updatedAt),
       url: canonicalUrl,
     },

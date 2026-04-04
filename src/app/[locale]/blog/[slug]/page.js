@@ -15,6 +15,77 @@ import {
 
 export const revalidate = 300;
 
+function formatEquipmentDisplayName(value) {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    return "";
+  }
+
+  if (/[A-Z]/.test(trimmedValue)) {
+    return trimmedValue;
+  }
+
+  const firstLetterIndex = trimmedValue.search(/[a-z]/i);
+
+  if (firstLetterIndex === -1) {
+    return trimmedValue;
+  }
+
+  return `${trimmedValue.slice(0, firstLetterIndex)}${trimmedValue
+    .charAt(firstLetterIndex)
+    .toUpperCase()}${trimmedValue.slice(firstLetterIndex + 1)}`;
+}
+
+function formatEquipmentAwareTitle(title, equipmentName) {
+  const normalizedTitle = typeof title === "string" ? title.trim() : "";
+  const normalizedEquipmentName = typeof equipmentName === "string" ? equipmentName.trim() : "";
+  const displayEquipmentName = formatEquipmentDisplayName(normalizedEquipmentName);
+
+  if (!normalizedTitle) {
+    return displayEquipmentName;
+  }
+
+  if (!normalizedEquipmentName || !displayEquipmentName) {
+    return normalizedTitle;
+  }
+
+  if (normalizedTitle.toLowerCase().startsWith(normalizedEquipmentName.toLowerCase())) {
+    return `${displayEquipmentName}${normalizedTitle.slice(normalizedEquipmentName.length)}`;
+  }
+
+  return normalizedTitle;
+}
+
+function normalizeArticlePresentation(article) {
+  if (!article) {
+    return article;
+  }
+
+  const equipmentName = article.equipment?.name || "";
+
+  return {
+    ...article,
+    equipment: article.equipment
+      ? {
+          ...article.equipment,
+          name: formatEquipmentDisplayName(equipmentName),
+        }
+      : article.equipment,
+    metadata: {
+      ...article.metadata,
+      ogTitle: formatEquipmentAwareTitle(article.metadata?.ogTitle, equipmentName),
+      title: formatEquipmentAwareTitle(article.metadata?.title, equipmentName),
+      twitterTitle: formatEquipmentAwareTitle(article.metadata?.twitterTitle, equipmentName),
+    },
+    title: formatEquipmentAwareTitle(article.title, equipmentName),
+  };
+}
+
 export async function generateMetadata({ params }) {
   const { locale, slug } = await params;
   const pageData = await getPublishedPostPageData({
@@ -26,24 +97,26 @@ export async function generateMetadata({ params }) {
     return {};
   }
 
+  const article = normalizeArticlePresentation(pageData.article);
+
   return buildPageMetadata({
-    authors: pageData.article.metadata.authors,
-    canonicalUrl: pageData.article.url,
-    description: pageData.article.metadata.description,
-    image: pageData.article.metadata.ogImage || pageData.article.heroImages[0] || null,
+    authors: article.metadata.authors,
+    canonicalUrl: article.url,
+    description: article.metadata.description,
+    image: article.metadata.ogImage || article.heroImages[0] || null,
     locale,
-    locales: pageData.article.availableLocales,
-    modifiedTime: pageData.article.updatedAt,
-    noindex: pageData.article.metadata.noindex,
-    openGraphDescription: pageData.article.metadata.ogDescription,
-    openGraphTitle: pageData.article.metadata.ogTitle,
-    publishedTime: pageData.article.publishedAt,
+    locales: article.availableLocales,
+    modifiedTime: article.updatedAt,
+    noindex: article.metadata.noindex,
+    openGraphDescription: article.metadata.ogDescription,
+    openGraphTitle: article.metadata.ogTitle,
+    publishedTime: article.publishedAt,
     segments: publicRouteSegments.blogPost(slug),
-    title: pageData.article.metadata.title,
-    twitterDescription: pageData.article.metadata.twitterDescription,
-    twitterTitle: pageData.article.metadata.twitterTitle,
+    title: article.metadata.title,
+    twitterDescription: article.metadata.twitterDescription,
+    twitterTitle: article.metadata.twitterTitle,
     type: "article",
-    keywords: pageData.article.metadata.keywords,
+    keywords: article.metadata.keywords,
   });
 }
 
@@ -64,20 +137,26 @@ export default async function BlogPostPage({ params, searchParams }) {
     notFound();
   }
 
+  const article = normalizeArticlePresentation(pageData.article);
+  const resolvedPageData = {
+    ...pageData,
+    article,
+  };
+
   return (
     <>
       <StructuredDataBundle
-        idPrefix={`post-${pageData.article.slug || slug}`}
+        idPrefix={`post-${article.slug || slug}`}
         items={[
-          buildBreadcrumbJsonLd(pageData.article.breadcrumb),
+          buildBreadcrumbJsonLd(article.breadcrumb),
           buildArticleJsonLd({
-            article: pageData.article,
+            article,
             locale,
           }),
-          buildFaqJsonLd(extractFaqItemsFromSections(pageData.article.bodySections)),
+          buildFaqJsonLd(extractFaqItemsFromSections(article.bodySections)),
         ]}
       />
-      <PublicPostPage locale={locale} messages={messages.public} pageData={pageData} />
+      <PublicPostPage locale={locale} messages={messages.public} pageData={resolvedPageData} />
     </>
   );
 }
