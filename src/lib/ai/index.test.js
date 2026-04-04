@@ -269,6 +269,20 @@ describe("AI composition pipeline", () => {
       }),
     ]);
     expect(
+      draft.article.sections.find((section) => section.id === "components_and_parts")?.items?.[0]?.images,
+    ).toEqual([
+      expect.objectContaining({
+        sourceUrl: expect.any(String),
+      }),
+    ]);
+    expect(
+      draft.article.sections.find((section) => section.id === "uses_and_applications")?.items?.[0]?.images,
+    ).toEqual([
+      expect.objectContaining({
+        sourceUrl: expect.any(String),
+      }),
+    ]);
+    expect(
       draft.article.sections.find((section) => section.id === "model_visual_guide")?.images,
     ).toEqual(
       expect.arrayContaining([
@@ -282,6 +296,14 @@ describe("AI composition pipeline", () => {
       ]),
     );
     expect(
+      draft.article.sections.find((section) => section.id === "commonly_encountered_models")?.groups?.[0]?.models?.[0]
+        ?.images,
+    ).toEqual([
+      expect.objectContaining({
+        sourceUrl: expect.any(String),
+      }),
+    ]);
+    expect(
       draft.article.sections.find((section) => section.id === "workflow_visual_guide")?.images,
     ).toEqual(
       expect.arrayContaining([
@@ -290,6 +312,13 @@ describe("AI composition pipeline", () => {
         }),
       ]),
     );
+    expect(
+      draft.article.sections.find((section) => section.id === "sop_and_how_to_use_guidance")?.steps?.[0]?.images,
+    ).toEqual([
+      expect.objectContaining({
+        sourceUrl: expect.any(String),
+      }),
+    ]);
     expect(draft.article.sections.find((section) => section.id === "references")?.items.length).toBeGreaterThan(0);
     expect(
       draft.article.sections.find((section) => section.id === "manuals_and_technical_documents")?.items,

@@ -433,6 +433,12 @@ describe("public site data", () => {
                     manufacturer: "Northfield Optics",
                     models: [
                       {
+                        images: [
+                          {
+                            alt: "CompoundLab 200 microscope",
+                            sourceUrl: "https://cdn.example.com/compoundlab-200.jpg",
+                          },
+                        ],
                         latestKnownYear: 2025,
                         name: "CompoundLab 200",
                         summary: "Entry-level teaching microscope.",
@@ -449,6 +455,12 @@ describe("public site data", () => {
                 items: [
                   {
                     details: "Supports routine laboratory bench inspection and teaching workflows.",
+                    images: [
+                      {
+                        alt: "Microscope on laboratory bench",
+                        sourceUrl: "https://cdn.example.com/microscope-bench-inline.jpg",
+                      },
+                    ],
                     label: "Bench inspection",
                   },
                 ],
@@ -595,6 +607,13 @@ describe("public site data", () => {
         items: [
           {
             description: "Supports routine laboratory bench inspection and teaching workflows.",
+            images: [
+              expect.objectContaining({
+                href: "https://cdn.example.com/microscope-bench-inline.jpg",
+                renderInline: true,
+                url: "https://cdn.example.com/microscope-bench-inline.jpg",
+              }),
+            ],
             title: "Bench inspection",
           },
         ],
@@ -602,6 +621,21 @@ describe("public site data", () => {
       });
     expect(pageData.article.bodySections.find((section) => section.id === "commonly_encountered_models"))
       .toMatchObject({
+        groups: [
+          expect.objectContaining({
+            models: [
+              expect.objectContaining({
+                images: [
+                  expect.objectContaining({
+                    href: "https://cdn.example.com/compoundlab-200.jpg",
+                    renderInline: true,
+                    url: "https://cdn.example.com/compoundlab-200.jpg",
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ],
         title: "Commonly encountered models",
       });
     expect(

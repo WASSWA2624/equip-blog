@@ -521,15 +521,22 @@ function inferStructuredSectionKind(section) {
 function normalizeListItems(items = [], sourceReferenceMap) {
   return (items || [])
     .filter((item) => item && typeof item === "object")
-    .map((item, index) => ({
-      ...item,
-      description: takeFirstText(item.description, item.details, item.summary) || null,
-      frequency: takeFirstText(item.frequency, item.interval) || null,
-      notes: takeFirstText(item.notes) || null,
-      sourceReferenceIds: normalizeSourceReferenceIds(item.sourceReferenceIds),
-      sourceReferences: resolveSourceReferences(item.sourceReferenceIds, sourceReferenceMap),
-      title: takeFirstText(item.title, item.label, item.name, item.heading, `Item ${index + 1}`),
-    }));
+    .map((item, index) => {
+      const title = takeFirstText(item.title, item.label, item.name, item.heading, `Item ${index + 1}`);
+
+      return {
+        ...item,
+        description: takeFirstText(item.description, item.details, item.summary) || null,
+        frequency: takeFirstText(item.frequency, item.interval) || null,
+        images: Array.isArray(item.images)
+          ? item.images.map((image) => createSectionImage(image, title)).filter(Boolean)
+          : [],
+        notes: takeFirstText(item.notes) || null,
+        sourceReferenceIds: normalizeSourceReferenceIds(item.sourceReferenceIds),
+        sourceReferences: resolveSourceReferences(item.sourceReferenceIds, sourceReferenceMap),
+        title,
+      };
+    });
 }
 
 function normalizeModelGroups(groups = [], sourceReferenceMap) {
@@ -540,14 +547,21 @@ function normalizeModelGroups(groups = [], sourceReferenceMap) {
       manufacturer: takeFirstText(group.manufacturer, group.title, `Manufacturer ${groupIndex + 1}`),
       models: (group.models || [])
         .filter((model) => model && typeof model === "object")
-        .map((model, modelIndex) => ({
-          ...model,
-          name: takeFirstText(model.name, model.title, `Model ${modelIndex + 1}`),
-          notes: takeFirstText(model.notes) || null,
-          sourceReferenceIds: normalizeSourceReferenceIds(model.sourceReferenceIds),
-          sourceReferences: resolveSourceReferences(model.sourceReferenceIds, sourceReferenceMap),
-          summary: takeFirstText(model.summary, model.description, model.details) || null,
-        })),
+        .map((model, modelIndex) => {
+          const name = takeFirstText(model.name, model.title, `Model ${modelIndex + 1}`);
+
+          return {
+            ...model,
+            images: Array.isArray(model.images)
+              ? model.images.map((image) => createSectionImage(image, name)).filter(Boolean)
+              : [],
+            name,
+            notes: takeFirstText(model.notes) || null,
+            sourceReferenceIds: normalizeSourceReferenceIds(model.sourceReferenceIds),
+            sourceReferences: resolveSourceReferences(model.sourceReferenceIds, sourceReferenceMap),
+            summary: takeFirstText(model.summary, model.description, model.details) || null,
+          };
+        }),
     }))
     .filter((group) => group.models.length);
 }
@@ -555,34 +569,48 @@ function normalizeModelGroups(groups = [], sourceReferenceMap) {
 function normalizeFaultItems(items = [], sourceReferenceMap) {
   return (items || [])
     .filter((item) => item && typeof item === "object")
-    .map((item, index) => ({
-      ...item,
-      cause: takeFirstText(item.cause, item.reason) || null,
-      evidenceCount:
-        typeof item.evidenceCount === "number" && Number.isFinite(item.evidenceCount)
-          ? item.evidenceCount
-          : null,
-      notes: takeFirstText(item.notes) || null,
-      remedy: takeFirstText(item.remedy, item.fix, item.resolution) || null,
-      severity: takeFirstText(item.severity) || null,
-      sourceReferenceIds: normalizeSourceReferenceIds(item.sourceReferenceIds),
-      sourceReferences: resolveSourceReferences(item.sourceReferenceIds, sourceReferenceMap),
-      symptoms: takeFirstText(item.symptoms, item.symptom, item.effect) || null,
-      title: takeFirstText(item.title, item.label, item.name, `Fault ${index + 1}`),
-    }));
+    .map((item, index) => {
+      const title = takeFirstText(item.title, item.label, item.name, `Fault ${index + 1}`);
+
+      return {
+        ...item,
+        cause: takeFirstText(item.cause, item.reason) || null,
+        evidenceCount:
+          typeof item.evidenceCount === "number" && Number.isFinite(item.evidenceCount)
+            ? item.evidenceCount
+            : null,
+        images: Array.isArray(item.images)
+          ? item.images.map((image) => createSectionImage(image, title)).filter(Boolean)
+          : [],
+        notes: takeFirstText(item.notes) || null,
+        remedy: takeFirstText(item.remedy, item.fix, item.resolution) || null,
+        severity: takeFirstText(item.severity) || null,
+        sourceReferenceIds: normalizeSourceReferenceIds(item.sourceReferenceIds),
+        sourceReferences: resolveSourceReferences(item.sourceReferenceIds, sourceReferenceMap),
+        symptoms: takeFirstText(item.symptoms, item.symptom, item.effect) || null,
+        title,
+      };
+    });
 }
 
 function normalizeStepItems(steps = [], sourceReferenceMap) {
   return (steps || [])
     .filter((step) => step && typeof step === "object")
-    .map((step, index) => ({
-      ...step,
-      description: takeFirstText(step.description, step.details, step.summary) || null,
-      notes: takeFirstText(step.notes) || null,
-      sourceReferenceIds: normalizeSourceReferenceIds(step.sourceReferenceIds),
-      sourceReferences: resolveSourceReferences(step.sourceReferenceIds, sourceReferenceMap),
-      title: takeFirstText(step.title, step.label, `Step ${index + 1}`),
-    }));
+    .map((step, index) => {
+      const title = takeFirstText(step.title, step.label, `Step ${index + 1}`);
+
+      return {
+        ...step,
+        description: takeFirstText(step.description, step.details, step.summary) || null,
+        images: Array.isArray(step.images)
+          ? step.images.map((image) => createSectionImage(image, title)).filter(Boolean)
+          : [],
+        notes: takeFirstText(step.notes) || null,
+        sourceReferenceIds: normalizeSourceReferenceIds(step.sourceReferenceIds),
+        sourceReferences: resolveSourceReferences(step.sourceReferenceIds, sourceReferenceMap),
+        title,
+      };
+    });
 }
 
 function normalizeFaqItems(items = []) {

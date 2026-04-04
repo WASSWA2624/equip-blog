@@ -901,6 +901,44 @@ function buildVisualGuideSections(researchPayload, request) {
   };
 }
 
+function getSectionAffinitizedImages(researchPayload, sectionIds = []) {
+  const requestedSectionIds = Array.isArray(sectionIds) ? sectionIds.filter(Boolean) : [];
+  const images = [...(researchPayload.mediaCandidates || [])];
+
+  if (!requestedSectionIds.length) {
+    return images;
+  }
+
+  const matchedImages = images.filter((image) =>
+    requestedSectionIds.some((sectionId) => image?.sectionAffinity?.includes(sectionId)),
+  );
+
+  return matchedImages.length ? matchedImages : images;
+}
+
+function attachIllustrationsToEntries(entries = [], images = [], maxImagesPerEntry = 1) {
+  if (!Array.isArray(entries) || !entries.length || !Array.isArray(images) || !images.length || maxImagesPerEntry < 1) {
+    return entries;
+  }
+
+  return entries.map((entry, index) => {
+    const assignedImages = [];
+
+    for (let imageOffset = 0; imageOffset < maxImagesPerEntry; imageOffset += 1) {
+      const candidate = images[(index + imageOffset) % images.length];
+
+      if (candidate) {
+        assignedImages.push(candidate);
+      }
+    }
+
+    return {
+      ...entry,
+      images: assignedImages,
+    };
+  });
+}
+
 function formatAudienceLabel(audience) {
   return audience.replace(/_/g, " ");
 }
@@ -1221,19 +1259,22 @@ function buildManufacturersSection(researchPayload) {
   return createSection("commonly_used_manufacturers", "Commonly used manufacturers", {
     intro:
       "Manufacturers are listed when supported by the available references for this equipment category. The list is illustrative rather than a definitive worldwide ranking.",
-    items: researchPayload.manufacturers.map((manufacturer) => ({
-      description: [
-        manufacturer.primaryDomain,
-        manufacturer.headquartersCountry ? `Headquarters: ${manufacturer.headquartersCountry}` : null,
-        manufacturer.branchCountries?.length
-          ? `Verified branch countries: ${manufacturer.branchCountries.join(", ")}`
-          : null,
-      ]
-        .filter(Boolean)
-        .join(" | "),
-      sourceReferenceIds: manufacturer.sourceReferenceIds,
-      title: manufacturer.name,
-    })),
+    items: attachIllustrationsToEntries(
+      researchPayload.manufacturers.map((manufacturer) => ({
+        description: [
+          manufacturer.primaryDomain,
+          manufacturer.headquartersCountry ? `Headquarters: ${manufacturer.headquartersCountry}` : null,
+          manufacturer.branchCountries?.length
+            ? `Verified branch countries: ${manufacturer.branchCountries.join(", ")}`
+            : null,
+        ]
+          .filter(Boolean)
+          .join(" | "),
+        sourceReferenceIds: manufacturer.sourceReferenceIds,
+        title: manufacturer.name,
+      })),
+      getSectionAffinitizedImages(researchPayload, ["featured_image", "model_visual_guide"]),
+    ),
     kind: "list",
     sourceReferenceIds: collectSourceReferenceIds(researchPayload.manufacturers),
   });
@@ -1245,12 +1286,15 @@ function buildModelsSection(researchPayload) {
       .filter((manufacturer) => manufacturer.models?.length)
       .map((manufacturer) => ({
         manufacturer: manufacturer.name,
-        models: manufacturer.models.map((model) => ({
-          latestKnownYear: model.latestKnownYear,
-          name: model.name,
-          sourceReferenceIds: model.sourceReferenceIds,
-          summary: model.summary,
-        })),
+        models: attachIllustrationsToEntries(
+          manufacturer.models.map((model) => ({
+            latestKnownYear: model.latestKnownYear,
+            name: model.name,
+            sourceReferenceIds: model.sourceReferenceIds,
+            summary: model.summary,
+          })),
+          getSectionAffinitizedImages(researchPayload, ["model_visual_guide", "components_visual_guide"]),
+        ),
     })),
     kind: "models_by_manufacturer",
     sourceReferenceIds: collectSourceReferenceIds(
@@ -1263,15 +1307,18 @@ function buildFaultsSection(researchPayload) {
   return createSection("faults_and_remedies", "Faults and remedies", {
     intro:
       "Common faults are summarized with their likely causes, visible symptoms, and first-line remedies so the troubleshooting path stays concrete and source-grounded.",
-    items: researchPayload.faults.map((fault) => ({
-      cause: fault.cause,
-      evidenceCount: fault.sourceReferenceIds?.length || 0,
-      remedy: fault.remedy,
-      severity: fault.severity,
-      sourceReferenceIds: fault.sourceReferenceIds,
-      symptoms: fault.symptoms,
-      title: fault.title,
-    })),
+    items: attachIllustrationsToEntries(
+      researchPayload.faults.map((fault) => ({
+        cause: fault.cause,
+        evidenceCount: fault.sourceReferenceIds?.length || 0,
+        remedy: fault.remedy,
+        severity: fault.severity,
+        sourceReferenceIds: fault.sourceReferenceIds,
+        symptoms: fault.symptoms,
+        title: fault.title,
+      })),
+      getSectionAffinitizedImages(researchPayload, ["operation_visual_guide", "workflow_visual_guide"]),
+    ),
     kind: "faults",
     sourceReferenceIds: collectSourceReferenceIds(researchPayload.faults),
   });
@@ -1305,31 +1352,41 @@ function splitMaintenanceTasks(researchPayload) {
 
 function buildMaintenanceSections(researchPayload) {
   const { dailyTasks, scheduledTasks } = splitMaintenanceTasks(researchPayload);
+  const maintenanceIllustrations = getSectionAffinitizedImages(researchPayload, [
+    "workflow_visual_guide",
+    "components_visual_guide",
+  ]);
 
   return [
     createSection("daily_care_and_maintenance", "Daily care and maintenance", {
       intro:
         "Daily care tasks should be completed consistently so the optical path stays clean and the instrument is ready for the next verified workflow.",
-      items: dailyTasks.map((task) => ({
-        description: task.details || "",
-        frequency: task.frequency || null,
-        sourceReferenceIds: task.sourceReferenceIds,
-        title: task.label,
-      })),
+      items: attachIllustrationsToEntries(
+        dailyTasks.map((task) => ({
+          description: task.details || "",
+          frequency: task.frequency || null,
+          sourceReferenceIds: task.sourceReferenceIds,
+          title: task.label,
+        })),
+        maintenanceIllustrations,
+      ),
       kind: "list",
       sourceReferenceIds: collectSourceReferenceIds(dailyTasks),
     }),
     createSection("preventive_maintenance_schedule", "Preventive maintenance schedule", {
       intro:
         "Preventive maintenance intervals should follow the operator guide, service notes, and institutional biomedical engineering policy.",
-      items: scheduledTasks.map((task) => ({
-        description: task.details
-          ? `${task.details}${task.frequency ? ` (${task.frequency})` : ""}`
-          : task.frequency || task.label,
-        frequency: task.frequency || null,
-        sourceReferenceIds: task.sourceReferenceIds,
-        title: task.label,
-      })),
+      items: attachIllustrationsToEntries(
+        scheduledTasks.map((task) => ({
+          description: task.details
+            ? `${task.details}${task.frequency ? ` (${task.frequency})` : ""}`
+            : task.frequency || task.label,
+          frequency: task.frequency || null,
+          sourceReferenceIds: task.sourceReferenceIds,
+          title: task.label,
+        })),
+        maintenanceIllustrations,
+      ),
       kind: "list",
       sourceReferenceIds: collectSourceReferenceIds(scheduledTasks),
     }),
@@ -1351,35 +1408,38 @@ function buildSopSection(researchPayload, fixture) {
       ...(researchPayload.safetyPrecautions || []),
       ...(researchPayload.maintenanceTasks || []),
     ]),
-    steps: [
-      ...((fixture?.compositionNotes?.howToUseSteps || []).length
-        ? fixture.compositionNotes.howToUseSteps
-        : [
-            {
-              description:
-                "Confirm the device is clean, safe to energize, connected correctly, and prepared according to the official operating instructions before use.",
-              title: "Prepare the equipment",
-            },
-            {
-              description:
-                "Follow the manufacturer workflow step by step, checking controls, patient or specimen positioning, operating indicators, and any model-specific adjustments as you proceed.",
-              title: "Operate using the approved workflow",
-            },
-            {
-              description:
-                "Shut the equipment down safely, complete cleaning or reset steps, and record any abnormal findings, maintenance needs, or service escalations before the next use.",
-              title: "Close out and document the session",
-            },
-          ]),
-      ...(modelDifferenceNote.length
-        ? [
-            {
-              description: modelDifferenceNote.join(" "),
-              title: "Apply model-specific differences inline",
-            },
-          ]
-        : []),
-    ],
+    steps: attachIllustrationsToEntries(
+      [
+        ...((fixture?.compositionNotes?.howToUseSteps || []).length
+          ? fixture.compositionNotes.howToUseSteps
+          : [
+              {
+                description:
+                  "Confirm the device is clean, safe to energize, connected correctly, and prepared according to the official operating instructions before use.",
+                title: "Prepare the equipment",
+              },
+              {
+                description:
+                  "Follow the manufacturer workflow step by step, checking controls, patient or specimen positioning, operating indicators, and any model-specific adjustments as you proceed.",
+                title: "Operate using the approved workflow",
+              },
+              {
+                description:
+                  "Shut the equipment down safely, complete cleaning or reset steps, and record any abnormal findings, maintenance needs, or service escalations before the next use.",
+                title: "Close out and document the session",
+              },
+            ]),
+        ...(modelDifferenceNote.length
+          ? [
+              {
+                description: modelDifferenceNote.join(" "),
+                title: "Apply model-specific differences inline",
+              },
+            ]
+          : []),
+      ],
+      getSectionAffinitizedImages(researchPayload, ["workflow_visual_guide", "operation_visual_guide"]),
+    ),
   });
 }
 
@@ -1489,6 +1549,19 @@ function buildStructuredArticle({ disclaimer, fixture, providerConfig, request, 
   ]
     .filter(Boolean)
     .join(" ");
+  const componentIllustrations = getSectionAffinitizedImages(researchPayload, [
+    "components_visual_guide",
+    "operation_visual_guide",
+  ]);
+  const variantIllustrations = getSectionAffinitizedImages(researchPayload, [
+    "model_visual_guide",
+    "workflow_visual_guide",
+  ]);
+  const useCaseIllustrations = getSectionAffinitizedImages(researchPayload, [
+    "workflow_visual_guide",
+    "operation_visual_guide",
+    "featured_image",
+  ]);
   const baseSections = [
     ...(visualGuideSections.featuredImageSection ? [visualGuideSections.featuredImageSection] : []),
     createSection("definition_and_overview", "Definition and overview", {
@@ -1508,16 +1581,19 @@ function buildStructuredArticle({ disclaimer, fixture, providerConfig, request, 
       intro:
         "Component descriptions focus on what each part contributes to normal operation so the device can be understood as a working system instead of a list of names.",
       kind: "list",
-      items: researchPayload.components.map((component) => ({
-        description: buildExpertSectionDescription(
-          component.label,
-          component.details || component.label,
-          profile.complexity.tier,
-          "In expert review, this part is assessed in terms of how its condition changes image quality, control response, safety, or serviceability across the full system.",
-        ),
-        sourceReferenceIds: component.sourceReferenceIds,
-        title: component.label,
-      })),
+      items: attachIllustrationsToEntries(
+        researchPayload.components.map((component) => ({
+          description: buildExpertSectionDescription(
+            component.label,
+            component.details || component.label,
+            profile.complexity.tier,
+            "In expert review, this part is assessed in terms of how its condition changes image quality, control response, safety, or serviceability across the full system.",
+          ),
+          sourceReferenceIds: component.sourceReferenceIds,
+          title: component.label,
+        })),
+        componentIllustrations,
+      ),
       sourceReferenceIds: collectSourceReferenceIds(researchPayload.components),
     }),
     ...(visualGuideSections.componentsVisualGuideSection
@@ -1527,32 +1603,38 @@ function buildStructuredArticle({ disclaimer, fixture, providerConfig, request, 
       intro:
         "Variant coverage highlights the practical differences that affect setup, viewing, workflow, or expected use context.",
       kind: "list",
-      items: researchPayload.variants.map((variant) => ({
-        description: buildExpertSectionDescription(
-          variant.label,
-          variant.details || variant.label,
-          profile.complexity.tier,
-          "Those differences matter because they change what operators, technicians, and support teams need to watch during setup and use.",
-        ),
-        sourceReferenceIds: variant.sourceReferenceIds,
-        title: variant.label,
-      })),
+      items: attachIllustrationsToEntries(
+        researchPayload.variants.map((variant) => ({
+          description: buildExpertSectionDescription(
+            variant.label,
+            variant.details || variant.label,
+            profile.complexity.tier,
+            "Those differences matter because they change what operators, technicians, and support teams need to watch during setup and use.",
+          ),
+          sourceReferenceIds: variant.sourceReferenceIds,
+          title: variant.label,
+        })),
+        variantIllustrations,
+      ),
       sourceReferenceIds: collectSourceReferenceIds(researchPayload.variants),
     }),
     createSection("uses_and_applications", "Uses and applications", {
       intro:
         "Applications are described in concrete workflow terms so readers can connect the equipment to real clinical, laboratory, teaching, or service contexts.",
       kind: "list",
-      items: researchPayload.uses.map((useCase) => ({
-        description: buildExpertSectionDescription(
-          useCase.label,
-          useCase.details || useCase.label,
-          profile.complexity.tier,
-          "That workflow context helps explain why configuration choices, accessory readiness, and maintenance discipline directly affect outcomes.",
-        ),
-        sourceReferenceIds: useCase.sourceReferenceIds,
-        title: useCase.label,
-      })),
+      items: attachIllustrationsToEntries(
+        researchPayload.uses.map((useCase) => ({
+          description: buildExpertSectionDescription(
+            useCase.label,
+            useCase.details || useCase.label,
+            profile.complexity.tier,
+            "That workflow context helps explain why configuration choices, accessory readiness, and maintenance discipline directly affect outcomes.",
+          ),
+          sourceReferenceIds: useCase.sourceReferenceIds,
+          title: useCase.label,
+        })),
+        useCaseIllustrations,
+      ),
       sourceReferenceIds: collectSourceReferenceIds(researchPayload.uses),
     }),
   ];

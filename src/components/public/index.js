@@ -467,6 +467,14 @@ const Figure = styled.figure`
   gap: 0.38rem;
   margin: 0;
 
+  ${({ $variant }) =>
+    $variant === "inlineCompact" &&
+    css`
+      gap: 0.28rem;
+      margin-block: 0.55rem 0.35rem;
+      width: min(100%, 19rem);
+    `}
+
   ${({ $presentation, $orientation }) =>
     $presentation === "atlas" &&
     css`
@@ -514,6 +522,13 @@ const FigureFrame = styled.div`
   justify-items: center;
   overflow: hidden;
   padding: clamp(0.26rem, 0.7vw, 0.4rem);
+
+  ${({ $variant }) =>
+    $variant === "inlineCompact" &&
+    css`
+      border-radius: 12px;
+      padding: 0.18rem;
+    `}
 
   ${({ $orientation, $variant }) =>
     $variant === "article" &&
@@ -613,6 +628,16 @@ const FigureImage = styled.img`
   max-width: 100%;
   width: ${({ $orientation, $variant }) =>
     $variant === "article" && $orientation === "portrait" ? "auto" : "100%"};
+
+  ${({ $variant }) =>
+    $variant === "inlineCompact" &&
+    css`
+      aspect-ratio: ${({ $aspectRatio }) => $aspectRatio || "4 / 3"};
+      border-radius: 10px;
+      max-height: clamp(140px, 22vw, 210px);
+      object-fit: cover;
+      width: 100%;
+    `}
 `;
 
 const FigureCaption = styled.figcaption`
@@ -2140,6 +2165,17 @@ const HeroImageGrid = styled.div`
   display: grid;
   gap: clamp(0.55rem, 1.2vw, 0.72rem);
 
+  ${({ $variant }) =>
+    $variant === "inlineCompact" &&
+    css`
+      gap: 0.45rem;
+      margin-block: 0.55rem 0.2rem;
+
+      @media (min-width: 720px) {
+        grid-template-columns: repeat(2, minmax(0, 17rem));
+      }
+    `}
+
   @media (min-width: 720px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2894,6 +2930,7 @@ function ExpandableBulletList({ items = [] }) {
           <li key={`${item.title}-${item.description || ""}`}>
             <strong>{item.title}</strong>
             {item.description ? `: ${item.description}` : ""}
+            {renderEntryInlineImages(item.images)}
             {item.notes ? <ResourceNote>{item.notes}</ResourceNote> : null}
             {renderInlineEvidenceNote(item)}
           </li>
@@ -2923,6 +2960,7 @@ function ManufacturerModelGroupCard({ group }) {
             <strong>{model.name}</strong>
             {model.latestKnownYear ? ` (${model.latestKnownYear})` : ""}
             {model.summary ? `: ${model.summary}` : ""}
+            {renderEntryInlineImages(model.images)}
             {model.notes ? <ResourceNote>{model.notes}</ResourceNote> : null}
             {renderInlineEvidenceNote(model)}
           </li>
@@ -2966,6 +3004,7 @@ function InlinePhotoFigure({
   presentation = "default",
   priority = false,
   sizes = "100vw",
+  variant = "article",
 }) {
   const [measuredDimensions, setMeasuredDimensions] = useState(null);
 
@@ -3035,16 +3074,16 @@ function InlinePhotoFigure({
       presentation={presentation}
       priority={priority}
       sizes={sizes}
-      variant="article"
+      variant={variant}
     />
   );
 
   return (
-    <Figure $orientation={orientation} $presentation={presentation}>
+    <Figure $orientation={orientation} $presentation={presentation} $variant={variant}>
       <FigureFrame
         $orientation={orientation}
         $presentation={presentation}
-        $variant="article"
+        $variant={variant}
       >
         {resolvedImage.href ? (
           <FigureFrameLink href={resolvedImage.href} rel="noreferrer" target="_blank">
@@ -3071,7 +3110,7 @@ function InlinePhotoFigure({
 
 function renderInlinePhotoFigure(
   image,
-  { presentation = "default", priority = false, sizes = "100vw" } = {},
+  { presentation = "default", priority = false, sizes = "100vw", variant = "article" } = {},
 ) {
   if (!image?.url) {
     return null;
@@ -3084,7 +3123,28 @@ function renderInlinePhotoFigure(
       presentation={presentation}
       priority={priority}
       sizes={sizes}
+      variant={variant}
     />
+  );
+}
+
+function renderEntryInlineImages(images = [], presentation = "default") {
+  const visibleImages = (images || []).filter((image) => image?.renderInline).slice(0, 2);
+
+  if (!visibleImages.length) {
+    return null;
+  }
+
+  return (
+    <HeroImageGrid $presentation={presentation} $variant="inlineCompact">
+      {visibleImages.map((image) =>
+        renderInlinePhotoFigure(image, {
+          presentation,
+          sizes: "(min-width: 720px) 28vw, 92vw",
+          variant: "inlineCompact",
+        }),
+      )}
+    </HeroImageGrid>
   );
 }
 
@@ -3111,6 +3171,7 @@ function renderArticleSection(section, copy, { locale, presentation = "default" 
               <li key={`${item.title}-${item.description || ""}`}>
                 <strong>{item.title}</strong>
                 {item.description ? `: ${item.description}` : ""}
+                {renderEntryInlineImages(item.images, presentation)}
                 {item.frequency ? <ResourceMeta>{`Frequency: ${item.frequency}`}</ResourceMeta> : null}
                 {item.notes ? <ResourceNote>{item.notes}</ResourceNote> : null}
                 {renderInlineEvidenceNote(item)}
@@ -3150,6 +3211,7 @@ function renderArticleSection(section, copy, { locale, presentation = "default" 
               {typeof fault.evidenceCount === "number" && fault.evidenceCount > 0 ? (
                 <ResourceMeta>{`Evidence points: ${fault.evidenceCount}`}</ResourceMeta>
               ) : null}
+              {renderEntryInlineImages(fault.images, presentation)}
               {fault.notes ? <ResourceNote>{fault.notes}</ResourceNote> : null}
               {renderInlineEvidenceNote(fault)}
             </ArticleBody>
@@ -3168,6 +3230,7 @@ function renderArticleSection(section, copy, { locale, presentation = "default" 
             <li key={step.title}>
               <strong>{step.title}</strong>
               {step.description ? `: ${step.description}` : ""}
+              {renderEntryInlineImages(step.images, presentation)}
               {step.notes ? <ResourceNote>{step.notes}</ResourceNote> : null}
               {renderInlineEvidenceNote(step)}
             </li>
