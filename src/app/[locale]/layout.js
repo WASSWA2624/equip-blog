@@ -4,7 +4,7 @@ import { StructuredDataBundle } from "@/components/seo";
 import SiteShell from "@/components/layout/site-shell";
 import { isSupportedLocale, supportedLocales } from "@/features/i18n/config";
 import { getMessages } from "@/features/i18n/get-messages";
-import { buildOrganizationJsonLd } from "@/lib/seo";
+import { buildOrganizationJsonLd, buildWebsiteJsonLd } from "@/lib/seo";
 
 export const dynamicParams = false;
 
@@ -44,6 +44,11 @@ export default async function LocaleLayout({ children, params }) {
         idPrefix={`organization-${locale}`}
         items={[
           buildOrganizationJsonLd({
+            description: messages.site.tagline,
+            locale,
+            name: messages.site.title,
+          }),
+          buildWebsiteJsonLd({
             description: messages.site.tagline,
             locale,
             name: messages.site.title,

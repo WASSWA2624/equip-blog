@@ -476,23 +476,30 @@ const FooterUtility = styled.div`
   }
 `;
 
-const FooterAdvertiseButton = styled.button`
+const FooterUtilityCard = styled.div`
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 10px;
-  color: rgba(255, 255, 255, 0.96);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  cursor: pointer;
-  font-size: 0.98rem;
-  font-weight: 600;
+  display: grid;
+  gap: 0.45rem;
   min-height: 56px;
-  padding: 0 1rem;
-  transition: background 160ms ease, border-color 160ms ease;
+  padding: 0.9rem 1rem;
+`;
 
-  &:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.24);
-  }
+const FooterUtilityTitle = styled.span`
+  color: rgba(255, 255, 255, 0.96);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+`;
+
+const FooterUtilityText = styled.p`
+  color: rgba(235, 241, 248, 0.82);
+  font-size: 0.94rem;
+  line-height: 1.5;
+  margin: 0;
 `;
 
 const FooterBottom = styled.div`
@@ -510,14 +517,13 @@ const Copyright = styled.span`
   font-size: clamp(0.95rem, 2vw, 1rem);
 `;
 
-const FooterLocale = styled.button`
+const FooterLocale = styled.div`
   align-items: center;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 10px;
   color: rgba(255, 255, 255, 0.96);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  cursor: pointer;
   display: inline-flex;
   font-size: clamp(0.96rem, 2vw, 1rem);
   gap: 0.42rem;
@@ -771,7 +777,12 @@ export default function SiteShell({ children, locale, messages }) {
             </FooterNavSection>
 
             <FooterUtility>
-              <FooterAdvertiseButton type="button">Advertise Here</FooterAdvertiseButton>
+              <FooterUtilityCard>
+                <FooterUtilityTitle>Editorial policy</FooterUtilityTitle>
+                <FooterUtilityText>
+                  Guides stay tied to visible references, legal disclaimers, and connected taxonomy pages.
+                </FooterUtilityText>
+              </FooterUtilityCard>
             </FooterUtility>
           </FooterTop>
 
@@ -779,7 +790,7 @@ export default function SiteShell({ children, locale, messages }) {
             <Copyright>
               &copy; {currentYear} {messages.site.title}. All rights reserved.
             </Copyright>
-            <FooterLocale type="button">
+            <FooterLocale>
               Locale: {languageLabel}
               <FooterLocaleArrow aria-hidden="true">v</FooterLocaleArrow>
             </FooterLocale>

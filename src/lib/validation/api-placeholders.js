@@ -94,19 +94,3 @@ export function validateParams(params, schema) {
     data: result.data,
   };
 }
-
-export function scaffoldRouteResponse({ access, body, method, params, route }) {
-  return NextResponse.json(
-    {
-      success: false,
-      access,
-      body,
-      method,
-      params,
-      route,
-      status: "scaffold_only",
-      message: "This route is scaffolded for Release 1 and will gain behavior in later steps.",
-    },
-    { status: 501 },
-  );
-}

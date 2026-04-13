@@ -986,14 +986,6 @@ export default function GeneratePostScreen({ copy, initialData }) {
       });
       const responsePayload = await response.json();
 
-      if (responsePayload.status === "scaffold_only") {
-        setNotice({
-          kind: "warning",
-          message: copy.publishScaffolded,
-        });
-        return false;
-      }
-
       if (!response.ok) {
         throw new Error(responsePayload.message || copy.publishErrorPrefix);
       }

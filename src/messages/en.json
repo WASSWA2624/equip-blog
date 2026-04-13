@@ -83,32 +83,32 @@
       "updatedLabel": "Updated"
     },
     "home": {
-      "eyebrow": "English release",
-      "title": "Published equipment guides built mobile-first.",
-      "description": "Equip Blog organizes published medical equipment explainers into discovery pages for categories, manufacturers, equipment families, and individual posts.",
-      "featuredTitle": "Start with the newest guide",
-      "featuredDescription": "The lead article stays prominent on small screens first, then expands cleanly for tablet and desktop scanning.",
-      "latestTitle": "Freshly published posts",
-      "latestDescription": "Browse the newest approved guides without leaving the locale-prefixed public route structure.",
+      "eyebrow": "Knowledge base",
+      "title": "Medical equipment guides with visible references.",
+      "description": "Equip Blog connects equipment explainers, maintenance notes, manufacturer profiles, and taxonomy hubs for biomedical teams that need fast orientation and trustworthy follow-up paths.",
+      "featuredTitle": "Start with the latest reviewed guide",
+      "featuredDescription": "Lead articles stay easy to scan on mobile, then open into richer entity context and source-backed reading paths on larger screens.",
+      "latestTitle": "Recently published guides",
+      "latestDescription": "Browse the newest approved guides without leaving the locale-prefixed archive and its connected discovery hubs.",
       "discoveryTitle": "Discovery routes",
-      "discoveryDescription": "Category, manufacturer, and equipment landing pages stay focused on published content only.",
-      "metaTitle": "Equip Blog home",
-      "metaDescription": "Browse published medical equipment guides, manufacturer landing pages, and equipment discovery routes."
+      "discoveryDescription": "Category, manufacturer, and equipment hubs reduce dead ends by surfacing related published content around each topic.",
+      "metaTitle": "Medical equipment guide library",
+      "metaDescription": "Browse medical equipment guides, manufacturer hubs, equipment pages, and reviewed reference summaries on Equip Blog."
     },
     "blog": {
       "eyebrow": "Published library",
-      "title": "Published blog index",
-      "description": "Browse the currently published English guides, ordered by release date and ready for mobile reading first.",
+      "title": "Medical equipment guide library",
+      "description": "Browse published English guides by release date, then move into connected category, manufacturer, and equipment archives for deeper context.",
       "resultsTitle": "Published guides",
-      "metaTitle": "Published blog",
-      "metaDescription": "Read the published English medical equipment guides available on Equip Blog."
+      "metaTitle": "Medical equipment guide archive",
+      "metaDescription": "Read published medical equipment guides, troubleshooting explainers, and connected archive pages on Equip Blog."
     },
     "search": {
       "eyebrow": "Search",
       "title": "Search published content",
-      "description": "Search the live English content library by equipment, article title, excerpt, body text, tag, or manufacturer.",
+      "description": "Search the live English content library by equipment, article title, excerpt, body text, tag, or manufacturer to reach the right published guide faster.",
       "searchTitle": "Search the published library",
-      "searchDescription": "Results stay limited to published content in the active locale route and rank exact title matches ahead of weaker matches.",
+      "searchDescription": "Results stay limited to published content in the active locale route and prioritize exact matches before broader archive signals.",
       "resultsTitle": "Search results",
       "metaTitle": "Search published content",
       "metaDescription": "Search the published Equip Blog library for English medical equipment guides."
@@ -136,14 +136,14 @@
             ]
           },
           {
-            "title": "Release 1 boundaries",
+            "title": "Coverage model",
             "items": [
-              "Only locale-prefixed English public routes are active in Release 1.",
-              "Only published posts appear on public pages.",
-              "Comments and public submission controls remain visibly staged while moderation flows continue to land."
+              "Only published posts appear on public routes.",
+              "Each article keeps its disclaimer, references, and related entity links visible.",
+              "Locale-prefixed routing keeps the public archive ready for future language expansion."
             ],
             "paragraphs": [
-              "The route structure is already locale-ready so future translations can reuse the same layout and content patterns."
+              "The route structure is already locale-ready so future translations can reuse the same editorial and SEO patterns without rebuilding the public information architecture."
             ]
           }
         ]
@@ -151,9 +151,9 @@
       "contact": {
         "eyebrow": "Contact",
         "title": "Contact the editorial team",
-        "description": "Use the contact route to understand how editorial questions, corrections, partnership notes, and moderation issues will be handled for the public site.",
+        "description": "Use this page to understand how corrections, moderation issues, and editorial partnership requests are reviewed for the public knowledge base.",
         "metaTitle": "Contact the editorial team",
-        "metaDescription": "Review the Equip Blog contact path and editorial response expectations.",
+        "metaDescription": "Review how Equip Blog handles corrections, moderation requests, and editorial communications.",
         "sections": [
           {
             "title": "What to contact us about",
@@ -163,7 +163,7 @@
               "Requests related to moderation or public trust concerns"
             ],
             "paragraphs": [
-              "The public form and workflow are staged separately, but this page already holds the route and response guidance used for Release 1."
+              "Requests that cite an official manual, manufacturer page, or similarly trusted source are easier to review and correct quickly."
             ]
           },
           {
@@ -174,15 +174,10 @@
             ]
           },
           {
-            "title": "Current contact path",
-            "links": [
-              {
-                "label": "Email the editorial team",
-                "href": "mailto:editorial@equip-blog.local"
-              }
-            ],
+            "title": "How requests are handled",
             "paragraphs": [
-              "A validated public submission flow will connect to this route in a later execution step."
+              "Direct editorial contact details are only published through verified organizational channels.",
+              "For article-specific feedback, use the relevant public guide and include the exact section, model, or reference that needs review."
             ]
           }
         ]
@@ -217,15 +212,15 @@
       "privacy": {
         "eyebrow": "Privacy",
         "title": "Privacy policy",
-        "description": "The privacy route explains how Release 1 public pages should treat analytics, comments, moderation records, and contact submissions once those capabilities are active.",
+        "description": "This policy explains how the public site handles analytics, comments, moderation records, and editorial communications with minimal data collection.",
         "metaTitle": "Privacy policy",
-        "metaDescription": "Review the Equip Blog Release 1 privacy expectations for public page interactions.",
+        "metaDescription": "Review how Equip Blog handles analytics, comments, moderation records, and public interactions.",
         "sections": [
           {
             "title": "Public page data handling",
             "paragraphs": [
-              "Release 1 keeps the public site focused on reading published content, but analytics, comments, and contact flows are designed with explicit data boundaries from the start.",
-              "Any future comment or contact submission should capture only the minimum data required for moderation, response, and abuse prevention."
+              "Public pages collect only the information needed to render published content, understand aggregate traffic, and protect moderation workflows.",
+              "Comment or contact submissions should capture only the minimum data required for moderation, response, and abuse prevention."
             ]
           },
           {
@@ -236,7 +231,7 @@
               "Publicly visible comments should only appear after approval."
             ],
             "paragraphs": [
-              "This policy route exists now so the legal content can evolve without changing the locale-aware public structure."
+              "Moderation records are retained to preserve auditability, protect the public archive, and explain why visible comments were approved, rejected, or removed."
             ]
           }
         ]
@@ -246,7 +241,7 @@
   "admin": {
     "title": "Equip Blog Admin",
     "description": "Editorial, moderation, and generation workbench.",
-    "footer": "Admin scaffold ready for authenticated workflows.",
+    "footer": "Authenticated workspace for publishing, moderation, SEO, and media operations.",
     "localizationManagement": {
       "activationGuide": [
         "Add a new locale message file under src/messages.",
@@ -564,7 +559,6 @@
       "providerLabel": "Provider and model",
       "publishAction": "Publish now",
       "publishErrorPrefix": "Unable to publish post",
-      "publishScaffolded": "Publish and schedule endpoints are still scaffolded in this step, but the generate page is already wired to those final actions.",
       "publishSuccess": "Post published and live.",
       "publishUnavailable": "Your current role cannot publish immediately in Release 1.",
       "publishWorking": "Publishing...",

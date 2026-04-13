@@ -1,155 +1,162 @@
-# Codebase Refactor Brief
+# Markdown Prompt Generator
 
-Perform an expert-level, end-to-end review of the attached codebase and produce a complete refactor of the project while preserving all existing functionality that is already correctly implemented and compliant.
+Use the following instruction to generate the final refactor prompt in markdown.
 
-## Core Objective
+---
 
-Refactor the entire codebase to improve cleanliness, maintainability, performance, SEO, content generation, admin control, and database naming consistency, without altering any parts that are already correct and aligned with the requirements.
+## Generator Instruction
 
-## Refactor Requirements
+Create a **single comprehensive markdown prompt** for an expert engineer or coding agent to deeply review and refactor the attached codebase.
 
-### 1. Codebase Cleanup
+### Output Rules
 
-- Remove unnecessary, unused, duplicate, obsolete, or dead code.
-- Delete redundant files, components, utilities, configurations, and assets.
-- Preserve all files and logic that are already valid, useful, and compliant.
+- The result must be **the final prompt only**.
+- The result must be written in **clean markdown**.
+- The result must be structured with clear headings, subheadings, bullet points, and implementation requirements.
+- The result must be written as an **actionable instruction prompt**, not as commentary, explanation, or analysis.
+- The prompt must instruct the engineer/agent to **preserve anything already implemented and compliant**.
+- The prompt must be explicit, detailed, and production-oriented.
 
-### 2. Environment Configuration
+### The generated prompt must require all of the following
+
+#### 1. Full Codebase Review
+
+- Perform an expert-level, deep review of the entire attached codebase.
+- Identify what is already compliant and leave it unchanged.
+- Refactor only what is necessary to make the whole codebase fully compliant with the requirements.
+
+#### 2. Code Cleanup
+
+- Remove unnecessary, unused, duplicate, obsolete, dead, or redundant code.
+- Remove unnecessary files, components, assets, utilities, and configurations.
+- Keep useful and compliant code intact.
+
+#### 3. Environment File Rules
 
 - Use `.env` as the active environment file instead of `.env.local`.
-- Use `.env.template.txt` as the source template for `.env`.
-- Ensure all required environment variables are clearly documented and aligned with the refactored implementation.
+- Use `.env.template.txt` as the template source for `.env`.
+- Align the entire codebase with this environment configuration.
 
-### 3. SEO Optimization
+#### 4. SEO Requirements
 
-- Optimize the application for strong SEO performance using the standards commonly validated by the top 10 SEO optimization tools.
-- Ensure best-practice implementation for at least:
+- Fully optimize the app for SEO using standards commonly validated by the top 10 SEO optimization tools.
+- Require implementation and validation of:
   - metadata
-  - titles and descriptions
+  - titles and meta descriptions
   - canonical URLs
   - structured data / schema markup
-  - Open Graph and Twitter cards
-  - sitemap generation
+  - Open Graph
+  - Twitter cards
+  - sitemap
   - robots.txt
+  - semantic HTML
   - internal linking
-  - semantic HTML structure
-  - page speed and crawlability
-- Preserve existing SEO-compliant implementations where already correct.
+  - crawlability
+  - page speed and performance-related SEO
 
-### 4. Blog Improvements
+#### 5. Blog Requirements
 
-- Make the blog comprehensive, scalable, and production-ready.
-- Blog content must be AI-generated and not hard-coded.
-- Ensure the blog architecture supports generating, editing, updating, and displaying posts cleanly.
-- Keep already compliant blog functionality unchanged where applicable.
+- Make the blog comprehensive and scalable.
+- Ensure blog posts are **AI-generated**, not hard-coded.
+- The blog architecture must support generating, editing, updating, and managing posts properly.
 
-### 5. Performance Optimization
+#### 6. Performance Optimization
 
-- Optimize the codebase for the best possible performance.
-- Improve frontend and backend efficiency, rendering behavior, database access patterns, asset loading, and overall responsiveness.
-- Remove performance bottlenecks while preserving behavior.
+- Optimize the entire codebase for best possible performance.
+- Improve frontend rendering, backend logic, data fetching, asset loading, database access, and overall responsiveness.
 
-### 6. UI Reusability and Uniformity
+#### 7. UI Reusability and Uniformity
 
-- Maximize reuse of UI components across the application.
-- Standardize component design, naming, structure, styling, and behavior.
-- Eliminate unnecessary UI duplication and enforce consistency throughout the app.
+- Maximize reusability of UI components.
+- Enforce consistency in component design, structure, naming, behavior, and styling.
+- Eliminate duplicated UI logic where appropriate.
 
-### 7. Database Naming Convention Refactor
+#### 8. Database Refactor
 
 - Refactor the database to use `snake_case` for all table names and column names.
-- Refactor and align the entire codebase so all database references, queries, models, migrations, schemas, APIs, and related logic consistently use `snake_case`.
-- Ensure no mismatches remain between database structure and application code.
+- Refactor and align the entire codebase so all database-related logic consistently uses `snake_case`.
+- This includes models, migrations, queries, schemas, APIs, DTOs, validators, and all related references.
 
-### 8. Advert Placeholder Behavior
+#### 9. Advert Placeholder Behavior
 
 - Make the empty advert placeholder clickable.
-- On click, redirect to a WhatsApp number defined in `.env`.
-- Use this number:
-  - `+256783230321`
+- Clicking it should redirect to the WhatsApp number stored in `.env`.
+- The WhatsApp number to configure is `+256783230321`.
 
-## Admin Dashboard Requirements
+#### 10. Admin Dashboard
 
-Create a simple admin dashboard with the following routes:
+Require creation of a simple admin dashboard with:
 
 - `/admin/login`
-- `/admin`
+- `/admin/`*
 
-### Admin Login
+##### Admin Login Defaults
 
-Use the following default credentials:
+- email: `admin@admin.com`
+- password: `admin`
 
-- **Email:** `admin@admin.com`
-- **Password:** `admin`
+##### Admin Dashboard Features
 
-### Admin Features
+The prompt must require:
 
-#### AI Provider Configuration
-
-Allow the admin to configure:
-
-- AI provider
-- AI model
-- API key
+- configuration of AI provider
+- configuration of AI model
+- configuration of API key
 
 Behavior:
 
-- Once a provider is selected, show only that provider’s supported models in a selectable dropdown.
+- once a provider is selected, only that provider’s supported models should appear in a searchable selectable dropdown
 
-#### Equipment Post Generation
+#### 11. Equipment Post Generator
 
-Allow the admin to:
+The admin dashboard must allow:
 
-- input an equipment name
-- click **Generate Post**
-- generate a blog post using AI
+- entering an equipment name
+- clicking **Generate Post**
+- generating a blog post using AI
 
-#### Equipment Master Table
+#### 12. Equipment Master List Table
 
-Add a table in the admin dashboard that is prefilled with a list of unique medical equipment general names.
+The admin dashboard must contain a prefilled table of **unique medical equipment general names**.
 
-This table must be populated using a comprehensive equipment master list based on the following rule:
+The generated prompt must clearly explain that:
 
-- include only general equipment names
-- avoid repetition
-- merge variants into their parent/general equipment name
+- only general equipment names should be included
+- duplicates must be removed
+- variants must be merged into their parent/general equipment name
 
 Example:
 
-- `x-ray machine` is the general name
-- variants such as `dental x-ray` and `c-arm x-ray` should not be treated as separate general equipment names
+- `x-ray machine` is a general equipment name
+- variants such as `dental x-ray` and `c-arm x-ray` must not be treated as separate general names
 
-Target:
+The generated prompt must require:
 
-- generate as many unique general medical equipment names as possible
-- aim for at least **1,000**
-- if fewer than 1,000 are realistically possible, include the maximum valid set
-- if more than 1,000 are possible, exceed 1,000
+- generating as many valid unique general medical equipment names as possible
+- targeting **at least 1,000**
+- exceeding 1,000 if more valid entries exist
+- using the maximum valid number if fewer than 1,000 are realistically possible
 
-#### Post Status Management
+#### 13. Posted Status / Content Management
 
-Each equipment entry must support a status indicating whether it has already been posted.
+Each equipment entry must support:
 
-This should allow an equipment item to be:
+- marking as already posted
+- manual editing
+- manual updating
+- AI-based regeneration or updating
 
-- marked as already posted
-- edited manually
-- updated manually
-- regenerated or updated via AI
+### Final instruction for the generated prompt
 
-## Implementation Constraints
+The generated prompt must end with a strong implementation directive that:
 
-- Leave all existing implementations unchanged where they are already correct and compliant.
-- Refactor only what is necessary to meet the above requirements.
-- Maintain a clean, scalable, production-ready architecture.
-- Ensure the final implementation is coherent, consistent, and fully aligned across the codebase.
+- preserves already compliant work
+- refactors non-compliant parts
+- keeps the final architecture clean, scalable, and production-ready
+- ensures the final solution is coherent across the full codebase
 
-## Expected Deliverable
+---
 
-Produce a comprehensive refactor plan and implementation that:
+## Expected Output From This Generator
 
-1. audits the current codebase
-2. identifies non-compliant areas
-3. preserves compliant areas
-4. refactors the rest to fully satisfy all requirements above
-
+A **single polished markdown prompt** ready to be given to an expert developer or coding agent.

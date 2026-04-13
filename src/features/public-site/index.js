@@ -2219,6 +2219,7 @@ async function getPublishedPostPageDataInternal(
 
   const path = buildLocalizedPath(resolvedLocale, publicRouteSegments.blogPost(post.slug));
   const canonicalUrl = translation.seoRecord?.canonicalUrl || toAbsolutePublicUrl(path);
+  const displayTitle = formatEquipmentAwareTitle(translation.title, post.equipment.name);
   const commentWhere = {
     parentId: null,
     postId: post.id,
@@ -2284,7 +2285,7 @@ async function getPublishedPostPageDataInternal(
         },
         {
           href: path,
-          label: translation.title,
+          label: displayTitle,
         },
       ],
       canonicalUrl,
@@ -2360,7 +2361,7 @@ async function getPublishedPostPageDataInternal(
       path,
       publishedAt: serializeDate(post.publishedAt),
       relatedPosts,
-      title: formatEquipmentAwareTitle(translation.title, post.equipment.name),
+      title: displayTitle,
       updatedAt: serializeDate(translation.updatedAt || post.updatedAt),
       url: canonicalUrl,
     },

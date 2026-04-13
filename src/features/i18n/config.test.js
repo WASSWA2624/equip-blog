@@ -10,7 +10,7 @@ function createBaseEnv() {
 
 const originalEnv = process.env;
 
-describe("locale scaffold", () => {
+describe("locale configuration", () => {
   beforeEach(() => {
     vi.resetModules();
     process.env = {

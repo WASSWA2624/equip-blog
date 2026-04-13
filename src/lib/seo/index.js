@@ -5,15 +5,12 @@ import {
   buildLocalizedPath,
   publicRouteSegments,
 } from "@/features/i18n/routing";
+import { dedupeStrings } from "@/lib/content/presentation";
 import { env } from "@/lib/env/server";
 
 const siteName = "Equip Blog";
 const defaultOpenGraphImagePath = "/opengraph-image";
 const defaultTwitterImagePath = "/twitter-image";
-
-function dedupeStrings(values) {
-  return [...new Set((values || []).map((value) => `${value}`.trim()).filter(Boolean))];
-}
 
 function trimText(value) {
   return typeof value === "string" ? value.trim() : "";
@@ -289,8 +286,28 @@ export function buildOrganizationJsonLd({ description, locale = defaultLocale, n
     "@context": "https://schema.org",
     "@type": "Organization",
     description,
+    logo: buildAbsoluteUrl("/favicon.svg"),
     name,
     url: buildAbsoluteUrl(buildLocalizedPath(locale, publicRouteSegments.home)),
+  };
+}
+
+export function buildWebsiteJsonLd({ description, locale = defaultLocale, name = siteName } = {}) {
+  const homePath = buildLocalizedPath(locale, publicRouteSegments.home);
+  const searchPath = buildLocalizedPath(locale, publicRouteSegments.search);
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    description,
+    inLanguage: locale,
+    name,
+    potentialAction: {
+      "@type": "SearchAction",
+      "query-input": "required name=search_term_string",
+      target: `${buildAbsoluteUrl(searchPath)}?q={search_term_string}`,
+    },
+    url: buildAbsoluteUrl(homePath),
   };
 }
 
