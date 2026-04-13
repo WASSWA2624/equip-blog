@@ -294,7 +294,8 @@ export default function AdminLoginScreen({ nextPath }) {
           <FormHeader>
             <FormTitle>Sign in to the admin workspace</FormTitle>
             <FormDescription>
-              Use the seeded admin credentials from your environment and Prisma seed setup.
+              Use the seeded admin credentials from your environment and Prisma seed setup. The
+              bootstrap template defaults are <code>admin@admin.com</code> and <code>admin</code>.
             </FormDescription>
           </FormHeader>
           <Form onSubmit={handleSubmit}>
@@ -304,7 +305,7 @@ export default function AdminLoginScreen({ nextPath }) {
                 autoComplete="email"
                 name="email"
                 onChange={(event) => setEmail(event.target.value)}
-                placeholder="admin@example.com"
+                placeholder="admin@admin.com"
                 required
                 type="email"
                 value={email}
@@ -317,7 +318,7 @@ export default function AdminLoginScreen({ nextPath }) {
                   autoComplete="current-password"
                   name="password"
                   onChange={(event) => setPassword(event.target.value)}
-                  placeholder="Enter your password"
+                  placeholder="admin"
                   required
                   type={isPasswordVisible ? "text" : "password"}
                   value={password}
@@ -339,7 +340,7 @@ export default function AdminLoginScreen({ nextPath }) {
           </Form>
           <FinePrint>
             Successful sign-in returns you to the requested admin route and creates a protected session
-            cookie.
+            cookie. Replace the bootstrap defaults after the first setup.
           </FinePrint>
         </FormCard>
       </Panel>

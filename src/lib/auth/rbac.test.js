@@ -35,6 +35,9 @@ describe("RBAC policy", () => {
     expect(getAdminPageAccess("/admin/providers")).toMatchObject({
       permission: ADMIN_PERMISSIONS.MANAGE_PROVIDER_CONFIG,
     });
+    expect(getAdminPageAccess("/admin/equipment")).toMatchObject({
+      permission: ADMIN_PERMISSIONS.VIEW_CONTENT_LISTS,
+    });
     expect(getAdminPageAccess("/admin/posts/example-post")).toMatchObject({
       permission: ADMIN_PERMISSIONS.EDIT_POSTS,
     });
@@ -51,6 +54,7 @@ describe("RBAC policy", () => {
     expect(getAdminNavigation({ role: "EDITOR" }).map((item) => item.key)).toEqual([
       "dashboard",
       "generate",
+      "equipment",
       "drafts",
       "published",
       "media",
@@ -60,6 +64,7 @@ describe("RBAC policy", () => {
     expect(getAdminNavigation({ role: "SUPER_ADMIN" }).map((item) => item.key)).toEqual([
       "dashboard",
       "generate",
+      "equipment",
       "drafts",
       "published",
       "comments",

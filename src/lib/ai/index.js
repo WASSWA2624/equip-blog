@@ -10,6 +10,7 @@ import { generatedArticleSectionOrder } from "@/lib/content/article-structure";
 import { detectDuplicateEquipmentPost } from "@/lib/generation/duplicates";
 import { generationStageOrder, generationTerminalStageIds } from "@/lib/generation/stages";
 import { buildMarkdownFromStructuredArticle, buildHtmlFromStructuredArticle } from "@/lib/markdown";
+import { updateEquipmentLifecycleStatus } from "@/lib/equipment/lifecycle";
 import { createCanonicalEquipmentIdentity, normalizeDisplayText } from "@/lib/normalization";
 import { buildVerifiedResearchPayload } from "@/lib/research";
 import { buildSeoPayload } from "@/lib/seo";
@@ -1988,7 +1989,7 @@ function createProvider(providerConfig, options = {}) {
 
       if (!resolvedCredential.apiKey) {
         throw new AiCompositionError(
-          `Provider configuration "${providerConfig.id}" is missing a stored API key. Save one from the Providers admin page before generating drafts.`,
+          `Provider configuration "${providerConfig.id}" is missing a usable API key. Save one from the Providers admin page or provide the provider key through the environment before generating drafts.`,
           {
             status: "invalid_provider_credentials",
             statusCode: 400,
@@ -2632,6 +2633,10 @@ async function persistDraftPackage(
     await syncPostStructuredRecords(tx, post.id, article);
     await upsertManufacturersAndModels(tx, equipment.id, post.id, researchPayload);
     await syncSourceReferences(tx, post.id, equipment.id, researchPayload);
+    await updateEquipmentLifecycleStatus(tx, {
+      equipmentId: equipment.id,
+      status: duplicatePost && request.replaceExistingPost ? "UPDATED" : "GENERATED",
+    });
 
     if (duplicatePost && request.replaceExistingPost) {
       await tx.auditEvent.create({

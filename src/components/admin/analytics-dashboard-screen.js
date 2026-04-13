@@ -48,6 +48,18 @@ function getToneFromStatus(status) {
   return "default";
 }
 
+function getToneFromLifecycle(status) {
+  if (status === "POSTED") {
+    return "success";
+  }
+
+  if (status === "UPDATED" || status === "EDITED" || status === "GENERATED") {
+    return "accent";
+  }
+
+  return "default";
+}
+
 const Page = styled.main`
   display: grid;
   gap: clamp(0.95rem, 2vw, 1.3rem);
@@ -385,6 +397,69 @@ export default function AnalyticsDashboardScreen({ copy, initialData }) {
           </SectionHeader>
         </Notice>
       )}
+
+      <Card>
+        <SectionHeader>
+          <CardTitle>{copy.equipmentPreviewTitle}</CardTitle>
+          <SmallText>{copy.equipmentPreviewDescription}</SmallText>
+        </SectionHeader>
+        <SummaryGrid>
+          <SummaryCard>
+            <SummaryValue>{formatNumber(initialData.equipmentPreview.summary.totalCount)}</SummaryValue>
+            <SmallText>{copy.equipmentInventoryLabel}</SmallText>
+          </SummaryCard>
+          <SummaryCard>
+            <SummaryValue>{formatNumber(initialData.equipmentPreview.summary.plannedCount)}</SummaryValue>
+            <SmallText>{copy.equipmentPlannedLabel}</SmallText>
+          </SummaryCard>
+          <SummaryCard>
+            <SummaryValue>{formatNumber(initialData.equipmentPreview.summary.generatedCount)}</SummaryValue>
+            <SmallText>{copy.equipmentGeneratedLabel}</SmallText>
+          </SummaryCard>
+          <SummaryCard>
+            <SummaryValue>{formatNumber(initialData.equipmentPreview.summary.postedCount)}</SummaryValue>
+            <SmallText>{copy.equipmentPostedLabel}</SmallText>
+          </SummaryCard>
+        </SummaryGrid>
+        {initialData.equipmentPreview.items.length ? (
+          <ItemList>
+            {initialData.equipmentPreview.items.map((item) => (
+              <Item key={item.id}>
+                <Row>
+                  <div>
+                    <ItemTitle>{item.name}</ItemTitle>
+                    <MetaRow>
+                      <span>{item.slug}</span>
+                      <span>{formatDateTime(item.updatedAt)}</span>
+                    </MetaRow>
+                  </div>
+                  <Pill $tone={getToneFromLifecycle(item.lifecycleStatus)}>{item.lifecycleStatus}</Pill>
+                </Row>
+                <MetaRow>
+                  <span>{item.primaryPost?.title || copy.equipmentPreviewNoPost}</span>
+                  {item.primaryPost?.status ? <span>{item.primaryPost.status}</span> : null}
+                </MetaRow>
+                <Row>
+                  <SmallText>{item.lifecycleNotes || copy.equipmentPreviewNoNotes}</SmallText>
+                  <MetaRow>
+                    {item.primaryPost?.editorPath ? (
+                      <InlineLink href={item.primaryPost.editorPath}>
+                        {copy.openEquipmentEditorAction}
+                      </InlineLink>
+                    ) : null}
+                    {item.primaryPost?.publicPath ? (
+                      <InlineLink href={item.primaryPost.publicPath}>{copy.openPostAction}</InlineLink>
+                    ) : null}
+                  </MetaRow>
+                </Row>
+              </Item>
+            ))}
+          </ItemList>
+        ) : (
+          <EmptyState>{copy.noEquipmentPreview}</EmptyState>
+        )}
+        <InlineLink href="/admin/equipment">{copy.openEquipmentInventoryAction}</InlineLink>
+      </Card>
 
       <Grid>
         <Card>

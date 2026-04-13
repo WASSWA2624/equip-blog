@@ -217,6 +217,51 @@ function createMockPrisma() {
       ],
     },
   ];
+  const equipmentRecords = [
+    {
+      _count: {
+        posts: 1,
+      },
+      id: "equipment_1",
+      lifecycleNotes: "Initial draft prepared.",
+      lifecycleStatus: "GENERATED",
+      name: "Microscope",
+      normalizedName: "microscope",
+      postedAt: null,
+      posts: [
+        {
+          editorialStage: "GENERATED",
+          id: "post_1",
+          publishedAt: new Date("2026-04-03T12:00:00.000Z"),
+          scheduledPublishAt: null,
+          slug: "microscope-basics",
+          status: "PUBLISHED",
+          translations: [
+            {
+              title: "Microscope basics",
+            },
+          ],
+          updatedAt: new Date("2026-04-03T10:12:00.000Z"),
+        },
+      ],
+      slug: "microscope",
+      updatedAt: new Date("2026-04-03T10:12:00.000Z"),
+    },
+    {
+      _count: {
+        posts: 0,
+      },
+      id: "equipment_2",
+      lifecycleNotes: null,
+      lifecycleStatus: "PLANNED",
+      name: "Centrifuge",
+      normalizedName: "centrifuge",
+      postedAt: null,
+      posts: [],
+      slug: "centrifuge",
+      updatedAt: new Date("2026-04-02T09:00:00.000Z"),
+    },
+  ];
 
   function matchesCreatedAtFilter(record, where = {}) {
     const gte = where?.createdAt?.gte;
@@ -235,6 +280,14 @@ function createMockPrisma() {
 
     if (where.equipmentName?.contains) {
       return job.equipmentName.includes(where.equipmentName.contains);
+    }
+
+    return true;
+  }
+
+  function matchesEquipmentWhere(equipment, where = {}) {
+    if (where.lifecycleStatus && equipment.lifecycleStatus !== where.lifecycleStatus) {
+      return false;
     }
 
     return true;
@@ -266,6 +319,11 @@ function createMockPrisma() {
           .sort((left, right) => right.createdAt.getTime() - left.createdAt.getTime())
           .slice(0, take || auditEvents.length);
       }),
+    },
+    equipment: {
+      count: vi.fn(async ({ where } = {}) =>
+        equipmentRecords.filter((equipment) => matchesEquipmentWhere(equipment, where)).length),
+      findMany: vi.fn(async ({ take } = {}) => equipmentRecords.slice(0, take || equipmentRecords.length)),
     },
     generationJob: {
       count: vi.fn(async ({ where } = {}) => generationJobs.filter((job) => matchesJobWhere(job, where)).length),
@@ -406,6 +464,15 @@ describe("analytics feature snapshots", () => {
       slug: "microscope-basics",
       title: "Microscope basics",
       viewCount: 2,
+    });
+    expect(snapshot.equipmentPreview.summary).toMatchObject({
+      generatedCount: 1,
+      plannedCount: 1,
+      totalCount: 2,
+    });
+    expect(snapshot.equipmentPreview.items[0]).toMatchObject({
+      lifecycleStatus: "GENERATED",
+      name: "Microscope",
     });
     expect(snapshot.recentFailures).toEqual(
       expect.arrayContaining([

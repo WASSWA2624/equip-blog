@@ -73,7 +73,22 @@ describe("provider configuration helpers", () => {
     });
   });
 
-  it("does not fall back to environment credentials for provider configs", async () => {
+  it("falls back to environment credentials when no stored provider key exists", async () => {
+    const { resolveProviderApiKey } = await import("./provider-configs");
+    const resolvedCredential = resolveProviderApiKey({
+      apiKeyEncrypted: null,
+      apiKeyEnvName: "OPENAI_API_KEY",
+      provider: "openai",
+    });
+
+    expect(resolvedCredential).toMatchObject({
+      apiKey: "env-openai-key",
+      envName: "OPENAI_API_KEY",
+      source: "environment",
+    });
+  });
+
+  it("returns a missing credential result when neither stored nor environment keys exist", async () => {
     const { resolveProviderApiKey } = await import("./provider-configs");
     const resolvedCredential = resolveProviderApiKey({
       apiKeyEncrypted: null,
@@ -151,7 +166,7 @@ describe("provider configuration helpers", () => {
     expect(snapshot.summary).toMatchObject({
       configCount: 2,
       enabledCount: 2,
-      environmentFallbackCount: 0,
+      environmentFallbackCount: 1,
       storedCredentialCount: 1,
     });
     expect(snapshot.configs[0]).toMatchObject({
@@ -160,8 +175,8 @@ describe("provider configuration helpers", () => {
       hasStoredApiKey: true,
     });
     expect(snapshot.configs[1]).toMatchObject({
-      credentialLabel: "No stored key is configured for this provider config",
-      credentialState: "missing",
+      credentialLabel: "Environment key available via OPENAI_API_KEY",
+      credentialState: "environment",
       hasStoredApiKey: false,
     });
     expect(snapshot.configs[0].apiKey).toBeUndefined();

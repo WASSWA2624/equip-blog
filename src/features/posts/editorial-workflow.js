@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { defaultLocale } from "@/features/i18n/config";
 import { buildLocalizedPath, publicRouteSegments } from "@/features/i18n/routing";
+import { updateEquipmentLifecycleStatusForPost } from "@/lib/equipment/lifecycle";
 import { createSlug, normalizeDisplayText } from "@/lib/normalization";
 
 import { emptyStructuredContent } from "./localized-content";
@@ -1082,8 +1083,22 @@ export async function updatePostEditorialRecord({ postId, ...input }, options = 
             ? currentPost.scheduledPublishAt
             : updateData.scheduledPublishAt,
         nextStatus: updateData.status || currentPost.status,
-      }),
+        }),
     );
+
+    if (statusUpdate.nextStatus === PostStatus.PUBLISHED) {
+      await updateEquipmentLifecycleStatusForPost(tx, {
+        postId,
+        postedAt:
+          updateData.publishedAt === undefined ? currentPost.publishedAt : updateData.publishedAt,
+        status: "POSTED",
+      });
+    } else if (statusUpdate.nextStatus === PostStatus.DRAFT) {
+      await updateEquipmentLifecycleStatusForPost(tx, {
+        postId,
+        status: "DRAFT",
+      });
+    }
   });
   const nextPublicSnapshot = await loadPostPublicRevalidationSnapshot(postId, db);
   const revalidation = await revalidatePostPublicSnapshots(

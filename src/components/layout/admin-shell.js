@@ -17,6 +17,7 @@ const DESKTOP_BREAKPOINT = 1220;
 const MOBILE_PRIMARY_KEYS = Object.freeze([
   "dashboard",
   "generate",
+  "equipment",
   "drafts",
   "published",
   "comments",

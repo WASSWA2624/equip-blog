@@ -3,6 +3,8 @@ import styled, { css } from "styled-components";
 
 import ContentImage from "@/components/public/content-image";
 import { formatEquipmentAwareTitle, formatEquipmentDisplayName } from "@/lib/content/presentation";
+import { buildWhatsAppContactHref } from "@/lib/contact/whatsapp";
+import { sharedEnv } from "@/lib/env/shared";
 import { sanitizeHrefUrl } from "@/lib/security";
 
 function formatDateLabel(locale, value) {
@@ -53,6 +55,12 @@ export function getCommonCopy(publicMessages = {}) {
     browseEquipment: common.browseEquipment || "Browse equipment",
     browseManufacturer: common.browseManufacturer || "Browse manufacturer",
     clearAction: common.clearAction || "Clear",
+    contactAdvertAction: common.contactAdvertAction || "Open WhatsApp",
+    contactAdvertDescription:
+      common.contactAdvertDescription ||
+      "Use the configured WhatsApp contact for advert enquiries or direct follow-up.",
+    contactAdvertPlaceholder: common.contactAdvertPlaceholder || "Advert space",
+    contactAdvertTitle: common.contactAdvertTitle || "Direct contact",
     emptyStateDescription:
       common.emptyStateDescription ||
       "Published content for this page will appear after editorial approval and release.",
@@ -222,6 +230,45 @@ const RailMetricValue = styled.dd`
   font-size: 1rem;
   font-weight: 800;
   margin: 0;
+`;
+
+const AdvertLink = styled.a`
+  background:
+    linear-gradient(180deg, rgba(255, 253, 247, 0.98), rgba(244, 248, 252, 0.94)),
+    radial-gradient(circle at top right, rgba(201, 123, 42, 0.18), transparent 52%);
+  border: 1px dashed rgba(32, 74, 113, 0.22);
+  border-radius: 16px;
+  color: inherit;
+  display: grid;
+  gap: 0.5rem;
+  min-height: 11rem;
+  padding: 1rem;
+  text-decoration: none;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+
+  &:hover {
+    border-color: rgba(32, 74, 113, 0.34);
+    box-shadow: 0 12px 28px rgba(22, 40, 64, 0.08);
+    transform: translateY(-1px);
+  }
+`;
+
+const AdvertPlaceholder = styled.strong`
+  color: #182742;
+  font-size: clamp(1.5rem, 4vw, 2.2rem);
+  letter-spacing: -0.04em;
+  line-height: 0.92;
+`;
+
+const AdvertAction = styled.span`
+  color: #244b73;
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 `;
 
 export const SectionHeader = styled.div`
@@ -458,7 +505,9 @@ export const BulletList = styled.ul`
   }
 `;
 
-export function PublicUtilityRail({ locale, metrics = [] }) {
+export function PublicUtilityRail({ copy = getCommonCopy(), locale, metrics = [] }) {
+  const advertHref = buildWhatsAppContactHref(sharedEnv.marketing.whatsappAdvertNumber);
+
   return (
     <>
       <RailCard>
@@ -470,6 +519,17 @@ export function PublicUtilityRail({ locale, metrics = [] }) {
           <li>Search remains available to readers but stays out of search-engine indexing.</li>
         </RailBulletList>
       </RailCard>
+
+      {advertHref ? (
+        <RailCard>
+          <RailTitle>{copy.contactAdvertTitle}</RailTitle>
+          <AdvertLink href={advertHref} rel="noreferrer" target="_blank">
+            <AdvertPlaceholder>{copy.contactAdvertPlaceholder}</AdvertPlaceholder>
+            <RailCopy>{copy.contactAdvertDescription}</RailCopy>
+            <AdvertAction>{copy.contactAdvertAction}</AdvertAction>
+          </AdvertLink>
+        </RailCard>
+      ) : null}
 
       <RailCard>
         <RailTitle>Current view</RailTitle>

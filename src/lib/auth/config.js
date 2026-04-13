@@ -7,12 +7,14 @@ export const ADMIN_REQUEST_PATH_HEADER = "x-admin-request-path";
 
 const protectedAdminApiPrefixes = [
   "/api/comments/",
+  "/api/equipment/",
   "/api/posts/",
 ];
 
 const protectedAdminApiPaths = new Set([
   "/api/auth/logout",
   "/api/categories",
+  "/api/equipment",
   "/api/generate-post",
   "/api/jobs",
   "/api/localization",

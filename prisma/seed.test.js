@@ -86,4 +86,13 @@ describe("prisma baseline seed definitions", () => {
     expect(secondHash).toMatch(/^scrypt\$32768\$8\$1\$/);
     expect(firstHash).not.toBe(secondHash);
   });
+
+  it("ships a normalized equipment master list with at least one thousand unique entries", () => {
+    const uniqueNames = new Set(seed.medicalEquipmentCatalog);
+
+    expect(seed.medicalEquipmentCatalog.length).toBeGreaterThanOrEqual(1000);
+    expect(uniqueNames.size).toBe(seed.medicalEquipmentCatalog.length);
+    expect(seed.createCatalogEquipmentSlug("X-Ray Machine")).toBe("x-ray-machine");
+    expect(seed.normalizeCatalogEquipmentName("  X-Ray   Machine  ")).toBe("x ray machine");
+  });
 });

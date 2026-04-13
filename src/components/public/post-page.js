@@ -7,7 +7,9 @@ import styled, { css } from "styled-components";
 import PublicViewTracker from "@/components/analytics/public-view-tracker";
 import { PublicCommentSection } from "@/components/comments";
 import ShareActions from "@/components/public/share-actions";
+import { buildWhatsAppContactHref } from "@/lib/contact/whatsapp";
 import { formatEquipmentAwareTitle, formatEquipmentDisplayName } from "@/lib/content/presentation";
+import { sharedEnv } from "@/lib/env/shared";
 import { createImagePlaceholderDataUrl } from "@/lib/media";
 import { sanitizeExternalUrl } from "@/lib/security";
 
@@ -92,6 +94,12 @@ function getCommonCopy(publicMessages = {}) {
       "Comment submitted. It will appear once an editor approves it.",
     copiedLink: common.copiedLink || "Link copied",
     copyLink: common.copyLink || "Copy link",
+    contactAdvertAction: common.contactAdvertAction || "Open WhatsApp",
+    contactAdvertDescription:
+      common.contactAdvertDescription ||
+      "Use the configured WhatsApp contact for advert enquiries or direct follow-up.",
+    contactAdvertPlaceholder: common.contactAdvertPlaceholder || "Advert space",
+    contactAdvertTitle: common.contactAdvertTitle || "Direct contact",
     emptyStateDescription:
       common.emptyStateDescription ||
       "Published content for this page will appear after editorial approval and release.",
@@ -239,20 +247,51 @@ const RailTitle = styled.p`
   text-transform: uppercase;
 `;
 
-const AdFrame = styled.div`
-  align-items: center;
+const AdFrame = styled.a`
+  align-content: center;
   aspect-ratio: 1 / 0.86;
-  background: linear-gradient(180deg, rgba(246, 248, 252, 0.98), rgba(237, 241, 247, 0.98));
-  border: 1px solid rgba(16, 32, 51, 0.06);
+  background:
+    linear-gradient(180deg, rgba(255, 253, 247, 0.98), rgba(237, 241, 247, 0.98)),
+    radial-gradient(circle at top right, rgba(201, 123, 42, 0.18), transparent 52%);
+  border: 1px dashed rgba(32, 74, 113, 0.18);
   border-radius: 12px;
   display: grid;
+  gap: 0.5rem;
   justify-items: center;
+  padding: 1rem;
+  text-align: center;
+  text-decoration: none;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+
+  &:hover {
+    border-color: rgba(32, 74, 113, 0.32);
+    box-shadow: 0 10px 24px rgba(22, 40, 64, 0.08);
+    transform: translateY(-1px);
+  }
 `;
 
 const AdText = styled.span`
-  color: rgba(99, 108, 127, 0.82);
-  font-size: clamp(2rem, 5vw, 3rem);
+  color: #182742;
+  font-size: clamp(1.6rem, 5vw, 2.3rem);
+  font-weight: 800;
   letter-spacing: -0.04em;
+`;
+
+const AdDescription = styled.span`
+  color: rgba(72, 84, 108, 0.94);
+  font-size: 0.92rem;
+  line-height: 1.5;
+`;
+
+const AdAction = styled.span`
+  color: #244b73;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 `;
 
 const RailUtilityCard = styled(Panel)`
@@ -971,14 +1010,25 @@ function getDiscoverySectionActionLabel(copy, kind) {
   return copy.browseEquipment;
 }
 
-function PublicUtilityRail({ locale }) {
+function PublicUtilityRail({ copy, locale }) {
+  const advertHref = buildWhatsAppContactHref(sharedEnv.marketing.whatsappAdvertNumber);
+
   return (
     <>
       <RailCard>
-        <RailTitle>Editorial standards</RailTitle>
-        <AdFrame>
-          <AdText>Refs</AdText>
-        </AdFrame>
+        <RailTitle>{copy.contactAdvertTitle}</RailTitle>
+        {advertHref ? (
+          <AdFrame href={advertHref} rel="noreferrer" target="_blank">
+            <AdText>{copy.contactAdvertPlaceholder}</AdText>
+            <AdDescription>{copy.contactAdvertDescription}</AdDescription>
+            <AdAction>{copy.contactAdvertAction}</AdAction>
+          </AdFrame>
+        ) : (
+          <AdFrame as="div">
+            <AdText>{copy.contactAdvertPlaceholder}</AdText>
+            <AdDescription>{copy.contactAdvertDescription}</AdDescription>
+          </AdFrame>
+        )}
       </RailCard>
 
       <RailUtilityCard>
@@ -1037,7 +1087,7 @@ export function PublicHomePage({ locale, messages, pageContent, pageData }) {
         </LandingContent>
 
         <LandingRail aria-label="Public utilities">
-          <PublicUtilityRail locale={locale} />
+          <PublicUtilityRail copy={copy} locale={locale} />
         </LandingRail>
       </LandingGrid>
 
@@ -1164,7 +1214,7 @@ export function PublicCollectionPage({
         </LandingContent>
 
         <LandingRail aria-label="Public utilities">
-          <PublicUtilityRail locale={locale} />
+          <PublicUtilityRail copy={copy} locale={locale} />
         </LandingRail>
       </LandingGrid>
 

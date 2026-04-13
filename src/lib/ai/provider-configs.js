@@ -174,6 +174,18 @@ function buildCredentialSnapshot(config) {
     };
   }
 
+  const envApiKey = getProviderEnvApiKey(config.provider);
+
+  if (envApiKey) {
+    return {
+      credentialLabel: `Environment key available via ${config.apiKeyEnvName || getProviderApiKeyEnvName(config.provider)}`,
+      credentialSourceEnvName: config.apiKeyEnvName || getProviderApiKeyEnvName(config.provider),
+      credentialState: "environment",
+      hasStoredApiKey: false,
+      hasUsableCredential: true,
+    };
+  }
+
   return {
     credentialLabel: "No stored key is configured for this provider config",
     credentialSourceEnvName: config.apiKeyEnvName || getProviderApiKeyEnvName(config.provider),
@@ -530,6 +542,16 @@ export function resolveProviderApiKey(providerConfig) {
       apiKey: decryptedApiKey,
       envName: providerConfig.apiKeyEnvName || getProviderApiKeyEnvName(providerConfig.provider),
       source: "stored",
+    };
+  }
+
+  const envApiKey = getProviderEnvApiKey(providerConfig.provider);
+
+  if (envApiKey) {
+    return {
+      apiKey: envApiKey,
+      envName: providerConfig.apiKeyEnvName || getProviderApiKeyEnvName(providerConfig.provider),
+      source: "environment",
     };
   }
 

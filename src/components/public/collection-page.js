@@ -133,6 +133,7 @@ export default function PublicCollectionPage({
 
         <LandingRail aria-label="Archive context">
           <PublicUtilityRail
+            copy={copy}
             locale={locale}
             metrics={[
               { label: "Published results", value: `${pageData.pagination.totalItems}` },

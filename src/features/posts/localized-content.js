@@ -4,6 +4,7 @@ import { syncLocaleRegistryToDatabase } from "@/features/i18n/activation";
 import { defaultLocale, isSupportedLocale, supportedLocales } from "@/features/i18n/config";
 import { getMessages } from "@/features/i18n/get-messages";
 import { buildLocalizedPath, publicRouteSegments } from "@/features/i18n/routing";
+import { updateEquipmentLifecycleStatusForPost } from "@/lib/equipment/lifecycle";
 import { sanitizeHtmlFragment, sanitizeStructuredContentJson } from "@/lib/security";
 
 import { loadPostPublicRevalidationSnapshot, revalidatePostPublicSnapshots } from "./public-revalidation";
@@ -491,6 +492,11 @@ export async function savePostLocaleContent(input, options = {}, prisma) {
         },
       });
     }
+
+    await updateEquipmentLifecycleStatusForPost(tx, {
+      postId: parsedInput.postId,
+      status: post.status === "PUBLISHED" ? "UPDATED" : "EDITED",
+    });
 
     return persistedTranslation;
   });

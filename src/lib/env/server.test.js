@@ -5,6 +5,7 @@ function createBaseEnv() {
     DATABASE_URL: "mysql://user:password@localhost:3306/med_blog",
     NEXT_PUBLIC_APP_URL: "https://example.com",
     DEFAULT_LOCALE: "en",
+    NEXT_PUBLIC_WHATSAPP_ADVERT_NUMBER: "+256783230321",
     SUPPORTED_LOCALES: "en",
     SESSION_SECRET: "change-me",
     SESSION_MAX_AGE_SECONDS: "28800",
@@ -21,8 +22,8 @@ function createBaseEnv() {
     S3_MEDIA_BASE_URL: "",
     S3_ACCESS_KEY_ID: "",
     S3_SECRET_ACCESS_KEY: "",
-    ADMIN_SEED_EMAIL: "admin@example.com",
-    ADMIN_SEED_PASSWORD: "strong-password",
+    ADMIN_SEED_EMAIL: "admin@admin.com",
+    ADMIN_SEED_PASSWORD: "admin",
     COMMENT_RATE_LIMIT_WINDOW_MS: "60000",
     COMMENT_RATE_LIMIT_MAX: "5",
     COMMENT_CAPTCHA_ENABLED: "false",
@@ -51,8 +52,9 @@ describe("server environment module", () => {
   it("loads the validated config at import time", async () => {
     const { env } = await import("./server");
 
-    expect(env.auth.adminSeed.email).toBe("admin@example.com");
+    expect(env.auth.adminSeed.email).toBe("admin@admin.com");
     expect(env.media.driver).toBe("local");
+    expect(env.marketing.whatsappAdvertNumber).toBe("+256783230321");
   });
 
   it("fails fast at import time when configuration is invalid", async () => {

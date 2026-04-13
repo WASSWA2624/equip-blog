@@ -63,6 +63,7 @@ export default function PublicHomePage({ locale, messages, pageContent, pageData
 
         <LandingRail aria-label="Public route context">
           <PublicUtilityRail
+            copy={copy}
             locale={locale}
             metrics={[
               { label: "Published guides", value: `${pageData.stats.postCount}` },

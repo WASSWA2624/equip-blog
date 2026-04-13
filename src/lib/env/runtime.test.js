@@ -7,6 +7,7 @@ function createBaseEnv() {
     DATABASE_URL: "mysql://user:password@localhost:3306/med_blog",
     NEXT_PUBLIC_APP_URL: "https://example.com",
     DEFAULT_LOCALE: "en",
+    NEXT_PUBLIC_WHATSAPP_ADVERT_NUMBER: "+256783230321",
     SUPPORTED_LOCALES: "en",
     SESSION_SECRET: "change-me",
     SESSION_MAX_AGE_SECONDS: "28800",
@@ -23,8 +24,8 @@ function createBaseEnv() {
     S3_MEDIA_BASE_URL: "",
     S3_ACCESS_KEY_ID: "",
     S3_SECRET_ACCESS_KEY: "",
-    ADMIN_SEED_EMAIL: "admin@example.com",
-    ADMIN_SEED_PASSWORD: "strong-password",
+    ADMIN_SEED_EMAIL: "admin@admin.com",
+    ADMIN_SEED_PASSWORD: "admin",
     COMMENT_RATE_LIMIT_WINDOW_MS: "60000",
     COMMENT_RATE_LIMIT_MAX: "5",
     COMMENT_CAPTCHA_ENABLED: "false",
@@ -43,6 +44,9 @@ describe("environment runtime schema", () => {
     expect(env.i18n).toEqual({
       defaultLocale: "en",
       supportedLocales: ["en"],
+    });
+    expect(env.marketing).toEqual({
+      whatsappAdvertNumber: "+256783230321",
     });
     expect(env.auth.session.maxAgeSeconds).toBe(28800);
     expect(env.comments.rateLimit).toEqual({

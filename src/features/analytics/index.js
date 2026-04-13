@@ -4,6 +4,7 @@ import {
   observabilityFailureActionValues,
   serializeAuditEvent,
 } from "@/lib/analytics";
+import { getEquipmentDashboardPreview } from "@/features/equipment-management";
 import { buildLocalizedPath, publicRouteSegments } from "@/features/i18n/routing";
 import { defaultLocale } from "@/features/i18n/config";
 
@@ -324,6 +325,22 @@ function createScheduledRunSummary(events = []) {
 
     return rightDate.localeCompare(leftDate);
   });
+}
+
+function createEmptyEquipmentPreview() {
+  return {
+    items: [],
+    summary: {
+      draftCount: 0,
+      editedCount: 0,
+      generatedCount: 0,
+      matchingCount: 0,
+      plannedCount: 0,
+      postedCount: 0,
+      totalCount: 0,
+      updatedCount: 0,
+    },
+  };
 }
 
 async function resolvePrismaClient(prisma) {
@@ -662,7 +679,16 @@ export async function getAdminDashboardSnapshot(user, prisma) {
   const thirtyDayStart = subtractDays(now, 30);
   const failureWindowStart = subtractDays(now, 14);
 
-  const [generationJobCount30d, completedJobCount30d, failedJobCount30d, warningJobCount30d, recentJobs, recentFailures, scheduledRuns] =
+  const [
+    generationJobCount30d,
+    completedJobCount30d,
+    failedJobCount30d,
+    warningJobCount30d,
+    recentJobs,
+    recentFailures,
+    scheduledRuns,
+    equipmentPreview,
+  ] =
     await Promise.all([
       countGenerationJobs(db, {
         createdAt: {
@@ -685,6 +711,9 @@ export async function getAdminDashboardSnapshot(user, prisma) {
       getRecentGenerationJobs(db, {}, 6),
       getRecentFailureEvents(db, failureWindowStart, 12),
       getScheduledPublishingRuns(db, 16),
+      typeof db.equipment?.count === "function"
+        ? getEquipmentDashboardPreview(db)
+        : createEmptyEquipmentPreview(),
     ]);
 
   const analytics = canViewAnalytics
@@ -712,6 +741,7 @@ export async function getAdminDashboardSnapshot(user, prisma) {
 
   return {
     analytics,
+    equipmentPreview,
     permissions: {
       canViewAnalytics,
     },

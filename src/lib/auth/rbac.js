@@ -164,6 +164,11 @@ export const ADMIN_NAV_ITEMS = Object.freeze([
     permission: ADMIN_PERMISSIONS.GENERATE_POSTS,
   }),
   Object.freeze({
+    href: "/admin/equipment",
+    key: "equipment",
+    permission: ADMIN_PERMISSIONS.VIEW_CONTENT_LISTS,
+  }),
+  Object.freeze({
     href: "/admin/posts/drafts",
     key: "drafts",
     permission: ADMIN_PERMISSIONS.VIEW_CONTENT_LISTS,
@@ -235,6 +240,11 @@ const adminPageRules = Object.freeze([
     label: "Generate",
     matches: (pathname) => pathname === "/admin/generate",
     permission: ADMIN_PERMISSIONS.GENERATE_POSTS,
+  }),
+  Object.freeze({
+    label: "Equipment",
+    matches: (pathname) => pathname === "/admin/equipment",
+    permission: ADMIN_PERMISSIONS.VIEW_CONTENT_LISTS,
   }),
   Object.freeze({
     label: "Draft posts",

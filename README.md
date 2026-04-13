@@ -14,7 +14,7 @@
 ## Local setup
 
 1. Copy `.env.template.txt` to `.env`.
-2. Update the database, auth, media, and secret values in `.env`.
+2. Update the database, auth, media, WhatsApp advert, and secret values in `.env`.
 3. Install dependencies with `npm install`.
 4. Generate Prisma client with `npm run prisma:generate`.
 5. Seed baseline data with `npm run prisma:seed`.
@@ -28,6 +28,8 @@ The runtime reads `.env`. `.env.local` is not used as the primary configuration 
 - Committed template: `.env.template.txt`
 
 If startup fails validation, compare your `.env` against `.env.template.txt`.
+
+Bootstrap admin defaults in the template are `admin@admin.com` / `admin`. They are intended for first-run bootstrap only and should be changed before any shared or production deployment.
 
 ## Useful commands
 

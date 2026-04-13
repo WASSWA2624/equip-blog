@@ -4,6 +4,7 @@ const path = require("node:path");
 const { PrismaMariaDb } = require("@prisma/adapter-mariadb");
 const { PrismaClient, SourceType, UserRole } = require("@prisma/client");
 const { config: loadEnv } = require("dotenv");
+const { medicalEquipmentCatalog } = require("./data/equipment-catalog.js");
 
 loadEnv({
   path: path.resolve(process.cwd(), ".env"),
@@ -214,6 +215,14 @@ function getApiKeyEnvName(provider) {
   return `${provider.toUpperCase().replace(/[^A-Z0-9]+/g, "_")}_API_KEY`;
 }
 
+function normalizeCatalogEquipmentName(name) {
+  return `${name || ""}`.trim().toLowerCase().replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ");
+}
+
+function createCatalogEquipmentSlug(name) {
+  return normalizeCatalogEquipmentName(name).replace(/\s+/g, "-");
+}
+
 function createAdapterFromDatabaseUrl(databaseUrl) {
   const parsedUrl = new URL(databaseUrl);
   const database = parsedUrl.pathname.replace(/^\//, "");
@@ -279,45 +288,24 @@ async function seedLocales(tx) {
   return BASELINE_LOCALES.length;
 }
 
-async function invalidateAdminSessions(tx, userId) {
-  await tx.adminSession.updateMany({
-    where: {
-      invalidatedAt: null,
-      userId,
-    },
-    data: {
-      invalidatedAt: new Date(),
-    },
-  });
-}
-
 async function seedAdminUser(tx) {
   const email = requiredEnv("ADMIN_SEED_EMAIL").toLowerCase();
   const password = requiredEnv("ADMIN_SEED_PASSWORD");
-  const passwordHash = createPasswordHash(password);
   const existingUser = await tx.user.findUnique({
     where: { email },
-    select: { id: true },
+    select: { email: true, id: true },
   });
 
   if (existingUser) {
-    await tx.user.update({
-      where: { email },
-      data: {
-        name: "Super Admin",
-        passwordHash,
-        role: UserRole.SUPER_ADMIN,
-        isActive: true,
-      },
-    });
-    await invalidateAdminSessions(tx, existingUser.id);
-
-    return { created: false };
+    return {
+      created: false,
+      existingEmail: existingUser.email,
+      source: "existing_seed_user",
+    };
   }
 
   const existingSeedAdmin = await tx.user.findFirst({
     where: {
-      name: "Super Admin",
       role: UserRole.SUPER_ADMIN,
     },
     orderBy: {
@@ -330,22 +318,10 @@ async function seedAdminUser(tx) {
   });
 
   if (existingSeedAdmin) {
-    await tx.user.update({
-      where: { id: existingSeedAdmin.id },
-      data: {
-        email,
-        isActive: true,
-        name: "Super Admin",
-        passwordHash,
-        role: UserRole.SUPER_ADMIN,
-      },
-    });
-    await invalidateAdminSessions(tx, existingSeedAdmin.id);
-
     return {
       created: false,
-      previousEmail: existingSeedAdmin.email,
-      updatedEmail: existingSeedAdmin.email !== email,
+      existingEmail: existingSeedAdmin.email,
+      source: "existing_super_admin",
     };
   }
 
@@ -353,13 +329,17 @@ async function seedAdminUser(tx) {
     data: {
       email,
       name: "Super Admin",
-      passwordHash,
+      passwordHash: createPasswordHash(password),
       role: UserRole.SUPER_ADMIN,
       isActive: true,
     },
   });
 
-  return { created: true };
+  return {
+    created: true,
+    existingEmail: email,
+    source: "seed_created",
+  };
 }
 
 async function seedProviderConfigs(tx) {
@@ -424,6 +404,26 @@ async function seedTags(tx) {
   return DEFAULT_TAGS.length;
 }
 
+async function seedEquipmentCatalog(tx) {
+  for (const equipmentName of medicalEquipmentCatalog) {
+    await tx.equipment.upsert({
+      where: {
+        normalizedName: normalizeCatalogEquipmentName(equipmentName),
+      },
+      update: {
+        name: equipmentName,
+      },
+      create: {
+        name: equipmentName,
+        normalizedName: normalizeCatalogEquipmentName(equipmentName),
+        slug: createCatalogEquipmentSlug(equipmentName),
+      },
+    });
+  }
+
+  return medicalEquipmentCatalog.length;
+}
+
 async function main() {
   const prisma = new PrismaClient({
     adapter: createAdapterFromDatabaseUrl(requiredEnv("DATABASE_URL")),
@@ -438,6 +438,7 @@ async function main() {
       const sourceConfigs = await seedSourceConfigs(tx);
       const categories = await seedCategories(tx);
       const tags = await seedTags(tx);
+      const equipmentCatalog = await seedEquipmentCatalog(tx);
 
       return {
         locales,
@@ -447,6 +448,7 @@ async function main() {
         sourceConfigs,
         categories,
         tags,
+        equipmentCatalog,
       };
     });
 
@@ -459,6 +461,7 @@ async function main() {
       sourceConfigs: summary.sourceConfigs,
       categories: summary.categories,
       tags: summary.tags,
+      equipmentCatalog: summary.equipmentCatalog,
     });
   } finally {
     await prisma.$disconnect();
@@ -474,9 +477,13 @@ module.exports = {
   SOURCE_CONFIGS,
   createAdapterFromDatabaseUrl,
   createPasswordHash,
+  createCatalogEquipmentSlug,
   getApiKeyEnvName,
   getProviderConfigs,
   main,
+  medicalEquipmentCatalog,
+  normalizeCatalogEquipmentName,
+  seedEquipmentCatalog,
 };
 
 if (require.main === module) {

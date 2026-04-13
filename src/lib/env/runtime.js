@@ -99,6 +99,12 @@ const sharedEnvSchema = z
       })
       .transform(normalizeBaseUrl),
     DEFAULT_LOCALE: localeString("DEFAULT_LOCALE"),
+    NEXT_PUBLIC_WHATSAPP_ADVERT_NUMBER: optionalString().refine(
+      (value) => value === undefined || /^\+?[1-9]\d{7,15}$/.test(value),
+      {
+        message: "NEXT_PUBLIC_WHATSAPP_ADVERT_NUMBER must be a valid international phone number.",
+      },
+    ),
     SUPPORTED_LOCALES: csvString("SUPPORTED_LOCALES"),
   })
   .superRefine((env, context) => {
@@ -281,6 +287,9 @@ function mapSharedEnv(parsedEnv) {
     i18n: {
       defaultLocale: parsedEnv.DEFAULT_LOCALE,
       supportedLocales: parsedEnv.SUPPORTED_LOCALES,
+    },
+    marketing: {
+      whatsappAdvertNumber: parsedEnv.NEXT_PUBLIC_WHATSAPP_ADVERT_NUMBER || null,
     },
   };
 }
