@@ -4,128 +4,109 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import styled from "styled-components";
 
+function EyeIcon(props) {
+  return (
+    <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" {...props}>
+      <path
+        d="M2.25 12s3.75-6.75 9.75-6.75S21.75 12 21.75 12 18 18.75 12 18.75 2.25 12 2.25 12Z"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+      <circle cx="12" cy="12" fill="currentColor" r="2.2" />
+    </svg>
+  );
+}
+
+function EyeOffIcon(props) {
+  return (
+    <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" {...props}>
+      <path
+        d="M3 3l18 18"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M10.58 5.42A10.3 10.3 0 0 1 12 5.25c6 0 9.75 6.75 9.75 6.75a18.82 18.82 0 0 1-3.18 3.94"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M6.29 6.28A18.9 18.9 0 0 0 2.25 12S6 18.75 12 18.75a10.2 10.2 0 0 0 5.72-1.72"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M9.88 9.88A3 3 0 0 0 14.12 14.12"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+    </svg>
+  );
+}
+
 const Shell = styled.main`
   align-items: center;
+  background: #f5f7f8;
   display: grid;
   min-height: 100vh;
-  padding: ${({ theme }) => theme.spacing.xl};
+  padding: 1.5rem;
 `;
 
 const Panel = styled.section`
-  background:
-    radial-gradient(circle at top left, rgba(201, 123, 42, 0.22), transparent 36%),
-    linear-gradient(135deg, rgba(0, 95, 115, 0.96), rgba(16, 32, 51, 0.98));
-  border-radius: ${({ theme }) => theme.radius.lg};
-  box-shadow: 0 30px 90px rgba(16, 32, 51, 0.22);
-  color: white;
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
   display: grid;
+  gap: 1.25rem;
   margin: 0 auto;
-  max-width: 1040px;
-  overflow: hidden;
+  max-width: 360px;
+  padding: 1.5rem;
   width: 100%;
-
-  @media (min-width: 900px) {
-    grid-template-columns: minmax(0, 1.1fr) minmax(360px, 460px);
-  }
 `;
 
-const Narrative = styled.div`
+const Header = styled.header`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.lg};
-  padding: clamp(2rem, 4vw, 3.5rem);
-`;
-
-const Eyebrow = styled.p`
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  margin: 0;
-  text-transform: uppercase;
+  gap: 0.35rem;
 `;
 
 const Title = styled.h1`
-  font-size: clamp(2.4rem, 4vw, 4.6rem);
-  line-height: 0.98;
+  color: ${({ theme }) => theme.colors.text};
+  font-size: 1.25rem;
   margin: 0;
-  max-width: 10ch;
 `;
 
 const Description = styled.p`
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 1.02rem;
-  line-height: 1.7;
-  margin: 0;
-  max-width: 54ch;
-`;
-
-const InsightGrid = styled.div`
-  display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
-
-  @media (min-width: 600px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-`;
-
-const InsightCard = styled.article`
-  backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: ${({ theme }) => theme.radius.md};
-  display: grid;
-  gap: 0.4rem;
-  padding: ${({ theme }) => theme.spacing.lg};
-`;
-
-const InsightTitle = styled.h2`
-  font-size: 1rem;
-  margin: 0;
-`;
-
-const InsightBody = styled.p`
-  color: rgba(255, 255, 255, 0.72);
-  line-height: 1.6;
-  margin: 0;
-`;
-
-const FormCard = styled.div`
-  background: rgba(249, 251, 253, 0.98);
-  color: ${({ theme }) => theme.colors.text};
-  display: grid;
-  gap: ${({ theme }) => theme.spacing.lg};
-  padding: clamp(1.6rem, 3vw, 2.5rem);
-`;
-
-const FormHeader = styled.div`
-  display: grid;
-  gap: 0.45rem;
-`;
-
-const FormTitle = styled.h2`
-  font-size: 1.6rem;
-  margin: 0;
-`;
-
-const FormDescription = styled.p`
   color: ${({ theme }) => theme.colors.muted};
-  line-height: 1.6;
+  font-size: 0.95rem;
+  line-height: 1.5;
   margin: 0;
 `;
 
 const Form = styled.form`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: 0.9rem;
 `;
 
 const Field = styled.label`
   display: grid;
-  gap: 0.45rem;
+  gap: 0.4rem;
 `;
 
 const FieldLabel = styled.span`
-  font-size: 0.92rem;
-  font-weight: 700;
+  color: ${({ theme }) => theme.colors.text};
+  font-size: 0.9rem;
+  font-weight: 600;
 `;
 
 const PasswordField = styled.div`
@@ -133,78 +114,102 @@ const PasswordField = styled.div`
 `;
 
 const Input = styled.input`
-  background: white;
+  background: #ffffff;
   border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.radius.sm};
-  min-height: 48px;
-  padding: 0.8rem 0.9rem;
+  border-radius: 10px;
+  min-height: 46px;
+  padding: 0.75rem 0.85rem;
 
   &:focus {
     border-color: ${({ theme }) => theme.colors.primary};
-    box-shadow: 0 0 0 4px rgba(0, 95, 115, 0.12);
+    box-shadow: 0 0 0 3px rgba(0, 95, 115, 0.12);
     outline: none;
   }
 `;
 
 const PasswordInput = styled(Input)`
-  padding-right: 4.8rem;
+  padding-right: 3.75rem;
 `;
 
 const PasswordToggle = styled.button`
   align-items: center;
-  background: transparent;
-  border: none;
+  background: rgba(0, 95, 115, 0.08);
+  border: 1px solid rgba(0, 95, 115, 0.14);
+  border-radius: 999px;
   color: ${({ theme }) => theme.colors.primary};
   cursor: pointer;
   display: inline-flex;
-  font-size: 0.9rem;
-  font-weight: 700;
-  inset: 0 0 0 auto;
   justify-content: center;
-  min-width: 4.25rem;
-  padding: 0 0.85rem;
+  min-height: 2.25rem;
+  min-width: 2.25rem;
+  padding: 0;
   position: absolute;
+  right: 0.45rem;
+  top: 50%;
+  transform: translateY(-50%);
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    color 140ms ease;
+
+  &:hover {
+    background: rgba(0, 95, 115, 0.12);
+    border-color: rgba(0, 95, 115, 0.2);
+  }
+
+  &[aria-pressed="true"] {
+    background: ${({ theme }) => theme.colors.primary};
+    border-color: ${({ theme }) => theme.colors.primary};
+    color: #ffffff;
+  }
 
   &:focus-visible {
-    outline: 2px solid ${({ theme }) => theme.colors.primary};
-    outline-offset: -2px;
+    box-shadow: 0 0 0 3px rgba(0, 95, 115, 0.16);
+    outline: none;
+  }
+`;
+
+const ToggleIcon = styled.span`
+  align-items: center;
+  display: inline-flex;
+  height: 1.1rem;
+  justify-content: center;
+  width: 1.1rem;
+
+  svg {
+    display: block;
+    height: 100%;
+    width: 100%;
   }
 `;
 
 const ErrorNotice = styled.p`
   background: rgba(180, 35, 24, 0.08);
-  border: 1px solid rgba(180, 35, 24, 0.2);
-  border-radius: ${({ theme }) => theme.radius.sm};
+  border: 1px solid rgba(180, 35, 24, 0.16);
+  border-radius: 10px;
   color: ${({ theme }) => theme.colors.danger};
+  font-size: 0.92rem;
+  line-height: 1.45;
   margin: 0;
-  padding: 0.8rem 0.9rem;
+  padding: 0.75rem 0.85rem;
 `;
 
 const SubmitButton = styled.button`
   background: ${({ theme }) => theme.colors.primary};
   border: none;
-  border-radius: 999px;
-  color: white;
+  border-radius: 10px;
+  color: #ffffff;
   cursor: pointer;
-  min-height: 50px;
-  padding: 0.85rem 1.2rem;
-  transition: transform 120ms ease, opacity 120ms ease;
+  font: inherit;
+  font-weight: 600;
+  min-height: 46px;
+  padding: 0.75rem 1rem;
 
   &:disabled {
     cursor: wait;
     opacity: 0.72;
   }
-
-  &:not(:disabled):hover {
-    transform: translateY(-1px);
-  }
-`;
-
-const FinePrint = styled.p`
-  color: ${({ theme }) => theme.colors.muted};
-  font-size: 0.92rem;
-  line-height: 1.6;
-  margin: 0;
 `;
 
 export default function AdminLoginScreen({ nextPath }) {
@@ -254,95 +259,50 @@ export default function AdminLoginScreen({ nextPath }) {
   return (
     <Shell>
       <Panel>
-        <Narrative>
-          <div>
-            <Eyebrow>Admin Access</Eyebrow>
-            <Title>Source-grounded publishing starts here.</Title>
-          </div>
-          <Description>
-            Release 1 keeps the public site open while the editorial workspace stays behind
-            authenticated admin sessions. Sign in with the seeded admin account to continue.
-          </Description>
-          <InsightGrid>
-            <InsightCard>
-              <InsightTitle>Email and password</InsightTitle>
-              <InsightBody>
-                The admin workflow uses credential auth first, matching the Release 1 access rules.
-              </InsightBody>
-            </InsightCard>
-            <InsightCard>
-              <InsightTitle>Protected sessions</InsightTitle>
-              <InsightBody>
-                Session cookies are validated server-side so expired or tampered access is rejected.
-              </InsightBody>
-            </InsightCard>
-            <InsightCard>
-              <InsightTitle>Audit trail ready</InsightTitle>
-              <InsightBody>
-                Login and logout events are recorded to support future editorial accountability work.
-              </InsightBody>
-            </InsightCard>
-            <InsightCard>
-              <InsightTitle>RBAC next</InsightTitle>
-              <InsightBody>
-                This step secures the admin surface now and leaves room for role-based controls next.
-              </InsightBody>
-            </InsightCard>
-          </InsightGrid>
-        </Narrative>
-        <FormCard>
-          <FormHeader>
-            <FormTitle>Sign in to the admin workspace</FormTitle>
-            <FormDescription>
-              Use the seeded admin credentials from your environment and Prisma seed setup. The
-              bootstrap template defaults are <code>admin@admin.com</code> and <code>admin</code>.
-            </FormDescription>
-          </FormHeader>
-          <Form onSubmit={handleSubmit}>
-            <Field>
-              <FieldLabel>Email address</FieldLabel>
-              <Input
-                autoComplete="email"
-                name="email"
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="admin@admin.com"
+        <Header>
+          <Title>Admin login</Title>
+          <Description>Sign in with your admin credentials.</Description>
+        </Header>
+        <Form onSubmit={handleSubmit}>
+          <Field>
+            <FieldLabel>Email</FieldLabel>
+            <Input
+              autoComplete="email"
+              name="email"
+              onChange={(event) => setEmail(event.target.value)}
+              required
+              type="email"
+              value={email}
+            />
+          </Field>
+          <Field>
+            <FieldLabel>Password</FieldLabel>
+            <PasswordField>
+              <PasswordInput
+                autoComplete="current-password"
+                name="password"
+                onChange={(event) => setPassword(event.target.value)}
                 required
-                type="email"
-                value={email}
+                type={isPasswordVisible ? "text" : "password"}
+                value={password}
               />
-            </Field>
-            <Field>
-              <FieldLabel>Password</FieldLabel>
-              <PasswordField>
-                <PasswordInput
-                  autoComplete="current-password"
-                  name="password"
-                  onChange={(event) => setPassword(event.target.value)}
-                  placeholder="admin"
-                  required
-                  type={isPasswordVisible ? "text" : "password"}
-                  value={password}
-                />
-                <PasswordToggle
-                  aria-label={isPasswordVisible ? "Hide password" : "Show password"}
-                  aria-pressed={isPasswordVisible}
-                  onClick={() => setIsPasswordVisible((currentValue) => !currentValue)}
-                  type="button"
-                >
-                  {isPasswordVisible ? "Hide" : "Show"}
-                </PasswordToggle>
-              </PasswordField>
-            </Field>
-            {error ? <ErrorNotice aria-live="polite">{error}</ErrorNotice> : null}
-            <SubmitButton disabled={isSubmitting || isNavigating} type="submit">
-              {isSubmitting || isNavigating ? "Signing in..." : "Sign in"}
-            </SubmitButton>
-          </Form>
-          <FinePrint>
-            Successful sign-in returns you to the requested admin route and creates a protected session
-            cookie. Replace the bootstrap defaults after the first setup.
-          </FinePrint>
-        </FormCard>
+              <PasswordToggle
+                aria-label={isPasswordVisible ? "Hide password" : "Show password"}
+                aria-pressed={isPasswordVisible}
+                onClick={() => setIsPasswordVisible((currentValue) => !currentValue)}
+                type="button"
+              >
+                <ToggleIcon>
+                  {isPasswordVisible ? <EyeOffIcon /> : <EyeIcon />}
+                </ToggleIcon>
+              </PasswordToggle>
+            </PasswordField>
+          </Field>
+          {error ? <ErrorNotice aria-live="polite">{error}</ErrorNotice> : null}
+          <SubmitButton disabled={isSubmitting || isNavigating} type="submit">
+            {isSubmitting || isNavigating ? "Signing in..." : "Sign in"}
+          </SubmitButton>
+        </Form>
       </Panel>
     </Shell>
   );
