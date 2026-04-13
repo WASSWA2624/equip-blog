@@ -18,6 +18,10 @@ export async function generateMetadata() {
   return {
     title: "Equip Blog Admin",
     description: "Editorial workspace for publishing, moderation, SEO, and media operations.",
+    robots: {
+      follow: false,
+      index: false,
+    },
   };
 }
 

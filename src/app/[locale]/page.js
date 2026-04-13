@@ -1,10 +1,10 @@
 import { PublicHomePage } from "@/components/public";
 import { getMessages } from "@/features/i18n/get-messages";
 import { publicRouteSegments } from "@/features/i18n/routing";
-import { getPublishedHomePageData, publicDataRevalidateSeconds } from "@/features/public-site";
+import { getPublishedHomePageData } from "@/features/public-site";
 import { buildPageMetadata } from "@/lib/seo";
 
-export const revalidate = publicDataRevalidateSeconds;
+export const revalidate = 300;
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;

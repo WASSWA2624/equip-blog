@@ -91,7 +91,7 @@ export const Panel = styled.section`
     0 18px 40px rgba(22, 40, 64, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.72);
   display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: 14px;
   overflow: hidden;
   padding: clamp(1rem, 2.6vw, 1.55rem);
 `;
@@ -245,7 +245,7 @@ export const SectionDescription = styled.p`
 
 export const Grid = styled.div`
   display: grid;
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: 8px;
 
   ${({ $columns }) =>
     $columns === "three" &&
@@ -266,7 +266,7 @@ const Card = styled.article`
   border-radius: 14px;
   box-shadow: 0 10px 24px rgba(22, 40, 64, 0.04);
   display: grid;
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: 8px;
   min-height: 100%;
   padding: clamp(1rem, 2.2vw, 1.35rem);
 `;
@@ -287,14 +287,14 @@ export const MetaRow = styled.div`
   color: rgba(80, 92, 115, 0.92);
   display: flex;
   flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: 8px;
   font-size: 0.88rem;
 `;
 
 const ChipRow = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: 8px;
 `;
 
 const Chip = styled(Link)`
@@ -362,7 +362,7 @@ const Pager = styled.nav`
   align-items: center;
   display: flex;
   flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: 8px;
   justify-content: space-between;
 `;
 
@@ -373,7 +373,7 @@ const PagerSummary = styled.p`
 
 const PagerActions = styled.div`
   display: flex;
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: 8px;
 `;
 
 const PagerButton = styled(Link)`
@@ -424,7 +424,7 @@ export const SearchLink = styled(Link)`
 `;
 
 const ContentSection = styled(Panel)`
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: 14px;
 `;
 
 export const StaticSectionGrid = styled.div`
@@ -439,7 +439,7 @@ export const StaticSectionGrid = styled.div`
 export const RichText = styled.div`
   color: rgba(72, 84, 108, 0.94);
   display: grid;
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: 8px;
   line-height: 1.62;
 `;
 

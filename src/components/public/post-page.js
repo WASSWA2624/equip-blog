@@ -3874,3 +3874,5 @@ export function PublicPostPage({ locale, messages, pageData }) {
     </PageMain>
   );
 }
+
+export default PublicPostPage;
