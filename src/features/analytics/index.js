@@ -1,4 +1,5 @@
 import { ADMIN_PERMISSIONS, hasAdminPermission } from "@/lib/auth/rbac";
+import { getProviderConfigurationSnapshot } from "@/lib/ai/provider-configs";
 import {
   isFailureAuditAction,
   observabilityFailureActionValues,
@@ -675,6 +676,9 @@ export async function getAdminDashboardSnapshot(user, prisma) {
   const db = await resolvePrismaClient(prisma);
   const now = new Date();
   const canViewAnalytics = hasAdminPermission(user, ADMIN_PERMISSIONS.VIEW_ANALYTICS);
+  const canGeneratePosts = hasAdminPermission(user, ADMIN_PERMISSIONS.GENERATE_POSTS);
+  const canManageProviders = hasAdminPermission(user, ADMIN_PERMISSIONS.MANAGE_PROVIDER_CONFIG);
+  const canViewEquipment = hasAdminPermission(user, ADMIN_PERMISSIONS.VIEW_CONTENT_LISTS);
   const trendWindow = createDateWindow(14, now);
   const thirtyDayStart = subtractDays(now, 30);
   const failureWindowStart = subtractDays(now, 14);
@@ -688,6 +692,7 @@ export async function getAdminDashboardSnapshot(user, prisma) {
     recentFailures,
     scheduledRuns,
     equipmentPreview,
+    providerConfiguration,
   ] =
     await Promise.all([
       countGenerationJobs(db, {
@@ -714,7 +719,26 @@ export async function getAdminDashboardSnapshot(user, prisma) {
       typeof db.equipment?.count === "function"
         ? getEquipmentDashboardPreview(db)
         : createEmptyEquipmentPreview(),
+      typeof db.modelProviderConfig?.findMany === "function"
+        ? getProviderConfigurationSnapshot(db)
+        : Promise.resolve({
+            configs: [],
+            summary: {
+              configCount: 0,
+              enabledCount: 0,
+              environmentFallbackCount: 0,
+              fallbackReady: false,
+              missingCredentialCount: 0,
+              storedCredentialCount: 0,
+            },
+          }),
     ]);
+  const defaultProviderConfig =
+    providerConfiguration.configs.find((config) => config.isDefault) ||
+    providerConfiguration.configs.find(
+      (config) => config.isEnabled && config.purpose === "draft_generation",
+    ) ||
+    null;
 
   const analytics = canViewAnalytics
     ? await (async () => {
@@ -748,6 +772,22 @@ export async function getAdminDashboardSnapshot(user, prisma) {
     recentFailures,
     recentGenerationJobs: recentJobs,
     scheduledRuns,
+    workspace: {
+      providerConfiguration: {
+        defaultConfig: defaultProviderConfig,
+        summary: providerConfiguration.summary,
+      },
+      routes: {
+        equipment: "/admin/equipment",
+        generate: "/admin/generate",
+        providers: "/admin/providers",
+      },
+      permissions: {
+        canGeneratePosts,
+        canManageProviders,
+        canViewEquipment,
+      },
+    },
     summary: {
       completedJobCount30d,
       failedJobCount30d,

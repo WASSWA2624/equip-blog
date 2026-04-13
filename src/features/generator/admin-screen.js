@@ -25,6 +25,10 @@ function createLocaleOption() {
 }
 
 export async function getAdminGeneratePostSnapshot(user, prisma) {
+  return getAdminGeneratePostSnapshotWithOptions(user, prisma);
+}
+
+export async function getAdminGeneratePostSnapshotWithOptions(user, prisma, options = {}) {
   const db = await resolvePrismaClient(prisma);
   const providerConfigs = await db.modelProviderConfig.findMany({
     orderBy: [{ isDefault: "desc" }, { provider: "asc" }, { model: "asc" }, { updatedAt: "desc" }],
@@ -49,6 +53,7 @@ export async function getAdminGeneratePostSnapshot(user, prisma) {
   return {
     defaults: createAdminGenerationFormState({
       locale: defaultLocale,
+      ...(options.defaults || {}),
       providerConfigId: defaultProviderConfig?.id || "",
     }),
     localeOptions: [createLocaleOption()],

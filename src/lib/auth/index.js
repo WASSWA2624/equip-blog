@@ -12,6 +12,7 @@ import {
 import { isAdminRole } from "@/lib/auth/rbac";
 import { env } from "@/lib/env/server";
 import { getPrismaClient } from "@/lib/prisma";
+import { isRecoverablePrismaError } from "@/lib/prisma/errors";
 
 const PASSWORD_HASH_ALGORITHM = "scrypt";
 const PASSWORD_HASH_KEY_LENGTH = 64;
@@ -143,31 +144,39 @@ async function validateAdminSessionToken(token) {
     return { status: "missing" };
   }
 
-  const session = await getStoredSessionByToken(token);
+  try {
+    const session = await getStoredSessionByToken(token);
 
-  if (!session) {
-    return { status: "invalid" };
+    if (!session) {
+      return { status: "invalid" };
+    }
+
+    if (session.invalidatedAt) {
+      return { status: "invalidated" };
+    }
+
+    if (session.expiresAt <= new Date()) {
+      await invalidateStoredSession(getPrismaClient(), session, "expired");
+      return { status: "expired" };
+    }
+
+    if (!isAllowedAdminUser(session.user)) {
+      await invalidateStoredSession(getPrismaClient(), session, "user_inactive_or_not_admin");
+      return { status: "forbidden" };
+    }
+
+    return {
+      session,
+      status: "authenticated",
+      user: getPublicAdminUser(session.user),
+    };
+  } catch (error) {
+    if (isRecoverablePrismaError(error)) {
+      return { status: "auth_unavailable" };
+    }
+
+    throw error;
   }
-
-  if (session.invalidatedAt) {
-    return { status: "invalidated" };
-  }
-
-  if (session.expiresAt <= new Date()) {
-    await invalidateStoredSession(getPrismaClient(), session, "expired");
-    return { status: "expired" };
-  }
-
-  if (!isAllowedAdminUser(session.user)) {
-    await invalidateStoredSession(getPrismaClient(), session, "user_inactive_or_not_admin");
-    return { status: "forbidden" };
-  }
-
-  return {
-    session,
-    status: "authenticated",
-    user: getPublicAdminUser(session.user),
-  };
 }
 
 function getSessionTokenFromRequest(request) {
@@ -227,66 +236,78 @@ export function hashSessionToken(token) {
 export async function authenticateAdminCredentials({ email, password, userAgent = null }) {
   const prisma = getPrismaClient();
   const normalizedEmail = normalizeEmail(email);
-  const user = await prisma.user.findUnique({
-    where: {
-      email: normalizedEmail,
-    },
-  });
 
-  if (!user || !isAllowedAdminUser(user) || !verifyPassword(password, user.passwordHash)) {
-    await createAuditEvent(prisma, {
-      action: "AUTH_LOGIN_FAILED",
-      entityId: normalizedEmail,
-      entityType: "auth_identity",
-      payloadJson: {
-        reason: !user
-          ? "user_not_found"
-            : !user.isActive
-              ? "user_inactive"
-            : !isAdminRole(user.role)
-              ? "role_not_allowed"
-              : "invalid_password",
-      },
-    });
-
-    return {
-      status: "invalid_credentials",
-      success: false,
-    };
-  }
-
-  const expiresAt = new Date(Date.now() + env.auth.session.maxAgeSeconds * 1000);
-  const sessionToken = crypto.randomBytes(32).toString("base64url");
-  const session = await prisma.$transaction(async (tx) => {
-    const createdSession = await tx.adminSession.create({
-      data: {
-        expiresAt,
-        tokenHash: hashSessionToken(sessionToken),
-        userAgent,
-        userId: user.id,
-      },
-    });
-
-    await createAuditEvent(tx, {
-      action: "AUTH_LOGIN_SUCCEEDED",
-      actorId: user.id,
-      entityId: createdSession.id,
-      entityType: "auth_session",
-      payloadJson: {
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
         email: normalizedEmail,
       },
     });
 
-    return createdSession;
-  });
+    if (!user || !isAllowedAdminUser(user) || !verifyPassword(password, user.passwordHash)) {
+      await createAuditEvent(prisma, {
+        action: "AUTH_LOGIN_FAILED",
+        entityId: normalizedEmail,
+        entityType: "auth_identity",
+        payloadJson: {
+          reason: !user
+            ? "user_not_found"
+              : !user.isActive
+                ? "user_inactive"
+              : !isAdminRole(user.role)
+                ? "role_not_allowed"
+                : "invalid_password",
+        },
+      });
 
-  return {
-    expiresAt,
-    session,
-    sessionToken,
-    success: true,
-    user: getPublicAdminUser(user),
-  };
+      return {
+        status: "invalid_credentials",
+        success: false,
+      };
+    }
+
+    const expiresAt = new Date(Date.now() + env.auth.session.maxAgeSeconds * 1000);
+    const sessionToken = crypto.randomBytes(32).toString("base64url");
+    const session = await prisma.$transaction(async (tx) => {
+      const createdSession = await tx.adminSession.create({
+        data: {
+          expiresAt,
+          tokenHash: hashSessionToken(sessionToken),
+          userAgent,
+          userId: user.id,
+        },
+      });
+
+      await createAuditEvent(tx, {
+        action: "AUTH_LOGIN_SUCCEEDED",
+        actorId: user.id,
+        entityId: createdSession.id,
+        entityType: "auth_session",
+        payloadJson: {
+          email: normalizedEmail,
+        },
+      });
+
+      return createdSession;
+    });
+
+    return {
+      expiresAt,
+      session,
+      sessionToken,
+      success: true,
+      user: getPublicAdminUser(user),
+    };
+  } catch (error) {
+    if (isRecoverablePrismaError(error)) {
+      return {
+        status: "auth_unavailable",
+        success: false,
+      };
+    }
+
+    throw error;
+  }
 }
 
 export async function invalidateAdminSession(sessionToken, reason = "logout") {
@@ -294,33 +315,41 @@ export async function invalidateAdminSession(sessionToken, reason = "logout") {
     return null;
   }
 
-  const prisma = getPrismaClient();
-  const session = await getStoredSessionByToken(sessionToken);
+  try {
+    const prisma = getPrismaClient();
+    const session = await getStoredSessionByToken(sessionToken);
 
-  if (!session || session.invalidatedAt) {
-    return null;
+    if (!session || session.invalidatedAt) {
+      return null;
+    }
+
+    return prisma.$transaction(async (tx) => {
+      const invalidatedSession = await tx.adminSession.update({
+        where: { id: session.id },
+        data: {
+          invalidatedAt: new Date(),
+        },
+      });
+
+      await createAuditEvent(tx, {
+        action: "AUTH_LOGOUT_SUCCEEDED",
+        actorId: session.userId,
+        entityId: session.id,
+        entityType: "auth_session",
+        payloadJson: {
+          reason,
+        },
+      });
+
+      return invalidatedSession;
+    });
+  } catch (error) {
+    if (isRecoverablePrismaError(error)) {
+      return null;
+    }
+
+    throw error;
   }
-
-  return prisma.$transaction(async (tx) => {
-    const invalidatedSession = await tx.adminSession.update({
-      where: { id: session.id },
-      data: {
-        invalidatedAt: new Date(),
-      },
-    });
-
-    await createAuditEvent(tx, {
-      action: "AUTH_LOGOUT_SUCCEEDED",
-      actorId: session.userId,
-      entityId: session.id,
-      entityType: "auth_session",
-      payloadJson: {
-        reason,
-      },
-    });
-
-    return invalidatedSession;
-  });
 }
 
 export async function validateRequestAdminSession(request) {
@@ -331,6 +360,10 @@ export async function validateRequestAdminSession(request) {
   }
 
   const validation = await validateAdminSessionToken(sessionToken);
+
+  if (validation.status === "auth_unavailable") {
+    return { status: "auth_unavailable" };
+  }
 
   if (validation.status !== "authenticated") {
     return { status: "invalid_or_expired_session" };

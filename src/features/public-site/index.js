@@ -14,6 +14,7 @@ import { env } from "@/lib/env/server";
 import { generatedArticleSectionOrder } from "@/lib/content/article-structure";
 import { getRenderableImageUrl, isReservedFixtureImageUrl } from "@/lib/media";
 import { normalizeDisplayText, normalizeEquipmentName } from "@/lib/normalization";
+import { isRecoverablePrismaReadError } from "@/lib/prisma/errors";
 import { sanitizeMediaUrl } from "@/lib/security";
 
 export const publicDataRevalidateSeconds = 300;
@@ -968,6 +969,47 @@ function createPagination(totalItems, currentPage, pageSize) {
     totalItems,
     totalPages,
   };
+}
+
+function createEmptyPublicListing(locale, { page = 1, pageSize = publicListingPageSize, search = "" } = {}) {
+  return {
+    locale,
+    pagination: createPagination(0, normalizePositiveInteger(page), normalizePositiveInteger(pageSize, publicListingPageSize)),
+    posts: [],
+    search: normalizeDisplayText(search) || "",
+  };
+}
+
+function createEmptyPublicHomePageData(locale) {
+  return {
+    featuredPost: null,
+    latestPosts: [],
+    locale,
+    searchPath: buildLocalizedPath(locale, publicRouteSegments.search),
+    spotlights: {
+      categories: [],
+      equipment: [],
+      manufacturers: [],
+    },
+    stats: {
+      categoryCount: 0,
+      equipmentCount: 0,
+      manufacturerCount: 0,
+      postCount: 0,
+    },
+  };
+}
+
+async function readPublicDataWithFallback(loader, fallbackValue) {
+  try {
+    return await loader();
+  } catch (error) {
+    if (isRecoverablePrismaReadError(error)) {
+      return typeof fallbackValue === "function" ? fallbackValue() : fallbackValue;
+    }
+
+    throw error;
+  }
 }
 
 function buildPublishedPostsWhere({ locale }) {
@@ -2371,7 +2413,10 @@ async function getPublishedPostPageDataInternal(
 
 const getCachedPublishedLandingPageData = unstable_cache(
   async (entityKind, locale, page, pageSize, slug) =>
-    getPublishedLandingPageDataInternal({ entityKind, locale, page, pageSize, slug }),
+    readPublicDataWithFallback(
+      () => getPublishedLandingPageDataInternal({ entityKind, locale, page, pageSize, slug }),
+      null,
+    ),
   ["public-landing-page-data"],
   {
     revalidate: publicDataRevalidateSeconds,
@@ -2379,7 +2424,11 @@ const getCachedPublishedLandingPageData = unstable_cache(
 );
 
 const getCachedPublishedHomePageData = unstable_cache(
-  async (locale) => getPublishedHomePageDataInternal({ locale }),
+  async (locale) =>
+    readPublicDataWithFallback(
+      () => getPublishedHomePageDataInternal({ locale }),
+      () => createEmptyPublicHomePageData(locale),
+    ),
   ["public-home-page-data"],
   {
     revalidate: publicDataRevalidateSeconds,
@@ -2388,7 +2437,10 @@ const getCachedPublishedHomePageData = unstable_cache(
 
 const getCachedPublishedPostPageData = unstable_cache(
   async (commentsPage, locale, slug) =>
-    getPublishedPostPageDataInternal({ commentsPage, locale, slug }),
+    readPublicDataWithFallback(
+      () => getPublishedPostPageDataInternal({ commentsPage, locale, slug }),
+      null,
+    ),
   ["public-post-page-data"],
   {
     revalidate: publicDataRevalidateSeconds,
@@ -2397,7 +2449,10 @@ const getCachedPublishedPostPageData = unstable_cache(
 
 const getCachedPublishedPostsList = unstable_cache(
   async (locale, page, pageSize, search) =>
-    listPublishedPostsInternal({ locale, page, pageSize, search }),
+    readPublicDataWithFallback(
+      () => listPublishedPostsInternal({ locale, page, pageSize, search }),
+      () => createEmptyPublicListing(locale, { page, pageSize, search }),
+    ),
   ["public-post-list-data"],
   {
     revalidate: publicDataRevalidateSeconds,
@@ -2406,7 +2461,10 @@ const getCachedPublishedPostsList = unstable_cache(
 
 const getCachedPublishedSearchResults = unstable_cache(
   async (locale, page, pageSize, search) =>
-    searchPublishedPostsInternal({ locale, page, pageSize, search }),
+    readPublicDataWithFallback(
+      () => searchPublishedPostsInternal({ locale, page, pageSize, search }),
+      () => createEmptyPublicListing(locale, { page, pageSize, search }),
+    ),
   ["public-search-data"],
   {
     revalidate: publicDataRevalidateSeconds,
@@ -2415,7 +2473,10 @@ const getCachedPublishedSearchResults = unstable_cache(
 
 const getCachedPublishedEquipmentSuggestions = unstable_cache(
   async (limit, locale, search) =>
-    searchPublishedEquipmentSuggestionsInternal({ limit, locale, search }),
+    readPublicDataWithFallback(
+      () => searchPublishedEquipmentSuggestionsInternal({ limit, locale, search }),
+      [],
+    ),
   ["public-equipment-suggestion-data"],
   {
     revalidate: publicDataRevalidateSeconds,
@@ -2427,83 +2488,112 @@ export async function listPublishedPosts(options = {}, prisma) {
     return searchPublishedPosts(options, prisma);
   }
 
-  if (prisma) {
-    return listPublishedPostsInternal(options, prisma);
-  }
+  const resolvedLocale = normalizePublicLocale(options.locale);
+  const fallbackValue = () =>
+    createEmptyPublicListing(resolvedLocale, {
+      page: options.page,
+      pageSize: options.pageSize,
+    });
 
-  return getCachedPublishedPostsList(
-    normalizePublicLocale(options.locale),
-    normalizePositiveInteger(options.page),
-    normalizePositiveInteger(options.pageSize, publicListingPageSize),
-    normalizeDisplayText(options.search) || "",
-  );
+  return readPublicDataWithFallback(() => {
+    if (prisma) {
+      return listPublishedPostsInternal(options, prisma);
+    }
+
+    return getCachedPublishedPostsList(
+      resolvedLocale,
+      normalizePositiveInteger(options.page),
+      normalizePositiveInteger(options.pageSize, publicListingPageSize),
+      normalizeDisplayText(options.search) || "",
+    );
+  }, fallbackValue);
 }
 
 export async function searchPublishedPosts(options = {}, prisma) {
-  if (prisma) {
-    return searchPublishedPostsInternal(options, prisma);
-  }
+  const resolvedLocale = normalizePublicLocale(options.locale);
+  const fallbackValue = () =>
+    createEmptyPublicListing(resolvedLocale, {
+      page: options.page,
+      pageSize: options.pageSize,
+      search: options.search,
+    });
 
-  return getCachedPublishedSearchResults(
-    normalizePublicLocale(options.locale),
-    normalizePositiveInteger(options.page),
-    normalizePositiveInteger(options.pageSize, publicListingPageSize),
-    normalizeDisplayText(options.search) || "",
-  );
+  return readPublicDataWithFallback(() => {
+    if (prisma) {
+      return searchPublishedPostsInternal(options, prisma);
+    }
+
+    return getCachedPublishedSearchResults(
+      resolvedLocale,
+      normalizePositiveInteger(options.page),
+      normalizePositiveInteger(options.pageSize, publicListingPageSize),
+      normalizeDisplayText(options.search) || "",
+    );
+  }, fallbackValue);
 }
 
 export async function searchPublishedEquipmentSuggestions(options = {}, prisma) {
-  if (prisma) {
-    return searchPublishedEquipmentSuggestionsInternal(options, prisma);
-  }
+  return readPublicDataWithFallback(() => {
+    if (prisma) {
+      return searchPublishedEquipmentSuggestionsInternal(options, prisma);
+    }
 
-  return getCachedPublishedEquipmentSuggestions(
-    normalizePositiveInteger(options.limit, publicEquipmentSuggestionLimit),
-    normalizePublicLocale(options.locale),
-    normalizeDisplayText(options.search) || "",
-  );
+    return getCachedPublishedEquipmentSuggestions(
+      normalizePositiveInteger(options.limit, publicEquipmentSuggestionLimit),
+      normalizePublicLocale(options.locale),
+      normalizeDisplayText(options.search) || "",
+    );
+  }, []);
 }
 
 export async function getPublishedHomePageData(options = {}, prisma) {
-  if (prisma) {
-    return getPublishedHomePageDataInternal(
-      {
-        ...options,
-        locale: normalizePublicLocale(options.locale),
-      },
-      prisma,
-    );
-  }
+  const resolvedLocale = normalizePublicLocale(options.locale);
 
-  return getCachedPublishedHomePageData(normalizePublicLocale(options.locale));
+  return readPublicDataWithFallback(() => {
+    if (prisma) {
+      return getPublishedHomePageDataInternal(
+        {
+          ...options,
+          locale: resolvedLocale,
+        },
+        prisma,
+      );
+    }
+
+    return getCachedPublishedHomePageData(resolvedLocale);
+  }, () => createEmptyPublicHomePageData(resolvedLocale));
 }
 
 export async function getPublishedLandingPageData(options = {}, prisma) {
-  if (prisma) {
-    return getPublishedLandingPageDataInternal(options, prisma);
-  }
+  return readPublicDataWithFallback(() => {
+    if (prisma) {
+      return getPublishedLandingPageDataInternal(options, prisma);
+    }
 
-  return getCachedPublishedLandingPageData(
-    options.entityKind,
-    normalizePublicLocale(options.locale),
-    normalizePositiveInteger(options.page),
-    normalizePositiveInteger(options.pageSize, publicListingPageSize),
-    options.slug,
-  );
+    return getCachedPublishedLandingPageData(
+      options.entityKind,
+      normalizePublicLocale(options.locale),
+      normalizePositiveInteger(options.page),
+      normalizePositiveInteger(options.pageSize, publicListingPageSize),
+      options.slug,
+    );
+  }, null);
 }
 
 export async function getPublishedPostPageData(options = {}, prisma) {
-  if (prisma) {
-    return getPublishedPostPageDataInternal(options, prisma);
-  }
+  return readPublicDataWithFallback(() => {
+    if (prisma) {
+      return getPublishedPostPageDataInternal(options, prisma);
+    }
 
-  return getCachedPublishedPostPageData(
-    normalizePositiveInteger(options.commentsPage),
-    normalizePublicLocale(options.locale),
-    options.slug,
-  );
+    return getCachedPublishedPostPageData(
+      normalizePositiveInteger(options.commentsPage),
+      normalizePublicLocale(options.locale),
+      options.slug,
+    );
+  }, null);
 }
 
 export async function listRelatedPublishedPosts(options = {}, prisma) {
-  return listRelatedPublishedPostsInternal(options, prisma);
+  return readPublicDataWithFallback(() => listRelatedPublishedPostsInternal(options, prisma), []);
 }

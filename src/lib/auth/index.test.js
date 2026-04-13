@@ -35,6 +35,12 @@ function createBaseEnv() {
 
 const originalEnv = process.env;
 
+function createRecoverablePrismaError(message, code = "P2021") {
+  const error = new Error(message);
+  error.code = code;
+  return error;
+}
+
 describe("auth helpers", () => {
   beforeEach(() => {
     vi.resetModules();
@@ -64,5 +70,63 @@ describe("auth helpers", () => {
     expect(normalizeEmail(" Admin@Example.com ")).toBe("admin@example.com");
     expect(hashSessionToken("session-token")).toBe(hashSessionToken("session-token"));
     expect(hashSessionToken("session-token")).not.toBe(hashSessionToken("other-token"));
+  });
+
+  it("treats missing auth session storage as unavailable instead of throwing", async () => {
+    vi.doMock("next/headers", () => ({
+      cookies: vi.fn().mockResolvedValue({
+        get: vi.fn().mockReturnValue({ value: "session-token" }),
+      }),
+    }));
+    vi.doMock("@/lib/prisma", () => ({
+      getPrismaClient: vi.fn(() => ({
+        adminSession: {
+          findUnique: vi.fn().mockRejectedValue(
+            createRecoverablePrismaError(
+              "The table `admin_session` does not exist in the current database.",
+            ),
+          ),
+        },
+      })),
+    }));
+
+    const { getOptionalAdminSession, validateRequestAdminSession } = await import("./index");
+
+    await expect(getOptionalAdminSession()).resolves.toBeNull();
+    await expect(
+      validateRequestAdminSession({
+        cookies: {
+          get: vi.fn().mockReturnValue({ value: "session-token" }),
+        },
+      }),
+    ).resolves.toEqual({
+      status: "auth_unavailable",
+    });
+  });
+
+  it("reports auth_unavailable when login storage is missing", async () => {
+    vi.doMock("@/lib/prisma", () => ({
+      getPrismaClient: vi.fn(() => ({
+        user: {
+          findUnique: vi.fn().mockRejectedValue(
+            createRecoverablePrismaError(
+              "The table `user` does not exist in the current database.",
+            ),
+          ),
+        },
+      })),
+    }));
+
+    const { authenticateAdminCredentials } = await import("./index");
+
+    await expect(
+      authenticateAdminCredentials({
+        email: "admin@example.com",
+        password: "admin",
+      }),
+    ).resolves.toMatchObject({
+      status: "auth_unavailable",
+      success: false,
+    });
   });
 });

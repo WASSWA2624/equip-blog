@@ -3,6 +3,42 @@
 import Link from "next/link";
 import styled from "styled-components";
 
+const fallbackCopy = Object.freeze({
+  fullGeneratorAction: "Open full generator",
+  inventoryWorkspaceDescription:
+    "The equipment inventory stays aligned with the seeded 1,000+ item master list, including lifecycle state, draft linkage, and posted status.",
+  inventoryWorkspaceTitle: "Equipment workflow",
+  manageProvidersAction: "Manage providers",
+  providerConfigDescription:
+    "Review the active provider, model readiness, credential coverage, and fallback health before starting new AI-assisted drafts.",
+  providerConfigMissing:
+    "No enabled primary generation provider is configured yet. Add or enable one before starting AI draft generation.",
+  providerConfigTitle: "AI configuration",
+  providerFallbackReadyLabel: "Fallback ready",
+  providerMissingKeysLabel: "Missing credentials",
+  providerStoredKeysLabel: "Stored credentials",
+  quickLaunchAction: "Generate post",
+  quickLaunchDescription:
+    "Enter an equipment name here to open the full generator with the field prefilled and the current default provider selected.",
+  quickLaunchHintMissing:
+    "Generation stays blocked until an enabled primary provider config has a usable credential.",
+  quickLaunchHintReady:
+    "The generator will open with your equipment name prefilled so you can review options and create the draft.",
+  quickLaunchLabel: "Equipment name",
+  quickLaunchPlaceholder: "e.g. ultrasound scanner",
+  quickLaunchTitle: "Equipment post generator",
+  workspaceDescription:
+    "Use the dashboard as the control surface for provider readiness, generation entry points, and the equipment master list.",
+  workspaceTitle: "Workspace",
+});
+
+function getDashboardCopy(copy = {}) {
+  return {
+    ...fallbackCopy,
+    ...copy,
+  };
+}
+
 function formatDateTime(value) {
   if (!value) {
     return null;
@@ -130,6 +166,15 @@ const SmallText = styled.p`
   font-size: 0.94rem;
   line-height: 1.45;
   margin: 0;
+`;
+
+const WorkspaceGrid = styled.section`
+  display: grid;
+  gap: clamp(0.95rem, 2vw, 1.2rem);
+
+  @media (min-width: 920px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 `;
 
 const Grid = styled.section`
@@ -275,75 +320,222 @@ const InlineLink = styled(Link)`
   font-weight: 700;
 `;
 
+const QuickLaunchForm = styled.form`
+  display: grid;
+  gap: 0.72rem;
+`;
+
+const QuickLaunchInput = styled.input`
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radius.md};
+  color: ${({ theme }) => theme.colors.text};
+  font: inherit;
+  min-height: 48px;
+  padding: 0.82rem 0.9rem;
+`;
+
+const ActionRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+`;
+
+const ActionButton = styled.button`
+  background: ${({ $tone, theme }) =>
+    $tone === "secondary" ? "rgba(247, 249, 252, 0.96)" : theme.colors.primary};
+  border: 1px solid ${({ $tone, theme }) => ($tone === "secondary" ? theme.colors.border : "transparent")};
+  border-radius: 999px;
+  color: ${({ $tone }) => ($tone === "secondary" ? "inherit" : "white")};
+  cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
+  font: inherit;
+  font-weight: 700;
+  min-height: 42px;
+  opacity: ${({ disabled }) => (disabled ? 0.66 : 1)};
+  padding: 0.72rem 1rem;
+`;
+
 export default function AnalyticsDashboardScreen({ copy, initialData }) {
+  const resolvedCopy = getDashboardCopy(copy);
   const trendMax = Math.max(...initialData.analytics.trend.map((entry) => entry.totalViews), 0);
+  const providerConfiguration = initialData.workspace?.providerConfiguration || {};
+  const defaultProviderConfig = providerConfiguration.defaultConfig || null;
+  const providerSummary = providerConfiguration.summary || {};
+  const workspacePermissions = initialData.workspace?.permissions || {};
+  const workspaceRoutes = {
+    equipment: initialData.workspace?.routes?.equipment || "/admin/equipment",
+    generate: initialData.workspace?.routes?.generate || "/admin/generate",
+    providers: initialData.workspace?.routes?.providers || "/admin/providers",
+  };
+  const providerReady = Boolean(defaultProviderConfig?.hasUsableCredential);
 
   return (
     <Page>
       <Hero>
-        <Eyebrow>{copy.eyebrow}</Eyebrow>
-        <Title>{copy.title}</Title>
-        <Description>{copy.description}</Description>
+        <Eyebrow>{resolvedCopy.eyebrow}</Eyebrow>
+        <Title>{resolvedCopy.title}</Title>
+        <Description>{resolvedCopy.description}</Description>
       </Hero>
 
       <SummaryGrid>
         <SummaryCard>
           <SummaryValue>{formatNumber(initialData.summary.generationJobCount30d)}</SummaryValue>
-          <SmallText>{copy.generationJobsLabel}</SmallText>
+          <SmallText>{resolvedCopy.generationJobsLabel}</SmallText>
         </SummaryCard>
         <SummaryCard>
           <SummaryValue>{formatNumber(initialData.summary.completedJobCount30d)}</SummaryValue>
-          <SmallText>{copy.completedJobsLabel}</SmallText>
+          <SmallText>{resolvedCopy.completedJobsLabel}</SmallText>
         </SummaryCard>
         <SummaryCard>
           <SummaryValue>{formatNumber(initialData.summary.failedJobCount30d)}</SummaryValue>
-          <SmallText>{copy.failedJobsLabel}</SmallText>
+          <SmallText>{resolvedCopy.failedJobsLabel}</SmallText>
         </SummaryCard>
         <SummaryCard>
           <SummaryValue>{formatNumber(initialData.summary.warningJobCount30d)}</SummaryValue>
-          <SmallText>{copy.warningJobsLabel}</SmallText>
+          <SmallText>{resolvedCopy.warningJobsLabel}</SmallText>
         </SummaryCard>
         <SummaryCard>
           <SummaryValue>{formatNumber(initialData.summary.failureLogCount14d)}</SummaryValue>
-          <SmallText>{copy.failureLogsLabel}</SmallText>
+          <SmallText>{resolvedCopy.failureLogsLabel}</SmallText>
         </SummaryCard>
         <SummaryCard>
           <SummaryValue>{formatNumber(initialData.summary.scheduledRunCount14d)}</SummaryValue>
-          <SmallText>{copy.scheduledRunsLabel}</SmallText>
+          <SmallText>{resolvedCopy.scheduledRunsLabel}</SmallText>
         </SummaryCard>
       </SummaryGrid>
+
+      <Card>
+        <SectionHeader>
+          <CardTitle>{resolvedCopy.workspaceTitle}</CardTitle>
+          <SmallText>{resolvedCopy.workspaceDescription}</SmallText>
+        </SectionHeader>
+
+        <WorkspaceGrid>
+          <Card>
+            <SectionHeader>
+              <CardTitle>{resolvedCopy.providerConfigTitle}</CardTitle>
+              <SmallText>{resolvedCopy.providerConfigDescription}</SmallText>
+            </SectionHeader>
+            {defaultProviderConfig ? (
+              <>
+                <SummaryGrid>
+                  <SummaryCard>
+                    <SummaryValue>{defaultProviderConfig.providerLabel}</SummaryValue>
+                    <SmallText>{defaultProviderConfig.model}</SmallText>
+                  </SummaryCard>
+                  <SummaryCard>
+                    <SummaryValue>{formatNumber(providerSummary.storedCredentialCount)}</SummaryValue>
+                    <SmallText>{resolvedCopy.providerStoredKeysLabel}</SmallText>
+                  </SummaryCard>
+                  <SummaryCard>
+                    <SummaryValue>{formatNumber(providerSummary.missingCredentialCount)}</SummaryValue>
+                    <SmallText>{resolvedCopy.providerMissingKeysLabel}</SmallText>
+                  </SummaryCard>
+                </SummaryGrid>
+                <Item>
+                  <Row>
+                    <ItemTitle>{defaultProviderConfig.credentialLabel}</ItemTitle>
+                    <Pill $tone={providerReady ? "success" : "error"}>
+                      {providerSummary.fallbackReady
+                        ? resolvedCopy.providerFallbackReadyLabel
+                        : defaultProviderConfig.credentialState}
+                    </Pill>
+                  </Row>
+                  <SmallText>
+                    {defaultProviderConfig.isDefault ? "Primary generation config." : "Enabled generation config."}
+                  </SmallText>
+                </Item>
+              </>
+            ) : (
+              <EmptyState>{resolvedCopy.providerConfigMissing}</EmptyState>
+            )}
+            {workspacePermissions.canManageProviders ? (
+              <InlineLink href={workspaceRoutes.providers}>{resolvedCopy.manageProvidersAction}</InlineLink>
+            ) : null}
+          </Card>
+
+          <Card>
+            <SectionHeader>
+              <CardTitle>{resolvedCopy.quickLaunchTitle}</CardTitle>
+              <SmallText>{resolvedCopy.quickLaunchDescription}</SmallText>
+            </SectionHeader>
+            <QuickLaunchForm action={workspaceRoutes.generate} method="get">
+              <QuickLaunchInput
+                aria-label={resolvedCopy.quickLaunchLabel}
+                defaultValue=""
+                name="equipment"
+                placeholder={resolvedCopy.quickLaunchPlaceholder}
+                type="text"
+              />
+              <ActionRow>
+                <ActionButton disabled={!workspacePermissions.canGeneratePosts || !providerReady} type="submit">
+                  {resolvedCopy.quickLaunchAction}
+                </ActionButton>
+                <InlineLink href={workspaceRoutes.generate}>{resolvedCopy.fullGeneratorAction}</InlineLink>
+              </ActionRow>
+            </QuickLaunchForm>
+            <SmallText>
+              {providerReady ? resolvedCopy.quickLaunchHintReady : resolvedCopy.quickLaunchHintMissing}
+            </SmallText>
+          </Card>
+
+          <Card>
+            <SectionHeader>
+              <CardTitle>{resolvedCopy.inventoryWorkspaceTitle}</CardTitle>
+              <SmallText>{resolvedCopy.inventoryWorkspaceDescription}</SmallText>
+            </SectionHeader>
+            <SummaryGrid>
+              <SummaryCard>
+                <SummaryValue>{formatNumber(initialData.equipmentPreview.summary.totalCount)}</SummaryValue>
+                <SmallText>{resolvedCopy.equipmentInventoryLabel}</SmallText>
+              </SummaryCard>
+              <SummaryCard>
+                <SummaryValue>{formatNumber(initialData.equipmentPreview.summary.generatedCount)}</SummaryValue>
+                <SmallText>{resolvedCopy.equipmentGeneratedLabel}</SmallText>
+              </SummaryCard>
+              <SummaryCard>
+                <SummaryValue>{formatNumber(initialData.equipmentPreview.summary.postedCount)}</SummaryValue>
+                <SmallText>{resolvedCopy.equipmentPostedLabel}</SmallText>
+              </SummaryCard>
+            </SummaryGrid>
+            {workspacePermissions.canViewEquipment ? (
+              <InlineLink href={workspaceRoutes.equipment}>{resolvedCopy.openEquipmentInventoryAction}</InlineLink>
+            ) : null}
+          </Card>
+        </WorkspaceGrid>
+      </Card>
 
       {initialData.permissions.canViewAnalytics ? (
         <Grid>
           <Card>
             <SectionHeader>
-              <CardTitle>{copy.trafficSectionTitle}</CardTitle>
-              <SmallText>{copy.trafficSectionDescription}</SmallText>
+              <CardTitle>{resolvedCopy.trafficSectionTitle}</CardTitle>
+              <SmallText>{resolvedCopy.trafficSectionDescription}</SmallText>
             </SectionHeader>
             <SummaryGrid>
               <SummaryCard>
                 <SummaryValue>{formatNumber(initialData.analytics.totalViewCount30d)}</SummaryValue>
-                <SmallText>{copy.totalViewsLabel}</SmallText>
+                <SmallText>{resolvedCopy.totalViewsLabel}</SmallText>
               </SummaryCard>
               <SummaryCard>
                 <SummaryValue>{formatNumber(initialData.analytics.websiteViewCount30d)}</SummaryValue>
-                <SmallText>{copy.websiteViewsLabel}</SmallText>
+                <SmallText>{resolvedCopy.websiteViewsLabel}</SmallText>
               </SummaryCard>
               <SummaryCard>
                 <SummaryValue>{formatNumber(initialData.analytics.pageViewCount30d)}</SummaryValue>
-                <SmallText>{copy.pageViewsLabel}</SmallText>
+                <SmallText>{resolvedCopy.pageViewsLabel}</SmallText>
               </SummaryCard>
               <SummaryCard>
                 <SummaryValue>{formatNumber(initialData.analytics.postViewCount30d)}</SummaryValue>
-                <SmallText>{copy.postViewsLabel}</SmallText>
+                <SmallText>{resolvedCopy.postViewsLabel}</SmallText>
               </SummaryCard>
             </SummaryGrid>
             {initialData.analytics.trend.length ? (
               <>
                 <SectionHeader>
-                  <CardTitle>{copy.trendTitle}</CardTitle>
+                  <CardTitle>{resolvedCopy.trendTitle}</CardTitle>
                 </SectionHeader>
-                <BarGrid aria-label={copy.trendTitle}>
+                <BarGrid aria-label={resolvedCopy.trendTitle}>
                   {initialData.analytics.trend.map((entry) => (
                     <BarColumn key={entry.date}>
                       <BarTrack>
@@ -358,14 +550,14 @@ export default function AnalyticsDashboardScreen({ copy, initialData }) {
                 </BarGrid>
               </>
             ) : (
-              <EmptyState>{copy.noTrendData}</EmptyState>
+              <EmptyState>{resolvedCopy.noTrendData}</EmptyState>
             )}
           </Card>
 
           <Card>
             <SectionHeader>
-              <CardTitle>{copy.topPostsTitle}</CardTitle>
-              <SmallText>{copy.topPostsDescription}</SmallText>
+              <CardTitle>{resolvedCopy.topPostsTitle}</CardTitle>
+              <SmallText>{resolvedCopy.topPostsDescription}</SmallText>
             </SectionHeader>
             {initialData.analytics.topPosts.length ? (
               <ItemList>
@@ -375,50 +567,50 @@ export default function AnalyticsDashboardScreen({ copy, initialData }) {
                       <div>
                         <ItemTitle>{post.title}</ItemTitle>
                         <MetaRow>
-                          <span>{copy.viewCountLabel}: {formatNumber(post.viewCount)}</span>
+                          <span>{resolvedCopy.viewCountLabel}: {formatNumber(post.viewCount)}</span>
                           {post.publishedAt ? <span>{formatDateTime(post.publishedAt)}</span> : null}
                         </MetaRow>
                       </div>
-                      <InlineLink href={post.path}>{copy.openPostAction}</InlineLink>
+                      <InlineLink href={post.path}>{resolvedCopy.openPostAction}</InlineLink>
                     </Row>
                   </Item>
                 ))}
               </ItemList>
             ) : (
-              <EmptyState>{copy.noTopPosts}</EmptyState>
+              <EmptyState>{resolvedCopy.noTopPosts}</EmptyState>
             )}
           </Card>
         </Grid>
       ) : (
         <Notice>
           <SectionHeader>
-            <CardTitle>{copy.analyticsRestrictedTitle}</CardTitle>
-            <SmallText>{copy.analyticsRestrictedDescription}</SmallText>
+            <CardTitle>{resolvedCopy.analyticsRestrictedTitle}</CardTitle>
+            <SmallText>{resolvedCopy.analyticsRestrictedDescription}</SmallText>
           </SectionHeader>
         </Notice>
       )}
 
       <Card>
         <SectionHeader>
-          <CardTitle>{copy.equipmentPreviewTitle}</CardTitle>
-          <SmallText>{copy.equipmentPreviewDescription}</SmallText>
+          <CardTitle>{resolvedCopy.equipmentPreviewTitle}</CardTitle>
+          <SmallText>{resolvedCopy.equipmentPreviewDescription}</SmallText>
         </SectionHeader>
         <SummaryGrid>
           <SummaryCard>
             <SummaryValue>{formatNumber(initialData.equipmentPreview.summary.totalCount)}</SummaryValue>
-            <SmallText>{copy.equipmentInventoryLabel}</SmallText>
+            <SmallText>{resolvedCopy.equipmentInventoryLabel}</SmallText>
           </SummaryCard>
           <SummaryCard>
             <SummaryValue>{formatNumber(initialData.equipmentPreview.summary.plannedCount)}</SummaryValue>
-            <SmallText>{copy.equipmentPlannedLabel}</SmallText>
+            <SmallText>{resolvedCopy.equipmentPlannedLabel}</SmallText>
           </SummaryCard>
           <SummaryCard>
             <SummaryValue>{formatNumber(initialData.equipmentPreview.summary.generatedCount)}</SummaryValue>
-            <SmallText>{copy.equipmentGeneratedLabel}</SmallText>
+            <SmallText>{resolvedCopy.equipmentGeneratedLabel}</SmallText>
           </SummaryCard>
           <SummaryCard>
             <SummaryValue>{formatNumber(initialData.equipmentPreview.summary.postedCount)}</SummaryValue>
-            <SmallText>{copy.equipmentPostedLabel}</SmallText>
+            <SmallText>{resolvedCopy.equipmentPostedLabel}</SmallText>
           </SummaryCard>
         </SummaryGrid>
         {initialData.equipmentPreview.items.length ? (
@@ -436,19 +628,19 @@ export default function AnalyticsDashboardScreen({ copy, initialData }) {
                   <Pill $tone={getToneFromLifecycle(item.lifecycleStatus)}>{item.lifecycleStatus}</Pill>
                 </Row>
                 <MetaRow>
-                  <span>{item.primaryPost?.title || copy.equipmentPreviewNoPost}</span>
+                  <span>{item.primaryPost?.title || resolvedCopy.equipmentPreviewNoPost}</span>
                   {item.primaryPost?.status ? <span>{item.primaryPost.status}</span> : null}
                 </MetaRow>
                 <Row>
-                  <SmallText>{item.lifecycleNotes || copy.equipmentPreviewNoNotes}</SmallText>
+                  <SmallText>{item.lifecycleNotes || resolvedCopy.equipmentPreviewNoNotes}</SmallText>
                   <MetaRow>
                     {item.primaryPost?.editorPath ? (
                       <InlineLink href={item.primaryPost.editorPath}>
-                        {copy.openEquipmentEditorAction}
+                        {resolvedCopy.openEquipmentEditorAction}
                       </InlineLink>
                     ) : null}
                     {item.primaryPost?.publicPath ? (
-                      <InlineLink href={item.primaryPost.publicPath}>{copy.openPostAction}</InlineLink>
+                      <InlineLink href={item.primaryPost.publicPath}>{resolvedCopy.openPostAction}</InlineLink>
                     ) : null}
                   </MetaRow>
                 </Row>
@@ -456,16 +648,16 @@ export default function AnalyticsDashboardScreen({ copy, initialData }) {
             ))}
           </ItemList>
         ) : (
-          <EmptyState>{copy.noEquipmentPreview}</EmptyState>
+          <EmptyState>{resolvedCopy.noEquipmentPreview}</EmptyState>
         )}
-        <InlineLink href="/admin/equipment">{copy.openEquipmentInventoryAction}</InlineLink>
+        <InlineLink href="/admin/equipment">{resolvedCopy.openEquipmentInventoryAction}</InlineLink>
       </Card>
 
       <Grid>
         <Card>
           <SectionHeader>
-            <CardTitle>{copy.recentFailuresTitle}</CardTitle>
-            <SmallText>{copy.recentFailuresDescription}</SmallText>
+            <CardTitle>{resolvedCopy.recentFailuresTitle}</CardTitle>
+            <SmallText>{resolvedCopy.recentFailuresDescription}</SmallText>
           </SectionHeader>
           {initialData.recentFailures.length ? (
             <ItemList>
@@ -477,7 +669,7 @@ export default function AnalyticsDashboardScreen({ copy, initialData }) {
                       <SmallText>{failure.summary}</SmallText>
                     </div>
                     <Pill $tone={failure.level === "error" ? "error" : "accent"}>
-                      {failure.level === "error" ? copy.levelError : copy.levelWarning}
+                      {failure.level === "error" ? resolvedCopy.levelError : resolvedCopy.levelWarning}
                     </Pill>
                   </Row>
                   <MetaRow>
@@ -489,14 +681,14 @@ export default function AnalyticsDashboardScreen({ copy, initialData }) {
               ))}
             </ItemList>
           ) : (
-            <EmptyState>{copy.noRecentFailures}</EmptyState>
+            <EmptyState>{resolvedCopy.noRecentFailures}</EmptyState>
           )}
         </Card>
 
         <Card>
           <SectionHeader>
-            <CardTitle>{copy.recentJobsTitle}</CardTitle>
-            <SmallText>{copy.recentJobsDescription}</SmallText>
+            <CardTitle>{resolvedCopy.recentJobsTitle}</CardTitle>
+            <SmallText>{resolvedCopy.recentJobsDescription}</SmallText>
           </SectionHeader>
           {initialData.recentGenerationJobs.length ? (
             <ItemList>
@@ -516,7 +708,7 @@ export default function AnalyticsDashboardScreen({ copy, initialData }) {
                   <MetaRow>
                     <span>{formatDateTime(job.createdAt)}</span>
                     {job.warningCount ? (
-                      <span>{copy.warningCountLabel}: {formatNumber(job.warningCount)}</span>
+                      <span>{resolvedCopy.warningCountLabel}: {formatNumber(job.warningCount)}</span>
                     ) : null}
                     {job.errorMessage ? <span>{job.errorMessage}</span> : null}
                   </MetaRow>
@@ -524,15 +716,15 @@ export default function AnalyticsDashboardScreen({ copy, initialData }) {
               ))}
             </ItemList>
           ) : (
-            <EmptyState>{copy.noRecentJobs}</EmptyState>
+            <EmptyState>{resolvedCopy.noRecentJobs}</EmptyState>
           )}
         </Card>
       </Grid>
 
       <Card>
         <SectionHeader>
-          <CardTitle>{copy.scheduledRunsTitle}</CardTitle>
-          <SmallText>{copy.scheduledRunsDescription}</SmallText>
+          <CardTitle>{resolvedCopy.scheduledRunsTitle}</CardTitle>
+          <SmallText>{resolvedCopy.scheduledRunsDescription}</SmallText>
         </SectionHeader>
         {initialData.scheduledRuns.length ? (
           <ItemList>
@@ -542,18 +734,18 @@ export default function AnalyticsDashboardScreen({ copy, initialData }) {
                   <div>
                     <ItemTitle>{run.runId}</ItemTitle>
                     <MetaRow>
-                      <span>{copy.batchSizeLabel}: {formatNumber(run.batchSize || 0)}</span>
-                      <span>{copy.dueCountLabel}: {formatNumber(run.dueCount || 0)}</span>
-                      <span>{copy.publishedCountLabel}: {formatNumber(run.publishedCount || 0)}</span>
+                      <span>{resolvedCopy.batchSizeLabel}: {formatNumber(run.batchSize || 0)}</span>
+                      <span>{resolvedCopy.dueCountLabel}: {formatNumber(run.dueCount || 0)}</span>
+                      <span>{resolvedCopy.publishedCountLabel}: {formatNumber(run.publishedCount || 0)}</span>
                     </MetaRow>
                   </div>
                   <Pill $tone={run.status === "completed" ? "success" : "accent"}>
-                    {run.status === "completed" ? copy.runCompletedLabel : copy.runRunningLabel}
+                    {run.status === "completed" ? resolvedCopy.runCompletedLabel : resolvedCopy.runRunningLabel}
                   </Pill>
                 </Row>
                 <MetaRow>
-                  <span>{copy.failedJobsLabel}: {formatNumber(run.failedCount || 0)}</span>
-                  <span>{copy.skippedCountLabel}: {formatNumber(run.skippedCount || 0)}</span>
+                  <span>{resolvedCopy.failedJobsLabel}: {formatNumber(run.failedCount || 0)}</span>
+                  <span>{resolvedCopy.skippedCountLabel}: {formatNumber(run.skippedCount || 0)}</span>
                   <span>
                     {run.completedAt ? formatDateTime(run.completedAt) : formatDateTime(run.startedAt)}
                   </span>
@@ -562,7 +754,7 @@ export default function AnalyticsDashboardScreen({ copy, initialData }) {
             ))}
           </ItemList>
         ) : (
-          <EmptyState>{copy.noScheduledRuns}</EmptyState>
+          <EmptyState>{resolvedCopy.noScheduledRuns}</EmptyState>
         )}
       </Card>
     </Page>

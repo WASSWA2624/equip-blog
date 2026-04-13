@@ -3,6 +3,7 @@ import { PostStatus } from "@prisma/client";
 import { defaultLocale, supportedLocales } from "@/features/i18n/config";
 import { buildLocalizedPath, publicRouteSegments, publicStaticRoutes } from "@/features/i18n/routing";
 import { env } from "@/lib/env/server";
+import { isRecoverablePrismaReadError } from "@/lib/prisma/errors";
 import { buildAbsoluteUrl, buildPageMetadata, extractFaqItemsFromSections } from "@/lib/seo";
 
 const nonIndexableStaticRouteKeys = new Set(["search"]);
@@ -249,6 +250,18 @@ async function getPublishedSeoInventory(prisma) {
   });
 }
 
+async function getPublishedSeoInventorySafe(prisma) {
+  try {
+    return await getPublishedSeoInventory(prisma);
+  } catch (error) {
+    if (isRecoverablePrismaReadError(error)) {
+      return [];
+    }
+
+    throw error;
+  }
+}
+
 function createPostSeoEntries(posts) {
   return posts.flatMap((post) =>
     post.translations.map((translation) => {
@@ -398,7 +411,7 @@ export function getRobotsConfiguration() {
 }
 
 export async function getSitemapEntries(prisma) {
-  const posts = await getPublishedSeoInventory(prisma);
+  const posts = await getPublishedSeoInventorySafe(prisma);
   const entityPages = createEntityPageSummary(posts);
   const staticEntries = supportedLocales.flatMap((locale) =>
     publicStaticRoutes
@@ -447,7 +460,7 @@ export async function getSitemapEntries(prisma) {
 }
 
 export async function getSeoManagementSnapshot(prisma) {
-  const posts = await getPublishedSeoInventory(prisma);
+  const posts = await getPublishedSeoInventorySafe(prisma);
   const postSeoEntries = createPostSeoEntries(posts);
   const entityPages = createEntityPageSummary(posts);
   const indexableStaticRoutes = getStaticRouteSamples().filter((route) => route.isIndexable);

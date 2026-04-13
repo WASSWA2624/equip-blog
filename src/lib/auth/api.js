@@ -12,6 +12,9 @@ import {
   validateRequestAdminSession,
 } from "./index";
 
+const AUTH_UNAVAILABLE_MESSAGE =
+  "Admin authentication is temporarily unavailable. Apply the latest database migrations and try again.";
+
 function getSessionCookieSettings(expiresAt) {
   return {
     expires: expiresAt,
@@ -37,16 +40,17 @@ export async function requireAdminApiSession(request) {
   const validation = await validateRequestAdminSession(request);
 
   if (validation.status !== "authenticated") {
+    const isAuthUnavailable = validation.status === "auth_unavailable";
     const response = NextResponse.json(
       {
-        message: "Admin authentication is required.",
+        message: isAuthUnavailable ? AUTH_UNAVAILABLE_MESSAGE : "Admin authentication is required.",
         status: validation.status,
         success: false,
       },
-      { status: 401 },
+      { status: isAuthUnavailable ? 503 : 401 },
     );
 
-    if (validation.status !== "auth_required") {
+    if (validation.status !== "auth_required" && validation.status !== "auth_unavailable") {
       clearAdminSessionCookie(response);
     }
 
@@ -92,13 +96,16 @@ export async function createLoginResponse({ email, password, userAgent }) {
   const result = await authenticateAdminCredentials({ email, password, userAgent });
 
   if (!result.success) {
+    const isAuthUnavailable = result.status === "auth_unavailable";
     return NextResponse.json(
       {
-        message: "The email or password is incorrect.",
+        message: isAuthUnavailable
+          ? AUTH_UNAVAILABLE_MESSAGE
+          : "The email or password is incorrect.",
         status: result.status,
         success: false,
       },
-      { status: 401 },
+      { status: isAuthUnavailable ? 503 : 401 },
     );
   }
 
