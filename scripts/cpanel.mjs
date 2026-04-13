@@ -4,11 +4,6 @@ import process from "node:process";
 import { config as loadEnv } from "dotenv";
 
 loadEnv({
-  path: ".env.cpanel",
-  override: false,
-});
-
-loadEnv({
   path: ".env",
   override: false,
 });
@@ -30,7 +25,7 @@ function requireEnv(name) {
   const value = readEnv(name);
 
   if (!value) {
-    fail(`${name} is required. Copy .env.cpanel.template.txt to .env.cpanel and fill it in.`);
+    fail(`${name} is required. Copy .env.template.txt to .env and fill it in.`);
   }
 
   return value;
@@ -67,7 +62,7 @@ function getGitBranch() {
   const branch = readEnv("CPANEL_GIT_BRANCH") || capture("git", ["branch", "--show-current"]);
 
   if (!branch) {
-    fail("Unable to determine the deployment branch. Set CPANEL_GIT_BRANCH in .env.cpanel.");
+    fail("Unable to determine the deployment branch. Set CPANEL_GIT_BRANCH in .env.");
   }
 
   return branch;

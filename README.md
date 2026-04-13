@@ -47,8 +47,8 @@ Bootstrap admin defaults in the template are `admin@admin.com` / `admin`. They a
 
 ## cPanel automation
 
-1. Copy `.env.cpanel.template.txt` to `.env.cpanel`.
-2. Fill in `CPANEL_SSH_HOST`, `CPANEL_SSH_USER`, `CPANEL_APP_PATH`, and `CPANEL_GIT_BRANCH`.
+1. Keep using `.env` as the only local env file.
+2. Fill in `CPANEL_SSH_HOST`, `CPANEL_SSH_USER`, `CPANEL_APP_PATH`, and `CPANEL_GIT_BRANCH` in `.env`.
 3. Ensure the remote cPanel app directory already has its own `.env`.
 4. Run `npm run db:cpanel:reset` for the initial remote wipe-and-bootstrap flow when you explicitly want a clean database.
 5. Run `npm run db:cpanel:migrate` for routine remote migrations plus baseline seed data.
