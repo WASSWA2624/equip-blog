@@ -20,11 +20,11 @@ const editorialFont = Newsreader({
 export const metadata = {
   applicationName: "Equip Blog",
   title: {
-    default: "Equip Blog",
+    default: "Equip Blog | Medical Equipment Guides",
     template: "%s | Equip Blog",
   },
   description:
-    "Locale-ready scaffold for the Equip Blog public site and admin workspace.",
+    "Evidence-led medical equipment guides, manufacturer context, and editorially reviewed troubleshooting references.",
   icons: {
     icon: [{ type: "image/svg+xml", url: "/favicon.svg" }],
     shortcut: ["/favicon.svg"],
@@ -32,15 +32,16 @@ export const metadata = {
   },
   metadataBase: new URL(env.app.url),
   openGraph: {
-    description: "Locale-ready scaffold for the Equip Blog public site and admin workspace.",
+    description:
+      "Evidence-led medical equipment guides, manufacturer context, and editorially reviewed troubleshooting references.",
     images: [
       {
-        alt: "Equip Blog",
+        alt: "Equip Blog medical equipment knowledge base",
         url: buildAbsoluteUrl("/opengraph-image"),
       },
     ],
     siteName: "Equip Blog",
-    title: "Equip Blog",
+    title: "Equip Blog | Medical Equipment Guides",
     type: "website",
     url: env.app.url,
   },
@@ -50,9 +51,10 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    description: "Locale-ready scaffold for the Equip Blog public site and admin workspace.",
+    description:
+      "Evidence-led medical equipment guides, manufacturer context, and editorially reviewed troubleshooting references.",
     images: [buildAbsoluteUrl("/twitter-image")],
-    title: "Equip Blog",
+    title: "Equip Blog | Medical Equipment Guides",
   },
 };
 

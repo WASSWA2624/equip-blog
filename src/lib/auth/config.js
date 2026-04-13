@@ -65,7 +65,7 @@ export function normalizeAdminRedirectTarget(value) {
 }
 
 export function buildAdminLoginHref(nextPath = ADMIN_HOME_PATH) {
-  const url = new URL(ADMIN_LOGIN_PATH, "https://equip-blog.local");
+  const url = new URL(ADMIN_LOGIN_PATH, "https://example.com");
 
   url.searchParams.set(ADMIN_REDIRECT_PARAM, normalizeAdminRedirectTarget(nextPath));
 

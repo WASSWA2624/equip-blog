@@ -4,7 +4,6 @@ import { StructuredDataBundle } from "@/components/seo";
 import SiteShell from "@/components/layout/site-shell";
 import { isSupportedLocale, supportedLocales } from "@/features/i18n/config";
 import { getMessages } from "@/features/i18n/get-messages";
-import { LocaleMessagesProvider } from "@/features/i18n/locale-provider";
 import { buildOrganizationJsonLd } from "@/lib/seo";
 
 export const dynamicParams = false;
@@ -40,7 +39,7 @@ export default async function LocaleLayout({ children, params }) {
   const messages = await getMessages(locale);
 
   return (
-    <LocaleMessagesProvider locale={locale} messages={messages}>
+    <>
       <StructuredDataBundle
         idPrefix={`organization-${locale}`}
         items={[
@@ -54,6 +53,6 @@ export default async function LocaleLayout({ children, params }) {
       <SiteShell locale={locale} messages={messages}>
         {children}
       </SiteShell>
-    </LocaleMessagesProvider>
+    </>
   );
 }

@@ -5,8 +5,10 @@ const { PrismaMariaDb } = require("@prisma/adapter-mariadb");
 const { PrismaClient, SourceType, UserRole } = require("@prisma/client");
 const { config: loadEnv } = require("dotenv");
 
-loadEnv({ path: path.resolve(process.cwd(), ".env.local"), override: true });
-loadEnv();
+loadEnv({
+  path: path.resolve(process.cwd(), ".env"),
+  override: true,
+});
 
 const RELEASE_ONE_DISCLAIMER =
   "While care has been taken to ensure accuracy of the content in this post, this content is provided for educational and informational purposes only. It does not replace the manufacturer's official instructions, operator manual, service manual, safety procedures, or institutional biomedical engineering protocols. Always follow the official manufacturer guidelines and applicable clinical regulations.";
@@ -198,7 +200,7 @@ function requiredEnv(name) {
   const value = process.env[name]?.trim();
 
   if (!value) {
-    throw new Error(`${name} is required to run prisma seeds.`);
+    throw new Error(`${name} is required to run prisma seeds. Copy .env.template.txt to .env first.`);
   }
 
   return value;

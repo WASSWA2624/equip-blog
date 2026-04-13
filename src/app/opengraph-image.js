@@ -30,10 +30,10 @@ export default function OpenGraphImage() {
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div style={{ fontSize: 72, fontWeight: 700, lineHeight: 1.05 }}>
-            Source-grounded medical equipment publishing
+            Medical equipment guides built from checked references
           </div>
           <div style={{ fontSize: 28, maxWidth: 900, opacity: 0.9 }}>
-            Locale-ready public routes, editorial workflows, and reliable equipment reference pages.
+            Browse editorially reviewed explainers, maintenance notes, and entity pages for clinical equipment teams.
           </div>
         </div>
       </div>

@@ -367,7 +367,7 @@ export function formatEnvValidationError(error) {
   return [
     "Invalid environment configuration.",
     ...lines,
-    "Update your env file to match .env.example before starting the app.",
+    "Copy .env.template.txt to .env and update the required values before starting the app.",
   ].join("\n");
 }
 

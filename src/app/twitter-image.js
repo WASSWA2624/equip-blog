@@ -40,12 +40,12 @@ export default function TwitterImage() {
             Equip Blog
           </div>
           <div style={{ fontSize: 48, fontWeight: 700, lineHeight: 1.1 }}>
-            Repo scaffold ready
+            Evidence-led guide library
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 520 }}>
           <div style={{ fontSize: 42, fontWeight: 700, lineHeight: 1.05 }}>
-            Public, admin, and API surfaces are wired for Release 1.
+            Medical equipment explainers, taxonomy hubs, and editorial review in one publishing stack.
           </div>
         </div>
       </div>

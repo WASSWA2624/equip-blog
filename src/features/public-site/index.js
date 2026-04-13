@@ -4,8 +4,15 @@ import { unstable_cache } from "next/cache";
 import { getCommentSubmissionFormSnapshot } from "@/features/comments";
 import { defaultLocale, isSupportedLocale, supportedLocales } from "@/features/i18n/config";
 import { buildLocalizedPath, publicRouteSegments } from "@/features/i18n/routing";
+import {
+  dedupeStrings,
+  formatEquipmentAwareTitle,
+  formatEquipmentDisplayName,
+  normalizePositiveInteger,
+} from "@/lib/content/presentation";
 import { env } from "@/lib/env/server";
 import { generatedArticleSectionOrder } from "@/lib/content/article-structure";
+import { getRenderableImageUrl, isReservedFixtureImageUrl } from "@/lib/media";
 import { normalizeDisplayText, normalizeEquipmentName } from "@/lib/normalization";
 import { sanitizeMediaUrl } from "@/lib/security";
 
@@ -53,13 +60,6 @@ const canonicalStructuredSectionTitles = Object.freeze({
   types_and_variants: "Types and variants",
   uses_and_applications: "Uses and applications",
 });
-const fixtureMediaUrlMap = Object.freeze({
-  "https://fixtures.example/images/microscope-bench.jpg":
-    "https://upload.wikimedia.org/wikipedia/commons/c/cd/Microscope_Machine.jpg",
-  "https://fixtures.example/images/microscope-optics.jpg":
-    "https://upload.wikimedia.org/wikipedia/commons/d/d0/Laboratory_Microscope.jpg",
-});
-
 function serializeDate(value) {
   return value instanceof Date ? value.toISOString() : null;
 }
@@ -72,16 +72,6 @@ function normalizePublicLocale(locale) {
   const normalizedLocale = locale.trim().toLowerCase();
 
   return isSupportedLocale(normalizedLocale) ? normalizedLocale : defaultLocale;
-}
-
-function normalizePositiveInteger(value, fallback = 1) {
-  const parsedValue = Number.parseInt(`${value ?? ""}`.trim(), 10);
-
-  if (Number.isNaN(parsedValue) || parsedValue < 1) {
-    return fallback;
-  }
-
-  return parsedValue;
 }
 
 function getDateSortValue(value) {
@@ -116,58 +106,8 @@ function dedupeBy(values, getKey) {
   return dedupedValues;
 }
 
-function dedupeStrings(values) {
-  return [...new Set((values || []).map((value) => `${value}`.trim()).filter(Boolean))];
-}
-
 function normalizeSearchValue(value) {
   return normalizeEquipmentName(normalizeDisplayText(value) || "");
-}
-
-function formatEquipmentDisplayName(value) {
-  if (typeof value !== "string") {
-    return "";
-  }
-
-  const trimmedValue = value.trim();
-
-  if (!trimmedValue) {
-    return "";
-  }
-
-  if (/[A-Z]/.test(trimmedValue)) {
-    return trimmedValue;
-  }
-
-  const firstLetterIndex = trimmedValue.search(/[a-z]/i);
-
-  if (firstLetterIndex === -1) {
-    return trimmedValue;
-  }
-
-  return `${trimmedValue.slice(0, firstLetterIndex)}${trimmedValue
-    .charAt(firstLetterIndex)
-    .toUpperCase()}${trimmedValue.slice(firstLetterIndex + 1)}`;
-}
-
-function formatEquipmentAwareTitle(title, equipmentName) {
-  const normalizedTitle = typeof title === "string" ? title.trim() : "";
-  const normalizedEquipmentName = typeof equipmentName === "string" ? equipmentName.trim() : "";
-  const displayEquipmentName = formatEquipmentDisplayName(normalizedEquipmentName);
-
-  if (!normalizedTitle) {
-    return displayEquipmentName;
-  }
-
-  if (!normalizedEquipmentName || !displayEquipmentName) {
-    return normalizedTitle;
-  }
-
-  if (normalizedTitle.toLowerCase().startsWith(normalizedEquipmentName.toLowerCase())) {
-    return `${displayEquipmentName}${normalizedTitle.slice(normalizedEquipmentName.length)}`;
-  }
-
-  return normalizedTitle;
 }
 
 function stripHtml(value) {
@@ -344,20 +284,10 @@ function toAbsolutePublicUrl(path) {
   return `${env.app.url}${path}`;
 }
 
-function resolveFixtureMediaUrl(url) {
-  const normalizedUrl = typeof url === "string" ? url.trim() : "";
-
-  if (!normalizedUrl) {
-    return "";
-  }
-
-  return fixtureMediaUrlMap[normalizedUrl] || normalizedUrl;
-}
-
 function getMediaUrl(media) {
   const rawUrl = media?.publicUrl || media?.sourceUrl || null;
 
-  return rawUrl ? resolveFixtureMediaUrl(rawUrl) : null;
+  return rawUrl ? sanitizeMediaUrl(rawUrl) : null;
 }
 
 function shouldRenderInlineImage(media, url) {
@@ -711,11 +641,17 @@ function createMediaImage(media, fallbackAlt) {
   const rawUrl = getMediaUrl(media);
   const alt = media?.alt || media?.caption || fallbackAlt;
   const caption = media?.caption || null;
-  const href = sanitizeMediaUrl(rawUrl);
+  const url = getRenderableImageUrl(rawUrl, {
+    alt,
+    caption,
+    height: media?.height,
+    sourceUrl: rawUrl,
+    width: media?.width,
+  });
+  const href = url && url === rawUrl ? rawUrl : null;
   const height = normalizeImageDimension(media?.height);
-  const renderInline = shouldRenderInlineImage(media, href);
+  const renderInline = shouldRenderInlineImage(media, url);
   const width = normalizeImageDimension(media?.width);
-  const url = renderInline ? href : href;
 
   if (!url) {
     return null;
@@ -726,11 +662,14 @@ function createMediaImage(media, fallbackAlt) {
     attributionText: media?.attributionText || null,
     caption,
     height,
-    href: href || null,
+    href,
     isAiGenerated: Boolean(media?.isAiGenerated),
     licenseType: media?.licenseType || null,
     renderInline,
-    srcSet: renderInline && rawUrl === url ? buildResponsiveImageSrcSet(media, rawUrl) : null,
+    srcSet:
+      renderInline && rawUrl === url && !isReservedFixtureImageUrl(rawUrl)
+        ? buildResponsiveImageSrcSet(media, rawUrl)
+        : null,
     storageDriver: media?.storageDriver || null,
     storageKey: media?.storageKey || null,
     url,
@@ -739,7 +678,7 @@ function createMediaImage(media, fallbackAlt) {
 }
 
 function createSectionImage(image, fallbackAlt) {
-  const rawUrl = resolveFixtureMediaUrl(
+  const rawUrl = sanitizeMediaUrl(
     (typeof image?.publicUrl === "string" && image.publicUrl.trim()) ||
     (typeof image?.url === "string" && image.url.trim()) ||
     (typeof image?.sourceUrl === "string" && image.sourceUrl.trim()) ||
@@ -747,11 +686,17 @@ function createSectionImage(image, fallbackAlt) {
   );
   const alt = image.alt || image.caption || fallbackAlt;
   const caption = image.caption || null;
-  const href = sanitizeMediaUrl(rawUrl);
+  const url = getRenderableImageUrl(rawUrl, {
+    alt,
+    caption,
+    height: image?.height,
+    sourceUrl: rawUrl,
+    width: image?.width,
+  });
+  const href = url && url === rawUrl ? rawUrl : null;
   const height = normalizeImageDimension(image?.height);
-  const renderInline = shouldRenderInlineImage(image, href);
+  const renderInline = shouldRenderInlineImage(image, url);
   const width = normalizeImageDimension(image?.width);
-  const url = renderInline ? href : href;
 
   if (!url) {
     return null;
@@ -762,7 +707,7 @@ function createSectionImage(image, fallbackAlt) {
     attributionText: image.attributionText || null,
     caption,
     height,
-    href: href || null,
+    href,
     isAiGenerated: Boolean(image?.isAiGenerated),
     licenseType: image.licenseType || null,
     renderInline,
@@ -2432,6 +2377,14 @@ const getCachedPublishedLandingPageData = unstable_cache(
   },
 );
 
+const getCachedPublishedHomePageData = unstable_cache(
+  async (locale) => getPublishedHomePageDataInternal({ locale }),
+  ["public-home-page-data"],
+  {
+    revalidate: publicDataRevalidateSeconds,
+  },
+);
+
 const getCachedPublishedPostPageData = unstable_cache(
   async (commentsPage, locale, slug) =>
     getPublishedPostPageDataInternal({ commentsPage, locale, slug }),
@@ -2511,13 +2464,17 @@ export async function searchPublishedEquipmentSuggestions(options = {}, prisma) 
 }
 
 export async function getPublishedHomePageData(options = {}, prisma) {
-  return getPublishedHomePageDataInternal(
-    {
-      ...options,
-      locale: normalizePublicLocale(options.locale),
-    },
-    prisma,
-  );
+  if (prisma) {
+    return getPublishedHomePageDataInternal(
+      {
+        ...options,
+        locale: normalizePublicLocale(options.locale),
+      },
+      prisma,
+    );
+  }
+
+  return getCachedPublishedHomePageData(normalizePublicLocale(options.locale));
 }
 
 export async function getPublishedLandingPageData(options = {}, prisma) {

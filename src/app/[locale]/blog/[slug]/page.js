@@ -5,6 +5,7 @@ import { StructuredDataBundle } from "@/components/seo";
 import { getMessages } from "@/features/i18n/get-messages";
 import { publicRouteSegments } from "@/features/i18n/routing";
 import { getPublishedPostPageData } from "@/features/public-site";
+import { formatEquipmentAwareTitle, formatEquipmentDisplayName } from "@/lib/content/presentation";
 import {
   buildArticleJsonLd,
   buildBreadcrumbJsonLd,
@@ -14,52 +15,6 @@ import {
 } from "@/lib/seo";
 
 export const revalidate = 300;
-
-function formatEquipmentDisplayName(value) {
-  if (typeof value !== "string") {
-    return "";
-  }
-
-  const trimmedValue = value.trim();
-
-  if (!trimmedValue) {
-    return "";
-  }
-
-  if (/[A-Z]/.test(trimmedValue)) {
-    return trimmedValue;
-  }
-
-  const firstLetterIndex = trimmedValue.search(/[a-z]/i);
-
-  if (firstLetterIndex === -1) {
-    return trimmedValue;
-  }
-
-  return `${trimmedValue.slice(0, firstLetterIndex)}${trimmedValue
-    .charAt(firstLetterIndex)
-    .toUpperCase()}${trimmedValue.slice(firstLetterIndex + 1)}`;
-}
-
-function formatEquipmentAwareTitle(title, equipmentName) {
-  const normalizedTitle = typeof title === "string" ? title.trim() : "";
-  const normalizedEquipmentName = typeof equipmentName === "string" ? equipmentName.trim() : "";
-  const displayEquipmentName = formatEquipmentDisplayName(normalizedEquipmentName);
-
-  if (!normalizedTitle) {
-    return displayEquipmentName;
-  }
-
-  if (!normalizedEquipmentName || !displayEquipmentName) {
-    return normalizedTitle;
-  }
-
-  if (normalizedTitle.toLowerCase().startsWith(normalizedEquipmentName.toLowerCase())) {
-    return `${displayEquipmentName}${normalizedTitle.slice(normalizedEquipmentName.length)}`;
-  }
-
-  return normalizedTitle;
-}
 
 function normalizeArticlePresentation(article) {
   if (!article) {

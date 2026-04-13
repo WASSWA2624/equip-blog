@@ -9,14 +9,15 @@ import {
 import { getAdminPageAccess, hasAdminPermission } from "@/lib/auth/rbac";
 import { defaultLocale } from "@/features/i18n/config";
 import { getMessages } from "@/features/i18n/get-messages";
-import { LocaleMessagesProvider } from "@/features/i18n/locale-provider";
+import StoreProvider from "@/store/provider";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { env } from "@/lib/env/server";
 
 export async function generateMetadata() {
   return {
     title: "Equip Blog Admin",
-    description: "Admin workspace scaffold for Equip Blog.",
+    description: "Editorial workspace for publishing, moderation, SEO, and media operations.",
   };
 }
 
@@ -31,16 +32,16 @@ export default async function AdminLayout({ children }) {
       : await getOptionalAdminSession();
 
   if (routeKind === "login" && authState) {
-    const redirectUrl = new URL(requestPath, "https://equip-blog.local");
+    const redirectUrl = new URL(requestPath, env.app.url);
 
     redirect(normalizeAdminRedirectTarget(redirectUrl.searchParams.get(ADMIN_REDIRECT_PARAM)));
   }
 
   if (routeKind !== "protected") {
     return (
-      <LocaleMessagesProvider locale={defaultLocale} messages={messages}>
+      <StoreProvider>
         {children}
-      </LocaleMessagesProvider>
+      </StoreProvider>
     );
   }
 
@@ -49,7 +50,7 @@ export default async function AdminLayout({ children }) {
     !pageAccess || hasAdminPermission(authState.user, pageAccess.permission);
 
   return (
-    <LocaleMessagesProvider locale={defaultLocale} messages={messages}>
+    <StoreProvider>
       <AdminShell messages={messages} user={authState.user}>
         {isAuthorizedForPage ? (
           children
@@ -61,6 +62,6 @@ export default async function AdminLayout({ children }) {
           />
         )}
       </AdminShell>
-    </LocaleMessagesProvider>
+    </StoreProvider>
   );
 }
