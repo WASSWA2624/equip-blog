@@ -37,8 +37,24 @@ Bootstrap admin defaults in the template are `admin@admin.com` / `admin`. They a
 - `npm run build`
 - `npm run lint`
 - `npm run test`
+- `npm run db:local:migrate`
+- `npm run db:local:reset`
 - `npm run prisma:validate`
 - `npm run prisma:seed`
+- `npm run db:cpanel:migrate`
+- `npm run db:cpanel:reset`
+- `npm run deploy:cpanel`
+
+## cPanel automation
+
+1. Copy `.env.cpanel.template.txt` to `.env.cpanel`.
+2. Fill in `CPANEL_SSH_HOST`, `CPANEL_SSH_USER`, `CPANEL_APP_PATH`, and `CPANEL_GIT_BRANCH`.
+3. Ensure the remote cPanel app directory already has its own `.env`.
+4. Run `npm run db:cpanel:reset` for the initial remote wipe-and-bootstrap flow when you explicitly want a clean database.
+5. Run `npm run db:cpanel:migrate` for routine remote migrations plus baseline seed data.
+6. Run `npm run deploy:cpanel` to pull the branch on cPanel, install dependencies, run migrations, seed baseline data, build, and restart the app.
+
+`npm run db:cpanel:reset` is intentionally gated by `CPANEL_ALLOW_DATA_RESET=true` because it wipes the remote database before reseeding it.
 
 ## Repository layout
 

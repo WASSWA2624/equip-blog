@@ -438,7 +438,6 @@ async function main() {
       const sourceConfigs = await seedSourceConfigs(tx);
       const categories = await seedCategories(tx);
       const tags = await seedTags(tx);
-      const equipmentCatalog = await seedEquipmentCatalog(tx);
 
       return {
         locales,
@@ -448,9 +447,9 @@ async function main() {
         sourceConfigs,
         categories,
         tags,
-        equipmentCatalog,
       };
     });
+    const equipmentCatalog = await seedEquipmentCatalog(prisma);
 
     console.log("Prisma seed completed.");
     console.table({
@@ -461,7 +460,7 @@ async function main() {
       sourceConfigs: summary.sourceConfigs,
       categories: summary.categories,
       tags: summary.tags,
-      equipmentCatalog: summary.equipmentCatalog,
+      equipmentCatalog,
     });
   } finally {
     await prisma.$disconnect();

@@ -11,6 +11,11 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "db:local:migrate": "prisma migrate deploy",
+    "db:local:reset": "node scripts/prisma-reset.mjs",
+    "db:cpanel:migrate": "node scripts/cpanel.mjs migrate",
+    "db:cpanel:reset": "node scripts/cpanel.mjs reset",
+    "deploy:cpanel": "node scripts/cpanel.mjs deploy",
     "prisma:generate": "prisma generate",
     "prisma:validate": "prisma validate",
     "prisma:seed": "prisma db seed"
